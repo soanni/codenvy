@@ -18,6 +18,9 @@ import com.codenvy.api.workspace.server.model.impl.WorkerImpl;
 import com.codenvy.api.workspace.server.spi.WorkerDao;
 
 import org.eclipse.che.api.core.NotFoundException;
+import org.eclipse.che.api.user.server.model.impl.UserImpl;
+import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
+import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.commons.test.tck.TckModuleFactory;
 import org.eclipse.che.commons.test.tck.repository.TckRepository;
 import org.eclipse.che.commons.test.tck.repository.TckRepositoryException;
@@ -51,6 +54,12 @@ public class WorkerDaoTest {
     @Inject
     private TckRepository<WorkerImpl> workerRepository;
 
+    @Inject
+    private TckRepository<UserImpl> userRepository;
+
+    @Inject
+    private TckRepository<WorkspaceImpl> workspaceRepository;
+
     WorkerImpl[] workers;
 
     @BeforeMethod
@@ -59,6 +68,15 @@ public class WorkerDaoTest {
                                    new WorkerImpl("ws1", "user2", Arrays.asList("read", "use")),
                                    new WorkerImpl("ws2", "user1", Arrays.asList("read", "run")),
                                    new WorkerImpl("ws2", "user2", Arrays.asList("read", "use", "run", "configure"))};
+
+        userRepository.createAll(Arrays.asList(new UserImpl("user0", "user0@com.com", "usr0"),
+                                               new UserImpl("user1", "user1@com.com", "usr1"),
+                                               new UserImpl("user2", "user2@com.com", "usr2")));
+
+        workspaceRepository.createAll(Arrays.asList(new WorkspaceImpl("ws0", "ns0", new WorkspaceConfigImpl("","","cfg0", null,null,null)),
+                                                    new WorkspaceImpl("ws1", "ns1", new WorkspaceConfigImpl("","","cfg1", null,null,null)),
+                                                    new WorkspaceImpl("ws2", "ns2", new WorkspaceConfigImpl("","","cfg2", null,null,null))));
+
         workerRepository.createAll(Arrays.asList(workers));
 
     }
@@ -66,14 +84,16 @@ public class WorkerDaoTest {
     @AfterMethod
     public void cleanUp() throws TckRepositoryException {
         workerRepository.removeAll();
+        workspaceRepository.removeAll();
+        userRepository.removeAll();
     }
 
     /* WorkerDao.store() tests */
     @Test
     public void shouldStoreWorker() throws Exception {
-        WorkerImpl worker = new WorkerImpl("ws", "user", Arrays.asList("read", "write", "start"));
+        WorkerImpl worker = new WorkerImpl("ws0", "user0", Arrays.asList("read", "use", "run"));
         workerDao.store(worker);
-        assertEquals(workerDao.getWorker("ws", "user"), worker);
+        assertEquals(workerDao.getWorker("ws0", "user0"), worker);
     }
 
     @Test
