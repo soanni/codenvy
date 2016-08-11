@@ -129,53 +129,13 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
-                    <!-- TODO Remove to enable analyze! -->
                     <execution>
                         <id>analyze</id>
                         <configuration>
                             <skip>true</skip>
                         </configuration>
                     </execution>
-                    <execution>
-                        <goals>
-                            <goal>unpack-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
-                            <includeArtifactIds>codenvy-hosted-api-workspace,
-                                che-core-api-account,
-                                che-core-api-factory,
-                                che-core-api-user,
-                                che-core-api-machine,
-                                che-core-api-workspace,
-                                che-core-api-ssh</includeArtifactIds>
-                            <includeScope>test</includeScope>
-                        </configuration>
-                    </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <systemPropertyVariables>
-                        <jdbc.driver>${jdbc.driver}</jdbc.driver>
-                        <jdbc.url>${jdbc.url}</jdbc.url>
-                        <jdbc.user>${jdbc.user}</jdbc.user>
-                        <jdbc.password>${jdbc.password}</jdbc.password>
-                    </systemPropertyVariables>
-                    <includes>
-                        <include>**/tck/**</include>
-                    </includes>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -186,54 +146,111 @@
                     </excludes>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>io.fabric8</groupId>
-                <artifactId>docker-maven-plugin</artifactId>
-                <version>0.15.16</version>
-                <!-- Connect start/stop to pre- and
-                     post-integration-test phase, respectively if you want to start
-                     your docker containers during integration tests -->
-                <executions>
-                    <execution>
-                        <id>start</id>
-                        <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>stop</goal>
-                            <goal>start</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>stop</id>
-                        <phase>post-integration-test</phase>
-                        <goals>
-                            <goal>stop</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <images>
-                        <image>
-                            <alias>database</alias>
-                            <name>${db.image.name}</name>
-                            <run>
-                                <ports>
-                                    <port>jdbc.port:5432</port>
-                                </ports>
-                                <wait>
-                                    <log>PostgreSQL init process complete</log>
-                                </wait>
-                                <restartPolicy>
-                                    <name>always</name>
-                                </restartPolicy>
-                                <env>
-                                    <POSTGRES_PASSWORD>${jdbc.password}</POSTGRES_PASSWORD>
-                                    <POSTGRES_USER>${jdbc.user}</POSTGRES_USER>
-                                </env>
-                            </run>
-                        </image>
-                    </images>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>integration</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>unpack-dependencies</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
+                                    <includeArtifactIds>codenvy-hosted-api-workspace,
+                                        che-core-api-account,
+                                        che-core-api-factory,
+                                        che-core-api-user,
+                                        che-core-api-machine,
+                                        che-core-api-workspace,
+                                        che-core-api-ssh</includeArtifactIds>
+                                    <includeScope>test</includeScope>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <systemPropertyVariables>
+                                <jdbc.driver>${jdbc.driver}</jdbc.driver>
+                                <jdbc.url>${jdbc.url}</jdbc.url>
+                                <jdbc.user>${jdbc.user}</jdbc.user>
+                                <jdbc.password>${jdbc.password}</jdbc.password>
+                            </systemPropertyVariables>
+                            <includes>
+                                <include>**/tck/**</include>
+                            </includes>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <version>0.15.16</version>
+                        <!-- Connect start/stop to pre- and
+                             post-integration-test phase, respectively if you want to start
+                             your docker containers during integration tests -->
+                        <executions>
+                            <execution>
+                                <id>start</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>stop</goal>
+                                    <goal>start</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>stop</id>
+                                <phase>post-integration-test</phase>
+                                <goals>
+                                    <goal>stop</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <images>
+                                <image>
+                                    <alias>database</alias>
+                                    <name>${db.image.name}</name>
+                                    <run>
+                                        <ports>
+                                            <port>jdbc.port:5432</port>
+                                        </ports>
+                                        <wait>
+                                            <log>PostgreSQL init process complete</log>
+                                        </wait>
+                                        <restartPolicy>
+                                            <name>always</name>
+                                        </restartPolicy>
+                                        <env>
+                                            <POSTGRES_PASSWORD>${jdbc.password}</POSTGRES_PASSWORD>
+                                            <POSTGRES_USER>${jdbc.user}</POSTGRES_USER>
+                                        </env>
+                                    </run>
+                                </image>
+                            </images>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
