@@ -9,8 +9,6 @@ $script = <<-SHELL
 sudo subscription-manager register --username riuvshin@codenvy.com --password codenvy --auto-attach
 sudo subscription-manager repos --enable=rhel-7-server-optional-rpms
 sudo subscription-manager repos --enable=rhel-7-server-extras-rpms
-
-sudo yum install net-tools -y
 SHELL
 
 Vagrant.configure("2") do |config|
