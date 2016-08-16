@@ -22,6 +22,7 @@ import com.google.inject.Module;
 import com.google.inject.name.Names;
 import com.google.inject.spi.ConstructorBinding;
 
+import org.eclipse.che.account.spi.AccountDao;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.machine.server.MachineManager;
 import org.eclipse.che.api.user.server.UserManager;
@@ -75,6 +76,7 @@ public class MachineTokenInterceptorTest {
                 bind(EventService.class).toInstance(mock(EventService.class));
                 bind(MachineManager.class).toInstance(mock(MachineManager.class));
                 bind(UserManager.class).toInstance(mock(UserManager.class));
+                bind(AccountDao.class).toInstance(mock(AccountDao.class));
                 bindConstant().annotatedWith(Names.named("workspace.runtime.auto_restore")).to(false);
                 bindConstant().annotatedWith(Names.named("workspace.runtime.auto_snapshot")).to(false);
                 bind(WorkspaceManager.class);
