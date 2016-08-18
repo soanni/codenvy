@@ -15,7 +15,6 @@
 package com.codenvy.api.workspace.server;
 
 import com.codenvy.api.permission.server.dao.PermissionsStorage;
-import com.codenvy.api.workspace.server.filters.MachinePermissionsFilter;
 import com.codenvy.api.workspace.server.filters.RecipeScriptDownloadPermissionFilter;
 import com.codenvy.api.workspace.server.filters.WorkspacePermissionsFilter;
 import com.codenvy.api.workspace.server.filters.RecipePermissionsFilter;
@@ -32,7 +31,6 @@ public class WorkspaceApiModule extends AbstractModule {
     protected void configure() {
         bind(WorkspacePermissionsFilter.class);
 //        bind(RecipePermissionsFilter.class);
-        bind(MachinePermissionsFilter.class);
 //        bind(StackPermissionsFilter.class);
 //        bind(AclSetPermissionsFilter.class);
         bind(RecipeScriptDownloadPermissionFilter.class);
