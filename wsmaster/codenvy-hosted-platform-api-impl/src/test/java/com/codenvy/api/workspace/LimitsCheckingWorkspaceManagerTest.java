@@ -63,6 +63,7 @@ public class LimitsCheckingWorkspaceManagerTest {
                                                                                               null,
                                                                                               null,
                                                                                               null,
+                                                                                              null,
                                                                                               false,
                                                                                               false));
         doReturn(ImmutableList.of(mock(WorkspaceImpl.class), mock(WorkspaceImpl.class))) // <- currently used 2
@@ -77,6 +78,7 @@ public class LimitsCheckingWorkspaceManagerTest {
         final LimitsCheckingWorkspaceManager manager = spy(new LimitsCheckingWorkspaceManager(-1, // <- workspaces max count
                                                                                               "2gb",
                                                                                               "1gb",
+                                                                                              null,
                                                                                               null,
                                                                                               null,
                                                                                               null,
@@ -106,6 +108,7 @@ public class LimitsCheckingWorkspaceManagerTest {
                                                                                               null,
                                                                                               null,
                                                                                               null,
+                                                                                              null,
                                                                                               false,
                                                                                               false));
         doReturn(emptyList()).when(manager).getByNamespace(anyString()); // <- currently used 0
@@ -128,6 +131,7 @@ public class LimitsCheckingWorkspaceManagerTest {
                                                                                               null,
                                                                                               null,
                                                                                               null,
+                                                                                              null,
                                                                                               false,
                                                                                               false));
         doReturn(singletonList(createRuntime("1gb", "1gb"))).when(manager).getByNamespace(anyString()); // <- currently running 2gb
@@ -140,6 +144,7 @@ public class LimitsCheckingWorkspaceManagerTest {
         final LimitsCheckingWorkspaceManager manager = spy(new LimitsCheckingWorkspaceManager(2,
                                                                                               "-1", // <- workspaces ram limit
                                                                                               "1gb",
+                                                                                              null,
                                                                                               null,
                                                                                               null,
                                                                                               null,
@@ -162,6 +167,7 @@ public class LimitsCheckingWorkspaceManagerTest {
         final LimitsCheckingWorkspaceManager manager = spy(new LimitsCheckingWorkspaceManager(2,
                                                                                               "3gb", // <- workspaces ram limit
                                                                                               "1gb",
+                                                                                              null,
                                                                                               null,
                                                                                               null,
                                                                                               null,
@@ -190,6 +196,7 @@ public class LimitsCheckingWorkspaceManagerTest {
                                                                                               null,
                                                                                               null,
                                                                                               null,
+                                                                                              null,
                                                                                               false,
                                                                                               false));
 
@@ -202,6 +209,7 @@ public class LimitsCheckingWorkspaceManagerTest {
         final LimitsCheckingWorkspaceManager manager = spy(new LimitsCheckingWorkspaceManager(2,
                                                                                               "3gb",
                                                                                               "-1", // <- workspaces env ram limit
+                                                                                              null,
                                                                                               null,
                                                                                               null,
                                                                                               null,
@@ -227,6 +235,7 @@ public class LimitsCheckingWorkspaceManagerTest {
                                                                                               null,
                                                                                               null,
                                                                                               null,
+                                                                                              null,
                                                                                               false,
                                                                                               false));
         manager.checkMaxEnvironmentRam(config);
@@ -239,6 +248,7 @@ public class LimitsCheckingWorkspaceManagerTest {
         final LimitsCheckingWorkspaceManager manager = spy(new LimitsCheckingWorkspaceManager(2,
                                                                                               "3gb",
                                                                                               "3gb", // <- workspaces env ram limit
+                                                                                              null,
                                                                                               null,
                                                                                               null,
                                                                                               null,
@@ -265,6 +275,7 @@ public class LimitsCheckingWorkspaceManagerTest {
                                                                                               null,
                                                                                               null,
                                                                                               userManager,
+                                                                                              null,
                                                                                               false,
                                                                                               false));
 
@@ -296,6 +307,7 @@ public class LimitsCheckingWorkspaceManagerTest {
                                                                                               null,
                                                                                               null,
                                                                                               userManager,
+                                                                                              null,
                                                                                               false,
                                                                                               false));
         doReturn(ws).when(manager).getWorkspace(anyString()); // <- currently running 2gb

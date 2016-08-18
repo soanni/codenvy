@@ -19,6 +19,7 @@ import com.codenvy.api.workspace.server.model.impl.WorkerImpl;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
+import org.eclipse.che.account.spi.AccountImpl;
 import org.eclipse.che.api.user.server.event.BeforeUserRemovedEvent;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.event.BeforeWorkspaceRemovedEvent;
@@ -65,8 +66,8 @@ public class JpaWorkerDaoTest {
         users = new UserImpl[]{new UserImpl("user1", "user1@com.com", "usr1"),
                                new UserImpl("user2", "user2@com.com", "usr2")};
 
-        workspaces = new WorkspaceImpl[]{new WorkspaceImpl("ws1", "ns1", new WorkspaceConfigImpl("","","cfg1", null,null,null)),
-                                         new WorkspaceImpl("ws2", "ns2", new WorkspaceConfigImpl("","","cfg2", null,null,null))};
+        workspaces = new WorkspaceImpl[]{new WorkspaceImpl("ws1", users[0].getAccount(), new WorkspaceConfigImpl("","","cfg1", null,null,null)),
+                                         new WorkspaceImpl("ws2", users[1].getAccount(), new WorkspaceConfigImpl("","","cfg2", null,null,null))};
 
         Injector injector = Guice.createInjector(new WorkerTckModule(), new WorkerJpaModule());
         manager = injector.getInstance(EntityManager.class);
@@ -104,14 +105,13 @@ public class JpaWorkerDaoTest {
                .getResultList()
                .forEach(manager::remove);
 
-        manager.createQuery("SELECT u FROM Usr u", UserImpl.class)
-               .getResultList()
-               .forEach(manager::remove);
-
         manager.createQuery("SELECT w FROM Workspace w", WorkspaceImpl.class)
                .getResultList()
                .forEach(manager::remove);
 
+        manager.createQuery("SELECT u FROM Usr u", UserImpl.class)
+               .getResultList()
+               .forEach(manager::remove);
         manager.getTransaction().commit();
     }
 
@@ -122,7 +122,7 @@ public class JpaWorkerDaoTest {
 
     @Test
     public void shouldRemoveWorkersWhenWorkspaceIsRemoved() throws Exception {
-        BeforeWorkspaceRemovedEvent event =  new BeforeWorkspaceRemovedEvent(new WorkspaceImpl("ws1", "ns", new WorkspaceConfigImpl()));
+        BeforeWorkspaceRemovedEvent event = new BeforeWorkspaceRemovedEvent(workspaces[0]);
         removeWorkersBeforeWorkspaceRemovedEventSubscriber.onEvent(event);
         assertTrue(workerDao.getWorkers("ws1").isEmpty());
     }
