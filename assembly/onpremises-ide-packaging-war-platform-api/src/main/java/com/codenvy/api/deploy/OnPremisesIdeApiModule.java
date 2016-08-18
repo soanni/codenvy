@@ -20,7 +20,6 @@ import com.codenvy.api.dao.mongo.OrganizationMongoDatabaseProvider;
 import com.codenvy.api.factory.FactoryMongoDatabaseProvider;
 import com.codenvy.api.permission.server.PermissionChecker;
 import com.codenvy.api.user.server.AdminUserService;
-import com.codenvy.api.user.server.dao.AdminUserDao;
 import com.codenvy.api.workspace.server.jpa.OnPremisesWorkspaceJpaModule;
 import com.codenvy.api.workspace.server.jpa.WorkerJpaModule;
 import com.codenvy.auth.aws.ecr.AwsEcrAuthResolver;
@@ -174,7 +173,6 @@ public class OnPremisesIdeApiModule extends AbstractModule {
         //user-workspace-account
 
 //        bind(WorkspaceDao.class).to(WorkspaceDaoImpl.class);
-//        bind(UserDao.class).to(LdapUserDao.class);
 //        bind(ProfileDao.class).to(LdapProfileDao.class);
 //        bind(AdminUserDao.class).to(AdminUserDaoImpl.class);
 //        bind(PreferenceDao.class).to(com.codenvy.api.dao.mongo.PreferenceDaoImpl.class);
@@ -191,7 +189,6 @@ public class OnPremisesIdeApiModule extends AbstractModule {
         install(new MachineJpaModule());
         bind(FactoryDao.class).to(JpaFactoryDao.class);
         bind(AuthenticationDao.class).to(com.codenvy.api.dao.authentication.AuthenticationDaoImpl.class);
-        bind(AdminUserDao.class).to(com.codenvy.api.dao.jpa.JpaAdminUserDao.class);
         bind(RecipeLoader.class);
         final Multibinder<String> recipeBinder = Multibinder.newSetBinder(binder(), String.class, Names.named("predefined.recipe.path"));
         recipeBinder.addBinding().toProvider(RecipeProvider.class);
