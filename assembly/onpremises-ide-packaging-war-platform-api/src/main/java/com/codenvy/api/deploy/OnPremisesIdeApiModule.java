@@ -48,6 +48,8 @@ import com.google.inject.persist.jpa.JpaPersistModule;
 import com.mongodb.client.MongoDatabase;
 import com.palominolabs.metrics.guice.InstrumentationModule;
 
+import org.eclipse.che.account.spi.AccountDao;
+import org.eclipse.che.account.spi.jpa.JpaAccountDao;
 import org.eclipse.che.api.auth.AuthenticationDao;
 import org.eclipse.che.api.agent.server.wsagent.WsAgentLauncher;
 import org.eclipse.che.api.auth.AuthenticationService;
@@ -187,6 +189,7 @@ public class OnPremisesIdeApiModule extends AbstractModule {
         install(new WorkerJpaModule());
         install(new OnPremisesWorkspaceJpaModule());
         install(new MachineJpaModule());
+        bind(AccountDao.class).to(JpaAccountDao.class);
         bind(FactoryDao.class).to(JpaFactoryDao.class);
         bind(AuthenticationDao.class).to(com.codenvy.api.dao.authentication.AuthenticationDaoImpl.class);
         bind(RecipeLoader.class);
@@ -289,7 +292,7 @@ public class OnPremisesIdeApiModule extends AbstractModule {
         install(new InstrumentationModule());
         bind(org.eclipse.che.api.ssh.server.SshService.class);
         bind(org.eclipse.che.api.environment.server.MachineService.class);
-        bind(org.eclipse.che.api.machine.server.spi.SnapshotDao.class).to(com.codenvy.api.dao.mongo.SnapshotDaoImpl.class);
+//        bind(org.eclipse.che.api.machine.server.spi.SnapshotDao.class).to(com.codenvy.api.dao.mongo.SnapshotDaoImpl.class);
         bind(com.mongodb.DB.class).annotatedWith(Names.named("mongo.db.machine"))
                                   .toProvider(com.codenvy.api.dao.mongo.MachineMongoDBProvider.class);
 
