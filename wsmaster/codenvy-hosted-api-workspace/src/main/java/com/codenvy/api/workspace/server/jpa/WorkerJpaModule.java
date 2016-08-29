@@ -14,8 +14,19 @@
  */
 package com.codenvy.api.workspace.server.jpa;
 
+import com.codenvy.api.permission.server.AbstractPermissionsDomain;
+import com.codenvy.api.permission.server.model.impl.AbstractPermissions;
+import com.codenvy.api.permission.server.spi.PermissionsDao;
+import com.codenvy.api.workspace.server.WorkspaceDomain;
+import com.codenvy.api.workspace.server.model.impl.WorkerImpl;
+import com.codenvy.api.workspace.server.recipe.RecipeDomain;
+import com.codenvy.api.workspace.server.recipe.RecipePermissionsImpl;
 import com.codenvy.api.workspace.server.spi.WorkerDao;
+import com.codenvy.api.workspace.server.stack.StackDomain;
+import com.codenvy.api.workspace.server.stack.StackPermissionsImpl;
 import com.google.inject.AbstractModule;
+import com.google.inject.TypeLiteral;
+import com.google.inject.multibindings.Multibinder;
 
 /**
  *
@@ -25,8 +36,19 @@ public class WorkerJpaModule extends AbstractModule {
 
     @Override
     protected void configure() {
-      bind(WorkerDao.class).to(JpaWorkerDao.class);
-      bind(JpaWorkerDao.RemoveWorkersBeforeUserRemovedEventSubscriber.class).asEagerSingleton();
-      bind(JpaWorkerDao.RemoveWorkersBeforeWorkspaceRemovedEventSubscriber.class).asEagerSingleton();
+
+        bind(WorkerDao.class).to(JpaWorkerDao.class);
+        bind(JpaWorkerDao.RemoveWorkersBeforeWorkspaceRemovedEventSubscriber.class).asEagerSingleton();
+
+        bind(new TypeLiteral<AbstractPermissionsDomain<RecipePermissionsImpl>>() {}).to(RecipeDomain.class);
+        bind(new TypeLiteral<AbstractPermissionsDomain<StackPermissionsImpl>>() {}).to(StackDomain.class);
+        bind(new TypeLiteral<AbstractPermissionsDomain<WorkerImpl>>() {}).to(WorkspaceDomain.class);
+
+
+        Multibinder<PermissionsDao<? extends AbstractPermissions>> storages =
+                Multibinder.newSetBinder(binder(),new TypeLiteral<PermissionsDao<? extends AbstractPermissions>>() {});
+        storages.addBinding().to(JpaWorkerDao.class);
+        storages.addBinding().to(JpaRecipePermissionsDao.class);
+        storages.addBinding().to(JpaStackPermissionsDao.class);
     }
 }

@@ -14,8 +14,10 @@
  */
 package com.codenvy.api.workspace.server.jpa;
 
+import com.codenvy.api.permission.server.AbstractPermissionsDomain;
 import com.codenvy.api.workspace.server.model.impl.WorkerImpl;
 import com.codenvy.api.workspace.server.spi.WorkerDao;
+import com.codenvy.api.workspace.server.spi.tck.WorkerDaoTest;
 import com.google.inject.TypeLiteral;
 import com.google.inject.persist.jpa.JpaPersistModule;
 
@@ -34,9 +36,11 @@ public class WorkerTckModule extends TckModule {
 
     @Override
     protected void configure() {
+
+        bind(new TypeLiteral<AbstractPermissionsDomain<WorkerImpl>>() {}).to(WorkerDaoTest.TestDomain.class);
+
         bind(WorkerDao.class).to(JpaWorkerDao.class);
         bind(new TypeLiteral<TckRepository<WorkerImpl>>() {}).toInstance(new JpaTckRepository<>(WorkerImpl.class));
-
         bind(new TypeLiteral<TckRepository<UserImpl>>() {}).toInstance(new JpaTckRepository<>(UserImpl.class));
 
         bind(new TypeLiteral<TckRepository<WorkspaceImpl>>() {}).toInstance(new JpaTckRepository<>(WorkspaceImpl.class));

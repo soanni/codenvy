@@ -12,16 +12,15 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.api.permission.server.dao;
+package com.codenvy.api.permission.server.spi;
 
 import com.codenvy.api.permission.server.AbstractPermissionsDomain;
-import com.codenvy.api.permission.server.PermissionsImpl;
+import com.codenvy.api.permission.server.model.impl.AbstractPermissions;
 
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * General contract of storage for permissions.
@@ -34,30 +33,27 @@ import java.util.Set;
  * @author gazarenkov
  * @author Sergii Leschenko
  */
-public interface PermissionsStorage {
+public interface PermissionsDao<T extends AbstractPermissions> {
+
     /**
      * @return store of domains this storage is able to maintain
      */
-    Set<AbstractPermissionsDomain> getDomains();
+    AbstractPermissionsDomain<T> getDomain();
 
     /**
      * Stores (adds or updates) permissions.
      *
      * @param permissions
      *         permission to store
-     * @throws NotFoundException
-     *         when given instance was not found
      * @throws ServerException
      *         when any other error occurs during permissions storing
      */
-    void store(PermissionsImpl permissions) throws ServerException, NotFoundException;
+    void store(T permissions) throws ServerException;
 
     /**
-     * @param user
+     * @param userId
      *         user id
-     * @param domain
-     *         domain id
-     * @param instance
+     * @param instanceId
      *         instance id
      * @return user's permissions for specified instance
      * @throws NotFoundException
@@ -65,12 +61,10 @@ public interface PermissionsStorage {
      * @throws ServerException
      *         when any other error occurs during permissions fetching
      */
-    PermissionsImpl get(String user, String domain, String instance) throws ServerException, NotFoundException;
+    T get(String userId, String instanceId) throws ServerException, NotFoundException;
 
     /**
-     * @param domain
-     *         domain id
-     * @param instance
+     * @param instanceId
      *         instance id
      * @return set of permissions
      * @throws NotFoundException
@@ -78,14 +72,23 @@ public interface PermissionsStorage {
      * @throws ServerException
      *         when any other error occurs during permissions fetching
      */
-    List<PermissionsImpl> getByInstance(String domain, String instance) throws ServerException, NotFoundException;
+    List<T> getByInstance(String instanceId) throws ServerException, NotFoundException;
 
     /**
-     * @param user
+     * @param userId
      *         user id
-     * @param domain
-     *         domain id
-     * @param instance
+     * @return set of permissions
+     * @throws NotFoundException
+     *         when given instance was not found
+     * @throws ServerException
+     *         when any other error occurs during permissions fetching
+     */
+    List<T> getByUser(String userId) throws ServerException, NotFoundException;
+
+    /**
+     * @param userId
+     *         user id
+     * @param instanceId
      *         instance id
      * @param action
      *         action name
@@ -93,21 +96,19 @@ public interface PermissionsStorage {
      * @throws ServerException
      *         when any other error occurs during permission existence checking
      */
-    boolean exists(String user, String domain, String instance, String action) throws ServerException;
+    boolean exists(String userId, String instanceId, String action) throws ServerException;
 
     /**
      * Removes permissions of user related to the particular instance of specified domain
      *
-     * @param user
+     * @param userId
      *         user id
-     * @param domain
-     *         domain id
-     * @param instance
+     * @param instanceId
      *         instance id
      * @throws NotFoundException
      *         when permissions with given user and domain and instance was not found
      * @throws ServerException
      *         when any other error occurs during permissions removing
      */
-    void remove(String user, String domain, String instance) throws ServerException, NotFoundException;
+    void remove(String userId, String instanceId) throws ServerException, NotFoundException;
 }

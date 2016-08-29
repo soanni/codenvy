@@ -14,27 +14,26 @@
  */
 package com.codenvy.api.workspace.server.model.impl;
 
-import com.codenvy.api.workspace.server.jpa.WorkerPrimaryKey;
+import com.codenvy.api.permission.server.model.impl.AbstractPermissions;
+import com.codenvy.api.workspace.server.WorkspaceDomain;
 import com.codenvy.api.workspace.server.model.Worker;
 
-import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 
-import javax.persistence.CollectionTable;
-import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.IdClass;
 import javax.persistence.Index;
 import javax.persistence.JoinColumn;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
-import java.util.ArrayList;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 import java.util.List;
 import java.util.Objects;
 
 /**
+ * Data object for {@link Worker}
+ *
  * @author Sergii Leschenko
  */
 @Entity(name = "Worker")
@@ -47,73 +46,44 @@ import java.util.Objects;
                 @NamedQuery(name = "Worker.getByUserId",
                             query = "SELECT worker " +
                                     "FROM Worker worker " +
-                                    "WHERE worker.userId = :userId ")
+                                    "WHERE worker.userId = :userId "),
+                @NamedQuery(name = "Worker.getByUserAndWorkspaceId",
+                            query = "SELECT worker " +
+                                    "FROM Worker worker " +
+                                    "WHERE worker.workspaceId = :workspaceId " +
+                                    "AND worker.userId = :userId")
         }
 )
-@IdClass(WorkerPrimaryKey.class)
-public class WorkerImpl implements Worker {
-    @Id
-    private String userId;
+@Table(indexes = @Index(columnList = "userId, workspaceId", unique = true))
+public class WorkerImpl extends AbstractPermissions implements Worker {
 
-    @OneToOne
-    @JoinColumn(name = "userId", insertable = false, updatable = false)
-    private UserImpl user;
-
-    @Id
     private String workspaceId;
 
     @OneToOne
     @JoinColumn(name = "workspaceId", insertable = false, updatable = false)
     private WorkspaceImpl workspace;
 
-    @ElementCollection
-    @CollectionTable(indexes = @Index(columnList = "actions"))
-    private List<String> actions;
-
     public WorkerImpl() {
     }
 
     public WorkerImpl(String workspaceId, String userId, List<String> actions) {
-        this.userId = userId;
+        super(userId, actions);
         this.workspaceId = workspaceId;
-        this.actions = new ArrayList<>();
-        if (actions != null) {
-            this.actions.addAll(actions);
-        }
     }
 
     @Override
-    public String getUserId() {
-        return userId;
+    public String getInstanceId() {
+        return workspaceId;
+    }
+
+    @Override
+    public String getDomainId() {
+        return WorkspaceDomain.DOMAIN_ID;
     }
 
     @Override
     public String getWorkspaceId() {
         return workspaceId;
-    }
-
-    @Override
-    public List<String> getActions() {
-        return actions;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (!(obj instanceof WorkerImpl)) return false;
-        final WorkerImpl other = (WorkerImpl)obj;
-        return Objects.equals(userId, other.userId) &&
-               Objects.equals(workspaceId, other.workspaceId) &&
-               actions.equals(other.actions);
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 31 * hash + Objects.hashCode(userId);
-        hash = 31 * hash + Objects.hashCode(workspaceId);
-        hash = 31 * hash + actions.hashCode();
-        return hash;
     }
 
     @Override

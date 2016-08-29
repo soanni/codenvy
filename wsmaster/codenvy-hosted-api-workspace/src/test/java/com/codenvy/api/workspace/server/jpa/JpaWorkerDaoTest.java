@@ -15,16 +15,25 @@
 package com.codenvy.api.workspace.server.jpa;
 
 
+import com.codenvy.api.permission.server.PermissionsModule;
+import com.codenvy.api.permission.server.jpa.AbstractJpaPermissionsDao;
+import com.codenvy.api.permission.server.jpa.PermissionsJpaModule;
 import com.codenvy.api.workspace.server.model.impl.WorkerImpl;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.TypeLiteral;
+import com.google.inject.persist.jpa.JpaPersistModule;
 
-import org.eclipse.che.account.spi.AccountImpl;
+import org.eclipse.che.api.core.jdbc.jpa.eclipselink.EntityListenerInjectionManagerInitializer;
+import org.eclipse.che.api.core.jdbc.jpa.guice.JpaInitializer;
 import org.eclipse.che.api.user.server.event.BeforeUserRemovedEvent;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.event.BeforeWorkspaceRemovedEvent;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
+import org.eclipse.che.commons.test.tck.repository.JpaTckRepository;
+import org.eclipse.che.commons.test.tck.repository.TckRepository;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -48,7 +57,7 @@ public class JpaWorkerDaoTest {
 
     private JpaWorkerDao.RemoveWorkersBeforeWorkspaceRemovedEventSubscriber removeWorkersBeforeWorkspaceRemovedEventSubscriber;
 
-    private JpaWorkerDao.RemoveWorkersBeforeUserRemovedEventSubscriber removeWorkersBeforeUserRemovedEventSubscriber;
+    private AbstractJpaPermissionsDao.RemovePermissionsBeforeUserRemovedEventSubscriber removeWorkersBeforeUserRemovedEventSubscriber;
 
     WorkerImpl[] workers;
 
@@ -66,17 +75,19 @@ public class JpaWorkerDaoTest {
         users = new UserImpl[]{new UserImpl("user1", "user1@com.com", "usr1"),
                                new UserImpl("user2", "user2@com.com", "usr2")};
 
-        workspaces = new WorkspaceImpl[]{new WorkspaceImpl("ws1", users[0].getAccount(), new WorkspaceConfigImpl("","","cfg1", null,null,null)),
-                                         new WorkspaceImpl("ws2", users[1].getAccount(), new WorkspaceConfigImpl("","","cfg2", null,null,null))};
+        workspaces = new WorkspaceImpl[]{
+                new WorkspaceImpl("ws1", users[0].getAccount(), new WorkspaceConfigImpl("", "", "cfg1", null, null, null)),
+                new WorkspaceImpl("ws2", users[1].getAccount(), new WorkspaceConfigImpl("", "", "cfg2", null, null, null))};
 
-        Injector injector = Guice.createInjector(new WorkerTckModule(), new WorkerJpaModule());
+        Injector injector =
+                Guice.createInjector(new TestModule(), new WorkerJpaModule(), new PermissionsModule(), new PermissionsJpaModule());
         manager = injector.getInstance(EntityManager.class);
         workerDao = injector.getInstance(JpaWorkerDao.class);
         removeWorkersBeforeWorkspaceRemovedEventSubscriber = injector.getInstance(
                 JpaWorkerDao.RemoveWorkersBeforeWorkspaceRemovedEventSubscriber.class);
 
-        removeWorkersBeforeUserRemovedEventSubscriber = injector.getInstance(
-                JpaWorkerDao.RemoveWorkersBeforeUserRemovedEventSubscriber.class);
+        removeWorkersBeforeUserRemovedEventSubscriber =
+                injector.getInstance(AbstractJpaPermissionsDao.RemovePermissionsBeforeUserRemovedEventSubscriber.class);
     }
 
     @BeforeMethod
@@ -134,4 +145,20 @@ public class JpaWorkerDaoTest {
         assertTrue(workerDao.getWorkersByUser("user1").isEmpty());
     }
 
+
+    private class TestModule extends AbstractModule {
+
+        @Override
+        protected void configure() {
+            bind(new TypeLiteral<TckRepository<WorkerImpl>>() {}).toInstance(new JpaTckRepository<>(WorkerImpl.class));
+            bind(new TypeLiteral<TckRepository<UserImpl>>() {}).toInstance(new JpaTckRepository<>(UserImpl.class));
+
+            bind(new TypeLiteral<TckRepository<WorkspaceImpl>>() {}).toInstance(new JpaTckRepository<>(WorkspaceImpl.class));
+
+            install(new JpaPersistModule("main"));
+            bind(JpaInitializer.class).asEagerSingleton();
+            bind(EntityListenerInjectionManagerInitializer.class).asEagerSingleton();
+            bind(org.eclipse.che.api.core.h2.jdbc.jpa.eclipselink.H2ExceptionHandler.class);
+        }
+    }
 }

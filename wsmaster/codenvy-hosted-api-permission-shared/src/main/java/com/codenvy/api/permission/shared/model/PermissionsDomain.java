@@ -12,18 +12,29 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.api.workspace.server.jpa;
+package com.codenvy.api.permission.shared.model;
 
-import com.google.inject.AbstractModule;
-
-import org.eclipse.che.api.workspace.server.jpa.JpaWorkspaceDao;
+import java.util.List;
 
 /**
- * @author Max Shaposhnik (mshaposhnik@codenvy.com)
+ * Describes permissions domain
+ *
+ * @author Sergii Leschenko
+ * @author gazarenkov
  */
-public class OnPremisesWorkspaceJpaModule extends AbstractModule {
-    @Override
-    protected void configure() {
-        bind(JpaWorkspaceDao.class).to(OnPremisesJpaWorkspaceDao.class);
-    }
+public interface PermissionsDomain {
+    /**
+     * @return id of permissions domain
+     */
+    String getId();
+
+    /**
+     * @return true if domain requires non nullable value for instance field or false otherwise
+     */
+    Boolean isInstanceRequired();
+
+    /**
+     * @return list actions which are allowed for domain
+     */
+    List<String> getAllowedActions();
 }

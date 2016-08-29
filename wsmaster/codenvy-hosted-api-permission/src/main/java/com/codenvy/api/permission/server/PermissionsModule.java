@@ -14,15 +14,12 @@
  */
 package com.codenvy.api.permission.server;
 
-import com.codenvy.api.permission.server.dao.CommonDomains;
-import com.codenvy.api.permission.server.dao.PermissionsStorage;
 import com.codenvy.api.permission.server.filter.GetPermissionsFilter;
 import com.codenvy.api.permission.server.filter.RemovePermissionsFilter;
 import com.codenvy.api.permission.server.filter.SetPermissionsFilter;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
-
 
 /**
  * @author Sergii Leschenko
@@ -39,13 +36,5 @@ public class PermissionsModule extends AbstractModule {
         Multibinder.newSetBinder(binder(),
                                  String.class,
                                  Names.named(SystemDomain.SYSTEM_DOMAIN_ACTIONS));
-
-        final Multibinder<AbstractPermissionsDomain> permissionsDomainMultibinder = Multibinder.newSetBinder(binder(),
-                                                                                                             AbstractPermissionsDomain.class,
-                                                                                                             CommonDomains.class);
-        permissionsDomainMultibinder.addBinding().to(SystemDomain.class);
-
-        Multibinder<PermissionsStorage> storages = Multibinder.newSetBinder(binder(),
-                                                                            PermissionsStorage.class);
     }
 }

@@ -14,10 +14,13 @@
  */
 package com.codenvy.api.workspace.server.spi.tck;
 
+import com.codenvy.api.permission.server.AbstractPermissionsDomain;
+import com.codenvy.api.permission.server.model.impl.AbstractPermissions;
 import com.codenvy.api.workspace.server.model.impl.WorkerImpl;
 import com.codenvy.api.workspace.server.spi.WorkerDao;
 
 import org.eclipse.che.api.core.NotFoundException;
+import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
@@ -184,13 +187,24 @@ public class WorkerDaoTest {
         workerDao.removeWorker("ws1", null);
     }
 
-    @Test(expectedExceptions = NotFoundException.class)
+    @Test(expectedExceptions = ServerException.class)
     public void shouldThrowNotFoundExceptionOnRemoveIfWorkerWithSuchWorkspaceIdDoesNotExist() throws Exception {
         workerDao.removeWorker("unexisted_ws", "user1");
     }
 
-    @Test(expectedExceptions = NotFoundException.class)
+    @Test(expectedExceptions = ServerException.class)
     public void shouldThrowNotFoundExceptionOnRemoveIfWorkerWithSuchUserIdDoesNotExist() throws Exception {
         workerDao.removeWorker("ws1", "unexisted_user");
+    }
+
+    public static class TestDomain extends AbstractPermissionsDomain<WorkerImpl> {
+        public TestDomain() {
+            super("workspace", Arrays.asList("read", "write", "use", "delete"));
+        }
+
+        @Override
+        protected WorkerImpl doCreateInstance(String userId, String instanceId, List allowedActions) {
+            return null;
+        }
     }
 }
