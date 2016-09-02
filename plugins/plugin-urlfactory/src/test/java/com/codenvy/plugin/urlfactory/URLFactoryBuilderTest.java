@@ -18,8 +18,6 @@ import org.eclipse.che.api.factory.shared.dto.Factory;
 import org.eclipse.che.api.workspace.shared.dto.EnvironmentDto;
 import org.eclipse.che.api.workspace.shared.dto.EnvironmentRecipeDto;
 import org.eclipse.che.api.workspace.shared.dto.ExtendedMachineDto;
-import org.eclipse.che.api.workspace.shared.dto.LimitsDto;
-import org.eclipse.che.api.workspace.shared.dto.ResourcesDto;
 import org.eclipse.che.api.workspace.shared.dto.WorkspaceConfigDto;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.mockito.InjectMocks;
@@ -73,10 +71,8 @@ public class URLFactoryBuilderTest {
 
         EnvironmentRecipeDto recipeDto = newDto(EnvironmentRecipeDto.class).withLocation(DEFAULT_DOCKER_IMAGE)
                                                                            .withType("dockerimage");
-        ResourcesDto limits = newDto(ResourcesDto.class).withLimits(
-                newDto(LimitsDto.class).withMemoryBytes(MEMORY_LIMIT_BYTES));
         ExtendedMachineDto machine = newDto(ExtendedMachineDto.class).withAgents(singletonList("ws-agent"))
-                                                                     .withResources(limits);
+                                                                     .withAttributes(singletonMap("memoryLimitBytes", MEMORY_LIMIT_BYTES));
 
         // setup environment
         EnvironmentDto environmentDto = newDto(EnvironmentDto.class).withRecipe(recipeDto)
@@ -103,10 +99,8 @@ public class URLFactoryBuilderTest {
         EnvironmentRecipeDto recipeDto = newDto(EnvironmentRecipeDto.class).withLocation(myLocation)
                                                                            .withType("dockerfile")
                                                                            .withContentType("text/x-dockerfile");
-        ResourcesDto limits = newDto(ResourcesDto.class).withLimits(
-                newDto(LimitsDto.class).withMemoryBytes(MEMORY_LIMIT_BYTES));
         ExtendedMachineDto machine = newDto(ExtendedMachineDto.class).withAgents(singletonList("ws-agent"))
-                                                                     .withResources(limits);
+                                                                     .withAttributes(singletonMap("memoryLimitBytes", MEMORY_LIMIT_BYTES));
 
         // setup environment
         EnvironmentDto environmentDto = newDto(EnvironmentDto.class).withRecipe(recipeDto)
@@ -133,10 +127,8 @@ public class URLFactoryBuilderTest {
         String myLocation = "http://foo-location";
         EnvironmentRecipeDto recipeDto = newDto(EnvironmentRecipeDto.class).withLocation(DEFAULT_DOCKER_IMAGE)
                                                                            .withType("dockerimage");
-        ResourcesDto limits = newDto(ResourcesDto.class).withLimits(
-                newDto(LimitsDto.class).withMemoryBytes(MEMORY_LIMIT_BYTES));
         ExtendedMachineDto machine = newDto(ExtendedMachineDto.class).withAgents(singletonList("ws-agent"))
-                                                                     .withResources(limits);
+                                                                     .withAttributes(singletonMap("memoryLimitBytes", MEMORY_LIMIT_BYTES));
 
         // setup environment
         EnvironmentDto environmentDto = newDto(EnvironmentDto.class).withRecipe(recipeDto)

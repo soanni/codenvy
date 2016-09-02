@@ -28,9 +28,7 @@ import org.eclipse.che.api.machine.server.model.impl.CommandImpl;
 import org.eclipse.che.api.workspace.server.model.impl.EnvironmentImpl;
 import org.eclipse.che.api.workspace.server.model.impl.EnvironmentRecipeImpl;
 import org.eclipse.che.api.workspace.server.model.impl.ExtendedMachineImpl;
-import org.eclipse.che.api.workspace.server.model.impl.LimitsImpl;
 import org.eclipse.che.api.workspace.server.model.impl.ProjectConfigImpl;
-import org.eclipse.che.api.workspace.server.model.impl.ResourcesImpl;
 import org.eclipse.che.api.workspace.server.model.impl.ServerConf2Impl;
 import org.eclipse.che.api.workspace.server.model.impl.SourceStorageImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
@@ -260,13 +258,10 @@ public class WorkspaceImplCodec implements Codec<WorkspaceImpl> {
                                                                              entry -> asServerConf2(entry.getValue())));
             machine.setServers(servers);
         }
-        Document resources = document.get("resources", Document.class);
-        if (resources != null) {
-            Document limits = resources.get("limits", Document.class);
-            if (limits != null) {
-                Long memoryBytes = limits.getLong("memoryBytes");
-                machine.setResources(new ResourcesImpl(new LimitsImpl(memoryBytes)));
-            }
+        @SuppressWarnings("unchecked")
+        List<Document> attributes = (List<Document>)document.get("attributes");
+        if (attributes != null) {
+            machine.setAttributes(documentsListAsMap(attributes));
         }
 
         return machine;
@@ -284,11 +279,8 @@ public class WorkspaceImplCodec implements Codec<WorkspaceImpl> {
                                                                   entry -> asDocument(entry.getValue())));
             document.append("servers", servers);
         }
-        if (machine.getResources() != null && machine.getResources().getLimits() != null) {
-            document.append("resources",
-                            new Document().append("limits",
-                                                  new Document().append("memoryBytes",
-                                                                        machine.getResources().getLimits().getMemoryBytes())));
+        if (machine.getAttributes() != null) {
+            document.append("attributes", mapAsDocumentsList(machine.getAttributes()));
         }
 
         return document;

@@ -20,8 +20,6 @@ import org.eclipse.che.api.factory.shared.dto.Factory;
 import org.eclipse.che.api.workspace.shared.dto.EnvironmentDto;
 import org.eclipse.che.api.workspace.shared.dto.EnvironmentRecipeDto;
 import org.eclipse.che.api.workspace.shared.dto.ExtendedMachineDto;
-import org.eclipse.che.api.workspace.shared.dto.LimitsDto;
-import org.eclipse.che.api.workspace.shared.dto.ResourcesDto;
 import org.eclipse.che.api.workspace.shared.dto.WorkspaceConfigDto;
 import org.eclipse.che.dto.server.DtoFactory;
 
@@ -48,8 +46,7 @@ public class URLFactoryBuilder {
     /**
      * Default docker type (if repository has no dockerfile)
      */
-    protected static final String DEFAULT_DOCKER_TYPE = "image";
-    protected static final long   MEMORY_LIMIT_BYTES  = 2000L * 1024L * 1024L;
+    protected static final String MEMORY_LIMIT_BYTES  = Long.toString(2000L * 1024L * 1024L);
     protected static final String MACHINE_NAME        = "ws-machine";
 
     /**
@@ -112,10 +109,8 @@ public class URLFactoryBuilder {
             recipeDto = newDto(EnvironmentRecipeDto.class).withLocation(DEFAULT_DOCKER_IMAGE)
                                                           .withType("dockerimage");
         }
-        ResourcesDto limits = newDto(ResourcesDto.class).withLimits(
-                newDto(LimitsDto.class).withMemoryBytes(MEMORY_LIMIT_BYTES));
         ExtendedMachineDto machine = newDto(ExtendedMachineDto.class).withAgents(singletonList("ws-agent"))
-                                                                     .withResources(limits);
+                                                                     .withAttributes(singletonMap("memoryLimitBytes", MEMORY_LIMIT_BYTES));
 
         // setup environment
         EnvironmentDto environmentDto = newDto(EnvironmentDto.class).withRecipe(recipeDto)

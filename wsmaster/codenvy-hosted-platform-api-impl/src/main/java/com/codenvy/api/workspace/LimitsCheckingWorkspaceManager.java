@@ -26,6 +26,9 @@ import org.eclipse.che.api.core.model.workspace.Environment;
 import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.core.model.workspace.WorkspaceConfig;
 import org.eclipse.che.api.core.notification.EventService;
+import org.eclipse.che.api.environment.server.EnvironmentParser;
+import org.eclipse.che.api.environment.server.compose.model.ComposeEnvironmentImpl;
+import org.eclipse.che.api.environment.server.compose.model.ComposeServiceImpl;
 import org.eclipse.che.api.machine.server.dao.SnapshotDao;
 import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
@@ -61,6 +64,7 @@ public class LimitsCheckingWorkspaceManager extends WorkspaceManager {
     private static final long          BYTES_TO_MEGABYTES_DIVIDER = 1024L * 1024L;
 
     private final UserManager       userManager;
+    private final EnvironmentParser environmentParser;
     private final int               workspacesPerUser;
     private final long              maxRamPerEnvMB;
     private final long              ramPerUserMB;
@@ -74,6 +78,7 @@ public class LimitsCheckingWorkspaceManager extends WorkspaceManager {
                                           EventService eventService,
                                           UserManager userManager,
                                           SnapshotDao snapshotDao,
+                                          EnvironmentParser environmentParser,
                                           @Named("workspace.runtime.auto_snapshot") boolean defaultAutoSnapshot,
                                           @Named("workspace.runtime.auto_restore") boolean defaultAutoRestore) {
         super(workspaceDao, runtimes, eventService, defaultAutoSnapshot, defaultAutoRestore, snapshotDao);
@@ -81,6 +86,7 @@ public class LimitsCheckingWorkspaceManager extends WorkspaceManager {
         this.workspacesPerUser = workspacesPerUser;
         this.maxRamPerEnvMB = "-1".equals(maxRamPerEnv) ? -1 : Size.parseSizeToMegabytes(maxRamPerEnv);
         this.ramPerUserMB = "-1".equals(ramPerUser) ? -1 : Size.parseSizeToMegabytes(ramPerUser);
+        this.environmentParser = environmentParser;
     }
 
     @Override
@@ -279,13 +285,13 @@ public class LimitsCheckingWorkspaceManager extends WorkspaceManager {
      * Parses (and fetches if needed) recipe of environment and sums RAM size of all machines in environment in megabytes.
      */
     private long sumRam(Environment environment) throws ServerException {
-        long sumBytes = environment.getMachines()
-                                   .values()
-                                   .stream()
-                                   .mapToLong(machine -> machine.getResources()
-                                                                .getLimits()
-                                                                .getMemoryBytes())
-                                   .sum();
+        ComposeEnvironmentImpl composeEnv = environmentParser.parse(environment);
+
+        long sumBytes = composeEnv.getServices()
+                                  .values()
+                                  .stream()
+                                  .mapToLong(ComposeServiceImpl::getMemLimit)
+                                  .sum();
         return sumBytes / BYTES_TO_MEGABYTES_DIVIDER;
     }
 

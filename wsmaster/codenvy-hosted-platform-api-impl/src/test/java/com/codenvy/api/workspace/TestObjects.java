@@ -30,7 +30,6 @@ import org.eclipse.che.api.machine.server.model.impl.MachineSourceImpl;
 import org.eclipse.che.api.workspace.server.model.impl.EnvironmentImpl;
 import org.eclipse.che.api.workspace.server.model.impl.EnvironmentRecipeImpl;
 import org.eclipse.che.api.workspace.server.model.impl.ExtendedMachineImpl;
-import org.eclipse.che.api.workspace.server.model.impl.ResourcesImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceRuntimeImpl;
@@ -64,14 +63,14 @@ public final class TestObjects {
         Map<String, ExtendedMachineImpl> machines = new HashMap<>();
         machines.put("dev-machine", new ExtendedMachineImpl(singletonList("ws-agent"),
                                                             emptyMap(),
-                                                            new ResourcesImpl(new org.eclipse.che.api.workspace.server.model.impl.LimitsImpl(Size.parseSize(devMachineRam)))));
+                                                            new HashMap<>(singletonMap("memoryLimitBytes", Long.toString(Size.parseSize(devMachineRam))))));
         HashMap<String, ComposeServiceImpl> services = new HashMap<>(1 + machineRams.length);
         services.put("dev-machine", createService());
         for (int i = 0; i < machineRams.length; i++) {
             services.put("machine" + i, createService());
             machines.put("machine" + i, new ExtendedMachineImpl(null,
                                                                 null,
-                                                                new ResourcesImpl(new org.eclipse.che.api.workspace.server.model.impl.LimitsImpl(Size.parseSize(machineRams[i])))));
+                                                                new HashMap<>(singletonMap("memoryLimitBytes", Long.toString(Size.parseSize(machineRams[i]))))));
         }
         ComposeEnvironmentImpl composeEnvironment = new ComposeEnvironmentImpl();
         composeEnvironment.setServices(services);
@@ -120,13 +119,13 @@ public final class TestObjects {
                                                                                        envName,
                                                                                        entry.getKey(),
                                                                                        devMachine.getKey().equals(entry.getKey()),
-                                                                                       entry.getValue().getResources().getLimits().getMemoryBytes()))
+                                                                                       entry.getValue().getAttributes().get("memoryLimitBytes")))
                                                            .collect(toList()),
                                          createMachine(workspace.getId(),
                                                        envName,
                                                        devMachine.getKey(),
                                                        true,
-                                                       devMachine.getValue().getResources().getLimits().getMemoryBytes()));
+                                                       devMachine.getValue().getAttributes().get("memoryLimitBytes")));
         workspace.setStatus(RUNNING);
         workspace.setRuntime(runtime);
         return workspace;
@@ -136,7 +135,7 @@ public final class TestObjects {
                                              String envName,
                                              String machineName,
                                              boolean isDev,
-                                             Long memoryBytes) {
+                                             String memoryBytes) {
 
         return MachineImpl.builder()
                           .setConfig(MachineConfigImpl.builder()
