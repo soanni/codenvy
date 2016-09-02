@@ -66,7 +66,9 @@ public class URLFactoryBuilder {
 
     /**
      * Build a default factory using the provided json file or create default one
-     * @param createFactoryParams optional parameters
+     *
+     * @param createFactoryParams
+     *         optional parameters
      * @return a factory
      */
     public Factory createFactory(CreateFactoryParams createFactoryParams) {
@@ -86,9 +88,13 @@ public class URLFactoryBuilder {
 
     /**
      * Help to generate default workspace configuration
-     * @param environmentName the name of the environment to create
-     * @param name the name of the workspace
-     * @param dockerFileLocation the optional location for codenvy dockerfile to use
+     *
+     * @param environmentName
+     *         the name of the environment to create
+     * @param name
+     *         the name of the workspace
+     * @param dockerFileLocation
+     *         the optional location for codenvy dockerfile to use
      * @return a workspace configuration
      */
     public WorkspaceConfigDto buildWorkspaceConfig(String environmentName,
@@ -109,7 +115,7 @@ public class URLFactoryBuilder {
         ResourcesDto limits = newDto(ResourcesDto.class).withLimits(
                 newDto(LimitsDto.class).withMemoryBytes(MEMORY_LIMIT_BYTES));
         ExtendedMachineDto machine = newDto(ExtendedMachineDto.class).withAgents(singletonList("ws-agent"))
-                                                                        .withResources(limits);
+                                                                     .withResources(limits);
 
         // setup environment
         EnvironmentDto environmentDto = newDto(EnvironmentDto.class).withRecipe(recipeDto)
@@ -117,8 +123,8 @@ public class URLFactoryBuilder {
 
         // workspace configuration using the environment
         return newDto(WorkspaceConfigDto.class)
-                         .withDefaultEnv(environmentName)
-                         .withEnvironments(singletonMap(environmentName, environmentDto))
-                         .withName(name);
+                .withDefaultEnv(environmentName)
+                .withEnvironments(singletonMap(environmentName, environmentDto))
+                .withName(name);
     }
 }
