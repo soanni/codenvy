@@ -34,7 +34,7 @@ export class CodenvyFactoryTemplate {
     this.factoryTemplatesByName = new Map();
 
     // remote call
-    this.remoteFactoryTemplateAPI = this.$resource('https://raw.githubusercontent.com/codenvy/factories/CHE-1818-2/templates-4.0/factory/:fileName');
+    this.remoteFactoryTemplateAPI = this.$resource('https://raw.githubusercontent.com/codenvy/factories/CHE-1818-3/templates-4.0/factory/:fileName');
   }
 
   /**
