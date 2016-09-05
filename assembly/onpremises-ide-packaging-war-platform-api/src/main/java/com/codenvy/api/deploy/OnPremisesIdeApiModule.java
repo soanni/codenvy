@@ -16,7 +16,6 @@ package com.codenvy.api.deploy;
 
 import com.codenvy.api.AdminApiModule;
 import com.codenvy.api.permission.server.PermissionChecker;
-import com.codenvy.api.permission.server.jpa.PermissionsJpaModule;
 import com.codenvy.api.user.server.AdminUserService;
 import com.codenvy.api.workspace.server.jpa.PermissionsJpaModule;
 import com.codenvy.api.workspace.server.jpa.OnPremisesJpaWorkspaceDao;
