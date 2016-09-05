@@ -21,7 +21,14 @@ import com.google.inject.persist.Transactional;
 
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.notification.EventService;
+import org.eclipse.che.api.core.notification.EventSubscriber;
+import org.eclipse.che.api.workspace.server.event.BeforeStackRemovedEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.persistence.NoResultException;
@@ -39,27 +46,18 @@ import static java.util.Objects.requireNonNull;
 @Singleton
 public class JpaStackPermissionsDao extends AbstractJpaPermissionsDao<StackPermissionsImpl> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(JpaStackPermissionsDao.class);
+
     @Inject
     public JpaStackPermissionsDao(AbstractPermissionsDomain<StackPermissionsImpl> domain) throws IOException {
         super(domain);
     }
 
     @Override
-    @Transactional
     public StackPermissionsImpl get(String userId, String instanceId) throws ServerException, NotFoundException {
         requireNonNull(instanceId, "Stack identifier required");
         requireNonNull(userId, "User identifier required");
-        try {
-            return managerProvider.get()
-                                  .createNamedQuery("StackPermissions.getByUserAndStackId", StackPermissionsImpl.class)
-                                  .setParameter("stackId", instanceId)
-                                  .setParameter("userId", userId)
-                                  .getSingleResult();
-        } catch (NoResultException e) {
-            throw new NotFoundException(format("Permissions on stack '%s' of user '%s' was not found.", instanceId, userId));
-        } catch (RuntimeException e) {
-            throw new ServerException(e.getLocalizedMessage(), e);
-        }
+        return doGet(userId, instanceId);
     }
 
     @Override
@@ -87,6 +85,50 @@ public class JpaStackPermissionsDao extends AbstractJpaPermissionsDao<StackPermi
                                   .getResultList();
         } catch (RuntimeException e) {
             throw new ServerException(e.getLocalizedMessage(), e);
+        }
+    }
+
+    @Transactional
+    protected StackPermissionsImpl doGet(String userId, String instanceId) throws ServerException, NotFoundException {
+        try {
+            return managerProvider.get()
+                                  .createNamedQuery("StackPermissions.getByUserAndStackId", StackPermissionsImpl.class)
+                                  .setParameter("stackId", instanceId)
+                                  .setParameter("userId", userId)
+                                  .getSingleResult();
+        } catch (NoResultException e) {
+            throw new NotFoundException(format("Permissions on stack '%s' of user '%s' was not found.", instanceId, userId));
+        } catch (RuntimeException e) {
+            throw new ServerException(e.getLocalizedMessage(), e);
+        }
+    }
+
+    @Singleton
+    public static class RemovePermissionsBeforeStackRemovedEventSubscriber implements EventSubscriber<BeforeStackRemovedEvent> {
+        @Inject
+        private EventService eventService;
+        @Inject
+        private JpaStackPermissionsDao dao;
+
+        @PostConstruct
+        public void subscribe() {
+            eventService.subscribe(this);
+        }
+
+        @PreDestroy
+        public void unsubscribe() {
+            eventService.unsubscribe(this);
+        }
+
+        @Override
+        public void onEvent(BeforeStackRemovedEvent event) {
+            try {
+                for (StackPermissionsImpl permissions : dao.getByInstance(event.getStack().getId())) {
+                    dao.remove(permissions.getUserId(), permissions.getInstanceId());
+                }
+            } catch (ServerException | NotFoundException x) {
+                LOG.error(format("Couldn't remove permissions before stack '%s' is removed", event.getStack().getId()), x);
+            }
         }
     }
 }

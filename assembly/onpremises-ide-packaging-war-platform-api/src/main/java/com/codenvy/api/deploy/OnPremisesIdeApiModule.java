@@ -18,8 +18,8 @@ import com.codenvy.api.AdminApiModule;
 import com.codenvy.api.permission.server.PermissionChecker;
 import com.codenvy.api.permission.server.jpa.PermissionsJpaModule;
 import com.codenvy.api.user.server.AdminUserService;
+import com.codenvy.api.workspace.server.jpa.PermissionsJpaModule;
 import com.codenvy.api.workspace.server.jpa.OnPremisesJpaWorkspaceDao;
-import com.codenvy.api.workspace.server.jpa.WorkerJpaModule;
 import com.codenvy.auth.aws.ecr.AwsEcrAuthResolver;
 import com.codenvy.auth.sso.client.ServerClient;
 import com.codenvy.auth.sso.client.TokenHandler;
@@ -165,7 +165,7 @@ public class OnPremisesIdeApiModule extends AbstractModule {
         install(new UserJpaModule());
         install(new SshJpaModule());
         install(new WorkspaceJpaModule());
-        install(new WorkerJpaModule());
+        install(new PermissionsJpaModule());
         install(new MachineJpaModule());
         bind(AccountDao.class).to(JpaAccountDao.class);
         bind(FactoryDao.class).to(JpaFactoryDao.class);

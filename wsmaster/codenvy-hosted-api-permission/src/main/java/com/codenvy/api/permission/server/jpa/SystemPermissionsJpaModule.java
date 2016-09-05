@@ -26,13 +26,12 @@ import com.google.inject.multibindings.Multibinder;
 /**
  * @author Max Shaposhnik
  */
-public class PermissionsJpaModule extends AbstractModule {
+public class SystemPermissionsJpaModule extends AbstractModule {
     @Override
     protected void configure() {
 
         bind(new TypeLiteral<AbstractPermissionsDomain<SystemPermissionsImpl>>() {}).to(SystemDomain.class);
-
-        bind(AbstractJpaPermissionsDao.RemovePermissionsBeforeUserRemovedEventSubscriber.class).asEagerSingleton();
+        bind(JpaSystemPermissionsDao.RemoveSystemPermissionsBeforeUserRemovedEventSubscriber.class).asEagerSingleton();
 
         Multibinder<PermissionsDao<? extends AbstractPermissions>> storages = Multibinder.newSetBinder(binder(),
                                                                         new TypeLiteral<PermissionsDao<? extends AbstractPermissions>>() {});

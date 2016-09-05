@@ -18,6 +18,9 @@ import com.codenvy.api.permission.server.AbstractPermissionsDomain;
 import com.codenvy.api.permission.server.model.impl.AbstractPermissions;
 import com.codenvy.api.permission.server.spi.PermissionsDao;
 import com.codenvy.api.workspace.server.WorkspaceDomain;
+import com.codenvy.api.workspace.server.jpa.listener.RemovePermissionsOnLastUserRemovedEventSubscriber;
+import com.codenvy.api.workspace.server.jpa.listener.RemoveRecipeOnLastUserRemovedEventSubscriber;
+import com.codenvy.api.workspace.server.jpa.listener.RemoveStackOnLastUserRemovedEventSubscriber;
 import com.codenvy.api.workspace.server.model.impl.WorkerImpl;
 import com.codenvy.api.workspace.server.recipe.RecipeDomain;
 import com.codenvy.api.workspace.server.recipe.RecipePermissionsImpl;
@@ -29,16 +32,25 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
 
 /**
- *
  * @author Max Shaposhnik
  */
-public class WorkerJpaModule extends AbstractModule {
+public class PermissionsJpaModule extends AbstractModule {
 
     @Override
     protected void configure() {
 
         bind(WorkerDao.class).to(JpaWorkerDao.class);
         bind(JpaWorkerDao.RemoveWorkersBeforeWorkspaceRemovedEventSubscriber.class).asEagerSingleton();
+        bind(JpaWorkerDao.RemoveWorkersBeforeUserRemovedEventSubscriber.class).asEagerSingleton();
+
+        bind(new TypeLiteral<RemovePermissionsOnLastUserRemovedEventSubscriber<JpaStackPermissionsDao>>() {
+        }).to(RemoveStackOnLastUserRemovedEventSubscriber.class);
+        bind(new TypeLiteral<RemovePermissionsOnLastUserRemovedEventSubscriber<JpaRecipePermissionsDao>>() {
+        }).to(RemoveRecipeOnLastUserRemovedEventSubscriber.class);
+        bind(RemoveRecipeOnLastUserRemovedEventSubscriber.class).asEagerSingleton();
+
+        bind(JpaStackPermissionsDao.RemovePermissionsBeforeStackRemovedEventSubscriber.class).asEagerSingleton();
+        bind(JpaRecipePermissionsDao.RemovePermissionsBeforeRecipeRemovedEventSubscriber.class).asEagerSingleton();
 
         bind(new TypeLiteral<AbstractPermissionsDomain<RecipePermissionsImpl>>() {}).to(RecipeDomain.class);
         bind(new TypeLiteral<AbstractPermissionsDomain<StackPermissionsImpl>>() {}).to(StackDomain.class);

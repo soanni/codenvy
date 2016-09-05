@@ -16,6 +16,7 @@ package com.codenvy.api.workspace.server.jpa;
 
 import com.codenvy.api.permission.server.AbstractPermissionsDomain;
 import com.codenvy.api.permission.server.jpa.AbstractJpaPermissionsDao;
+import com.codenvy.api.permission.server.model.impl.SystemPermissionsImpl;
 import com.codenvy.api.workspace.server.model.impl.WorkerImpl;
 import com.codenvy.api.workspace.server.spi.WorkerDao;
 import com.google.inject.persist.Transactional;
@@ -24,6 +25,7 @@ import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.core.notification.EventSubscriber;
+import org.eclipse.che.api.user.server.event.BeforeUserRemovedEvent;
 import org.eclipse.che.api.workspace.server.event.BeforeWorkspaceRemovedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,21 +82,10 @@ public class JpaWorkerDao extends AbstractJpaPermissionsDao<WorkerImpl> implemen
 
 
     @Override
-    @Transactional
     public WorkerImpl get(String userId, String instanceId) throws ServerException, NotFoundException {
         requireNonNull(instanceId, "Workspace identifier required");
         requireNonNull(userId, "User identifier required");
-        try {
-            return managerProvider.get()
-                                  .createNamedQuery("Worker.getByUserAndWorkspaceId", WorkerImpl.class)
-                                  .setParameter("workspaceId", instanceId)
-                                  .setParameter("userId", userId)
-                                  .getSingleResult();
-        } catch (NoResultException e) {
-            throw new NotFoundException(format("Worker of workspace '%s' with id '%s' was not found.", instanceId, userId));
-        } catch (RuntimeException e) {
-            throw new ServerException(e.getLocalizedMessage(), e);
-        }
+        return doGet(userId, instanceId);
     }
 
     @Override
@@ -125,6 +116,21 @@ public class JpaWorkerDao extends AbstractJpaPermissionsDao<WorkerImpl> implemen
         }
     }
 
+    @Transactional
+    protected WorkerImpl doGet(String userId, String instanceId) throws ServerException, NotFoundException {
+        try {
+            return managerProvider.get()
+                                  .createNamedQuery("Worker.getByUserAndWorkspaceId", WorkerImpl.class)
+                                  .setParameter("workspaceId", instanceId)
+                                  .setParameter("userId", userId)
+                                  .getSingleResult();
+        } catch (NoResultException e) {
+            throw new NotFoundException(format("Worker of workspace '%s' with id '%s' was not found.", instanceId, userId));
+        } catch (RuntimeException e) {
+            throw new ServerException(e.getLocalizedMessage(), e);
+        }
+    }
+
     @Singleton
     public static class RemoveWorkersBeforeWorkspaceRemovedEventSubscriber implements EventSubscriber<BeforeWorkspaceRemovedEvent> {
         @Inject
@@ -150,6 +156,35 @@ public class JpaWorkerDao extends AbstractJpaPermissionsDao<WorkerImpl> implemen
                 }
             } catch (Exception x) {
                 LOG.error(format("Couldn't remove workers before workspace '%s' is removed", event.getWorkspace().getId()), x);
+            }
+        }
+    }
+
+    @Singleton
+    public static class RemoveWorkersBeforeUserRemovedEventSubscriber implements EventSubscriber<BeforeUserRemovedEvent> {
+        @Inject
+        private EventService eventService;
+        @Inject
+        private WorkerDao    dao;
+
+        @PostConstruct
+        public void subscribe() {
+            eventService.subscribe(this);
+        }
+
+        @PreDestroy
+        public void unsubscribe() {
+            eventService.unsubscribe(this);
+        }
+
+        @Override
+        public void onEvent(BeforeUserRemovedEvent event) {
+            try {
+                for (WorkerImpl worker : dao.getWorkersByUser(event.getUser().getId())) {
+                    dao.removeWorker(worker.getInstanceId(), worker.getUserId());
+                }
+            } catch (Exception x) {
+                LOG.error(format("Couldn't remove worker before user '%s' is removed", event.getUser().getId()), x);
             }
         }
     }

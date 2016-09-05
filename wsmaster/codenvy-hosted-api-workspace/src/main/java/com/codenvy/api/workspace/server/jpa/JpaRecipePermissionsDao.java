@@ -22,7 +22,14 @@ import com.google.inject.persist.Transactional;
 
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.notification.EventService;
+import org.eclipse.che.api.core.notification.EventSubscriber;
+import org.eclipse.che.api.machine.server.event.BeforeRecipeRemovedEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.persistence.NoResultException;
@@ -39,27 +46,18 @@ import static java.util.Objects.requireNonNull;
 @Singleton
 public class JpaRecipePermissionsDao extends AbstractJpaPermissionsDao<RecipePermissionsImpl> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(JpaRecipePermissionsDao.class);
+
     @Inject
     public JpaRecipePermissionsDao(AbstractPermissionsDomain<RecipePermissionsImpl> domain) throws IOException {
         super(domain);
     }
 
     @Override
-    @Transactional
     public RecipePermissionsImpl get(String userId, String instanceId) throws ServerException, NotFoundException {
         requireNonNull(instanceId, "Stack identifier required");
         requireNonNull(userId, "User identifier required");
-        try {
-            return managerProvider.get()
-                                  .createNamedQuery("RecipePermissions.getByUserAndRecipeId", RecipePermissionsImpl.class)
-                                  .setParameter("recipeId", instanceId)
-                                  .setParameter("userId", userId)
-                                  .getSingleResult();
-        } catch (NoResultException e) {
-            throw new NotFoundException(format("Permissions on recipe '%s' of user '%s' was not found.", instanceId, userId));
-        } catch (RuntimeException e) {
-            throw new ServerException(e.getLocalizedMessage(), e);
-        }
+        return doGet(userId, instanceId);
     }
 
     @Override
@@ -87,6 +85,51 @@ public class JpaRecipePermissionsDao extends AbstractJpaPermissionsDao<RecipePer
                                   .getResultList();
         } catch (RuntimeException e) {
             throw new ServerException(e.getLocalizedMessage(), e);
+        }
+    }
+
+    @Transactional
+    protected RecipePermissionsImpl doGet(String userId, String instanceId) throws ServerException, NotFoundException {
+        try {
+            return managerProvider.get()
+                                  .createNamedQuery("RecipePermissions.getByUserAndRecipeId", RecipePermissionsImpl.class)
+                                  .setParameter("recipeId", instanceId)
+                                  .setParameter("userId", userId)
+                                  .getSingleResult();
+        } catch (NoResultException e) {
+            throw new NotFoundException(format("Permissions on recipe '%s' of user '%s' was not found.", instanceId, userId));
+        } catch (RuntimeException e) {
+            throw new ServerException(e.getLocalizedMessage(), e);
+        }
+    }
+
+
+    @Singleton
+    public static class RemovePermissionsBeforeRecipeRemovedEventSubscriber implements EventSubscriber<BeforeRecipeRemovedEvent> {
+        @Inject
+        private EventService eventService;
+        @Inject
+        private JpaRecipePermissionsDao dao;
+
+        @PostConstruct
+        public void subscribe() {
+            eventService.subscribe(this);
+        }
+
+        @PreDestroy
+        public void unsubscribe() {
+            eventService.unsubscribe(this);
+        }
+
+        @Override
+        public void onEvent(BeforeRecipeRemovedEvent event) {
+            try {
+                for (RecipePermissionsImpl permissions : dao.getByInstance(event.getRecipe().getId())) {
+                    dao.remove(permissions.getUserId(), permissions.getInstanceId());
+                }
+            } catch (ServerException |NotFoundException x) {
+                LOG.error(format("Couldn't remove permissions before recipe '%s' is removed", event.getRecipe().getId()), x);
+            }
         }
     }
 }
