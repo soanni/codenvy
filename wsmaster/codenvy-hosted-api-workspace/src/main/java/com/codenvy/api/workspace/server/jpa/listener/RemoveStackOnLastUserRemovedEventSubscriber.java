@@ -14,7 +14,8 @@
  */
 package com.codenvy.api.workspace.server.jpa.listener;
 
-import com.codenvy.api.workspace.server.jpa.JpaStackPermissionsDao;
+import com.codenvy.api.permission.server.jpa.listener.RemovePermissionsOnLastUserRemovedEventSubscriber;
+import com.codenvy.api.workspace.server.spi.jpa.JpaStackPermissionsDao;
 
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;

@@ -34,7 +34,10 @@ import java.util.List;
                 @NamedQuery(name = "SystemPermissions.getByUserId",
                             query = "SELECT permissions " +
                                     "FROM SystemPermissions permissions " +
-                                    "WHERE permissions.userId = :userId ")
+                                    "WHERE permissions.userId = :userId "),
+                @NamedQuery(name = "SystemPermissions.getAll",
+                            query = "SELECT permissions " +
+                                    "FROM SystemPermissions permissions ")
         }
 )
 @Table(indexes = @Index(columnList = "userId", unique = true))
@@ -60,7 +63,7 @@ public class SystemPermissionsImpl extends AbstractPermissions {
     @Override
     public String toString() {
         return "SystemPermissions{" +
-               "user='" + userId + '\'' +
+               "user='" + getUserId() + '\'' +
                ", actions=" + actions +
                '}';
     }

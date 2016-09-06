@@ -15,7 +15,6 @@
 package com.codenvy.api.workspace.server.spi.tck;
 
 import com.codenvy.api.permission.server.AbstractPermissionsDomain;
-import com.codenvy.api.permission.server.model.impl.AbstractPermissions;
 import com.codenvy.api.workspace.server.model.impl.WorkerImpl;
 import com.codenvy.api.workspace.server.spi.WorkerDao;
 
@@ -27,6 +26,7 @@ import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.commons.test.tck.TckModuleFactory;
 import org.eclipse.che.commons.test.tck.repository.TckRepository;
 import org.eclipse.che.commons.test.tck.repository.TckRepositoryException;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Guice;
@@ -67,19 +67,20 @@ public class WorkerDaoTest {
 
     @BeforeMethod
     public void setUp() throws TckRepositoryException {
-        workers = new WorkerImpl[]{new WorkerImpl("ws1", "user1", Arrays.asList("read", "use", "run")),
-                                   new WorkerImpl("ws1", "user2", Arrays.asList("read", "use")),
-                                   new WorkerImpl("ws2", "user1", Arrays.asList("read", "run")),
-                                   new WorkerImpl("ws2", "user2", Arrays.asList("read", "use", "run", "configure"))};
+        workers = new WorkerImpl[] {new WorkerImpl("ws1", "user1", Arrays.asList("read", "use", "run")),
+                                    new WorkerImpl("ws1", "user2", Arrays.asList("read", "use")),
+                                    new WorkerImpl("ws2", "user1", Arrays.asList("read", "run")),
+                                    new WorkerImpl("ws2", "user2", Arrays.asList("read", "use", "run", "configure"))};
 
         final UserImpl[] users = new UserImpl[] {new UserImpl("user0", "user0@com.com", "usr0"),
                                                  new UserImpl("user1", "user1@com.com", "usr1"),
                                                  new UserImpl("user2", "user2@com.com", "usr2")};
         userRepository.createAll(Arrays.asList(users));
 
-        workspaceRepository.createAll(Arrays.asList(new WorkspaceImpl("ws0", users[0].getAccount(), new WorkspaceConfigImpl("","","cfg0", null,null,null)),
-                                                    new WorkspaceImpl("ws1", users[1].getAccount(), new WorkspaceConfigImpl("","","cfg1", null,null,null)),
-                                                    new WorkspaceImpl("ws2", users[2].getAccount(), new WorkspaceConfigImpl("","","cfg2", null,null,null))));
+        workspaceRepository.createAll(
+                Arrays.asList(new WorkspaceImpl("ws0", users[0].getAccount(), new WorkspaceConfigImpl("", "", "cfg0", null, null, null)),
+                              new WorkspaceImpl("ws1", users[1].getAccount(), new WorkspaceConfigImpl("", "", "cfg1", null, null, null)),
+                              new WorkspaceImpl("ws2", users[2].getAccount(), new WorkspaceConfigImpl("", "", "cfg2", null, null, null))));
 
         workerRepository.createAll(Arrays.asList(workers));
 
@@ -97,14 +98,14 @@ public class WorkerDaoTest {
     public void shouldStoreWorker() throws Exception {
         WorkerImpl worker = new WorkerImpl("ws0", "user0", Arrays.asList("read", "use", "run"));
         workerDao.store(worker);
-        assertEquals(workerDao.getWorker("ws0", "user0"), worker);
+        Assert.assertEquals(workerDao.getWorker("ws0", "user0"), worker);
     }
 
     @Test
     public void shouldReplaceExistingWorkerOnStoring() throws Exception {
         WorkerImpl replace = new WorkerImpl("ws1", "user1", Collections.singletonList("read"));
         workerDao.store(replace);
-        assertEquals(workerDao.getWorker("ws1", "user1"), replace);
+        Assert.assertEquals(workerDao.getWorker("ws1", "user1"), replace);
     }
 
     @Test(expectedExceptions = NullPointerException.class)
@@ -115,8 +116,8 @@ public class WorkerDaoTest {
     /* WorkerDao.getWorker() tests */
     @Test
     public void shouldGetWorkerByWorkspaceIdAndUserId() throws Exception {
-        assertEquals(workerDao.getWorker("ws1", "user1"), workers[0]);
-        assertEquals(workerDao.getWorker("ws2", "user2"), workers[3]);
+        Assert.assertEquals(workerDao.getWorker("ws1", "user1"), workers[0]);
+        Assert.assertEquals(workerDao.getWorker("ws2", "user2"), workers[3]);
     }
 
     @Test(expectedExceptions = NullPointerException.class)

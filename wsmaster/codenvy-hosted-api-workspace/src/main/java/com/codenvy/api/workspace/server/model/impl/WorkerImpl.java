@@ -14,8 +14,8 @@
  */
 package com.codenvy.api.workspace.server.model.impl;
 
-import com.codenvy.api.permission.server.model.impl.AbstractPermissions;
 import com.codenvy.api.workspace.server.WorkspaceDomain;
+import com.codenvy.api.permission.server.model.impl.AbstractPermissions;
 import com.codenvy.api.workspace.server.model.Worker;
 
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
@@ -27,9 +27,7 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Data object for {@link Worker}
@@ -89,7 +87,7 @@ public class WorkerImpl extends AbstractPermissions implements Worker {
     @Override
     public String toString() {
         return "WorkerImpl{" +
-               "userId='" + userId + '\'' +
+               "userId='" + getUserId() + '\'' +
                ", workspaceId='" + workspaceId + '\'' +
                ", actions=" + actions +
                '}';

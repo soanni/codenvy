@@ -16,6 +16,7 @@ package com.codenvy.api.workspace.server.jpa;
 
 import com.codenvy.api.permission.server.PermissionsModule;
 import com.codenvy.api.permission.server.jpa.SystemPermissionsJpaModule;
+import com.codenvy.api.workspace.server.spi.jpa.JpaStackPermissionsDao;
 import com.codenvy.api.workspace.server.stack.StackPermissionsImpl;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -38,7 +39,9 @@ import org.testng.annotations.Test;
 
 import javax.persistence.EntityManager;
 import java.util.Arrays;
+import java.util.List;
 
+import static java.util.Arrays.asList;
 import static org.testng.Assert.assertTrue;
 
 /**
@@ -61,21 +64,21 @@ public class JpaStackPermissionsDaoTest {
 
     @BeforeClass
     public void setupEntities() throws Exception {
-        permissionses = new StackPermissionsImpl[]{new StackPermissionsImpl("user1", "stack1", Arrays.asList("read", "use", "run")),
-                                                   new StackPermissionsImpl("user2", "stack1", Arrays.asList("read", "use")),
-                                                   new StackPermissionsImpl("user1", "stack2", Arrays.asList("read", "run")),
-                                                   new StackPermissionsImpl("user2", "stack2",
-                                                                            Arrays.asList("read", "use", "run", "configure"))};
+        permissionses = new StackPermissionsImpl[] {new StackPermissionsImpl("user1", "stack1", Arrays.asList("read", "use", "run")),
+                                                    new StackPermissionsImpl("user2", "stack1", Arrays.asList("read", "use")),
+                                                    new StackPermissionsImpl("user1", "stack2", Arrays.asList("read", "run")),
+                                                    new StackPermissionsImpl("user2", "stack2",
+                                                                             Arrays.asList("read", "use", "run", "configure"))};
 
-        users = new UserImpl[]{new UserImpl("user1", "user1@com.com", "usr1"),
-                               new UserImpl("user2", "user2@com.com", "usr2")};
+        users = new UserImpl[] {new UserImpl("user1", "user1@com.com", "usr1"),
+                                new UserImpl("user2", "user2@com.com", "usr2")};
 
-        stacks = new StackImpl[]{
+        stacks = new StackImpl[] {
                 new StackImpl("stack1", "st1", null, null, null, null, null, null, null, null),
                 new StackImpl("stack2", "st2", null, null, null, null, null, null, null, null)};
 
         Injector injector =
-                Guice.createInjector(new TestModule(), new PermissionsJpaModule(), new PermissionsModule(),
+                Guice.createInjector(new TestModule(), new OnPremisesJpaWorkspaceModule(), new PermissionsModule(),
                                      new SystemPermissionsJpaModule());
         manager = injector.getInstance(EntityManager.class);
         dao = injector.getInstance(JpaStackPermissionsDao.class);
@@ -131,6 +134,41 @@ public class JpaStackPermissionsDaoTest {
         assertTrue(dao.getByInstance("stack1").isEmpty());
     }
 
+    @Test
+    public void shouldStoreStackPublicPermission() throws Exception {
+        final StackPermissionsImpl publicPermission = new StackPermissionsImpl("*",
+                                                                               "stack1",
+                                                                               asList("read", "use", "run"));
+        dao.store(publicPermission);
+
+        assertTrue(dao.getByInstance(publicPermission.getInstanceId())
+                      .contains(publicPermission));
+    }
+
+    @Test
+    public void shouldUpdateExistingStackPublicPermissions() throws Exception {
+        final StackPermissionsImpl publicPermission = new StackPermissionsImpl("*",
+                                                                               "stack1",
+                                                                               asList("read", "use", "run"));
+        dao.store(publicPermission);
+        dao.store(publicPermission);
+
+        final List<StackPermissionsImpl> permissions = dao.getByInstance(publicPermission.getInstanceId());
+        assertTrue(permissions.contains(publicPermission));
+        assertTrue(permissions.stream().filter(p -> "*".equals(p.getUserId())).count() == 1);
+    }
+
+    @Test
+    public void shouldRemoveStackPublicPermission() throws Exception {
+        final StackPermissionsImpl publicPermission = new StackPermissionsImpl("*",
+                                                                               "stack1",
+                                                                               asList("read", "use", "run"));
+        dao.store(publicPermission);
+        dao.remove(publicPermission.getUserId(), publicPermission.getInstanceId());
+
+        List<StackPermissionsImpl> byInstance = dao.getByInstance(publicPermission.getInstanceId());
+        assertTrue(byInstance.stream().filter(p -> "*".equals(p.getUserId())).count() == 0);
+    }
 
     private class TestModule extends AbstractModule {
 

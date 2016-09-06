@@ -1,3 +1,2 @@
-com.codenvy.api.workspace.server.jpa.WorkerTckModule
-com.codenvy.api.workspace.server.jpa.StackPermissionsTckModule
-com.codenvy.api.workspace.server.jpa.RecipePermissionsTckModule
+com.codenvy.api.workspace.server.spi.jpa.StackPermissionsTckModule
+com.codenvy.api.workspace.server.spi.jpa.WorkerTckModule

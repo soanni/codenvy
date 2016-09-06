@@ -38,21 +38,21 @@ public class RecipeScriptDownloadPermissionFilter extends CheMethodInvokerFilter
     @Override
     protected void filter(GenericResourceMethod genericMethodResource, Object[] arguments) throws ApiException {
 
-            final String methodName = genericMethodResource.getMethod().getName();
+        final String methodName = genericMethodResource.getMethod().getName();
 
-            final Subject currentSubject = EnvironmentContext.getCurrent().getSubject();
-            String action;
-            String workspaceId;
+        final Subject currentSubject = EnvironmentContext.getCurrent().getSubject();
+        String action;
+        String workspaceId;
 
-            switch (methodName) {
-                case "getRecipeScript": {
-                    workspaceId = ((String)arguments[0]);
-                    action = USE;
-                    break;
-                }
-                default:
-                    throw new ForbiddenException("The user does not have permission to perform this operation");
+        switch (methodName) {
+            case "getRecipeScript": {
+                workspaceId = ((String)arguments[0]);
+                action = USE;
+                break;
             }
-            currentSubject.checkPermission(DOMAIN_ID, workspaceId, action);
+            default:
+                throw new ForbiddenException("The user does not have permission to perform this operation");
         }
+        currentSubject.checkPermission(DOMAIN_ID, workspaceId, action);
+    }
 }

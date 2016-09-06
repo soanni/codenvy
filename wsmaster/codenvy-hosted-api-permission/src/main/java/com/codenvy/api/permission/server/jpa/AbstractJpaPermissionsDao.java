@@ -26,15 +26,14 @@ import org.eclipse.che.api.core.ServerException;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.persistence.EntityManager;
-import java.io.IOException;
 import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
 /**
- *  Basic JPA DAO implementation for {@link Permissions} objects.
+ * Basic JPA DAO implementation for {@link Permissions} objects.
  *
- *  @author Max Shaposhnik
+ * @author Max Shaposhnik
  */
 public abstract class AbstractJpaPermissionsDao<T extends AbstractPermissions> implements PermissionsDao<T> {
 
@@ -43,7 +42,7 @@ public abstract class AbstractJpaPermissionsDao<T extends AbstractPermissions> i
     @Inject
     protected Provider<EntityManager> managerProvider;
 
-    public AbstractJpaPermissionsDao(AbstractPermissionsDomain<T> supportedDomain) throws IOException {
+    public AbstractJpaPermissionsDao(AbstractPermissionsDomain<T> supportedDomain) {
         this.supportedDomain = supportedDomain;
     }
 
@@ -55,17 +54,12 @@ public abstract class AbstractJpaPermissionsDao<T extends AbstractPermissions> i
     @Override
     public void store(T permissions) throws ServerException {
         requireNonNull(permissions, "Permissions instance required");
-        doCreate(permissions);
+        try {
+            doCreate(permissions);
+        } catch (RuntimeException e) {
+            throw new ServerException(e.getMessage(), e);
+        }
     }
-
-    @Override
-    public abstract T get(String userId, String instanceId) throws ServerException, NotFoundException;
-
-    @Override
-    public abstract List<T> getByInstance(String instanceId) throws ServerException;
-
-    @Override
-    public abstract List<T> getByUser(String userId) throws ServerException;
 
     @Override
     @Transactional
@@ -89,6 +83,15 @@ public abstract class AbstractJpaPermissionsDao<T extends AbstractPermissions> i
         doRemove(userId, instanceId);
     }
 
+    @Override
+    public abstract T get(String userId, String instanceId) throws ServerException, NotFoundException;
+
+    @Override
+    public abstract List<T> getByUser(String userId) throws ServerException;
+
+    @Override
+    public abstract List<T> getByInstance(String instanceId) throws ServerException;
+
     @Transactional
     protected void doCreate(T permissions) throws ServerException {
         EntityManager manager = managerProvider.get();
@@ -98,8 +101,6 @@ public abstract class AbstractJpaPermissionsDao<T extends AbstractPermissions> i
             result.getActions().addAll(permissions.getActions());
         } catch (NotFoundException n) {
             manager.persist(permissions);
-        } catch (RuntimeException e) {
-            throw new ServerException(e.getLocalizedMessage(), e);
         }
     }
 
@@ -111,5 +112,15 @@ public abstract class AbstractJpaPermissionsDao<T extends AbstractPermissions> i
         } catch (RuntimeException e) {
             throw new ServerException(e.getLocalizedMessage(), e);
         }
+    }
+
+    /**
+     * Converts '*' user wildcard to {@code null}
+     *
+     * @return {@code null} when user identifier equal to '*',
+     * either user identifier will be returned
+     */
+    public static String wildcardToNull(String userId) {
+        return !"*".equals(userId) ? userId : null;
     }
 }

@@ -17,6 +17,7 @@ package com.codenvy.api.permission.server;
 import com.codenvy.api.permission.server.model.impl.AbstractPermissions;
 import com.codenvy.api.permission.server.spi.PermissionsDao;
 import com.codenvy.api.permission.shared.model.Permissions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import org.eclipse.che.api.core.ConflictException;
@@ -43,24 +44,25 @@ import static com.codenvy.api.permission.server.AbstractPermissionsDomain.SET_PE
  */
 @Singleton
 public class PermissionsManager {
-    private final Map<String, PermissionsDao>            domainToDao;
-    private final Map<String, AbstractPermissionsDomain> domains;
+
+    private final List<AbstractPermissionsDomain<? extends AbstractPermissions>> domains;
+    private final Map<String, PermissionsDao<? extends AbstractPermissions>>     domainToDao;
 
     @Inject
-    public PermissionsManager(Set<PermissionsDao<? extends AbstractPermissions>> storages) throws ServerException {
-        Map<String, PermissionsDao> domainToDao = new HashMap<>();
-        Map<String, AbstractPermissionsDomain> domains = new HashMap<>();
-        for (PermissionsDao storage : storages) {
-            AbstractPermissionsDomain domain = storage.getDomain();
-            domains.put(domain.getId(), domain);
-            PermissionsDao oldStorage = domainToDao.put(domain.getId(), storage);
+    public PermissionsManager(Set<PermissionsDao<? extends AbstractPermissions>> daos) throws ServerException {
+        final Map<String, PermissionsDao<? extends AbstractPermissions>> domainToDao = new HashMap<>();
+        final List<AbstractPermissionsDomain<? extends AbstractPermissions>> domains = new ArrayList<>();
+        for (PermissionsDao<? extends AbstractPermissions> dao : daos) {
+            final AbstractPermissionsDomain<? extends AbstractPermissions> domain = dao.getDomain();
+            final PermissionsDao<? extends AbstractPermissions> oldStorage = domainToDao.put(domain.getId(), dao);
+            domains.add(domain);
             if (oldStorage != null) {
                 throw new ServerException("Permissions Domain '" + domain.getId() + "' should be stored in only one storage. " +
-                                          "Duplicated in " + storage.getClass() + " and " + oldStorage.getClass());
+                                          "Duplicated in " + dao.getClass() + " and " + oldStorage.getClass());
             }
         }
+        this.domains = ImmutableList.copyOf(domains);
         this.domainToDao = ImmutableMap.copyOf(domainToDao);
-        this.domains = ImmutableMap.copyOf(domains);
     }
 
     /**
@@ -80,27 +82,34 @@ public class PermissionsManager {
         final String instanceId = permissions.getInstanceId();
         final String userId = permissions.getUserId();
 
-        final PermissionsDao permissionsStorage = getPermissionsDao(domainId);
+        final PermissionsDao<? extends AbstractPermissions> permissionsDao = getPermissionsDao(domainId);
         if (!permissions.getActions().contains(SET_PERMISSIONS)
-            && userHasLastSetPermissions(permissionsStorage, userId, instanceId)) {
+            && userHasLastSetPermissions(permissionsDao, userId, instanceId)) {
             throw new ConflictException("Can't edit permissions because there is not any another user with permission 'setPermissions'");
         }
+        store(permissionsDao, userId, instanceId, permissions);
+    }
 
-        final AbstractPermissionsDomain permissionsDomain = getDomain(permissions.getDomainId());
-        final AbstractPermissions permissionsEntity = permissionsDomain.newInstance(userId, instanceId, permissions.getActions());
+    private <T extends AbstractPermissions> void store(PermissionsDao<T> dao,
+                                                       String userId,
+                                                       String instanceId,
+                                                       Permissions permissions) throws ConflictException,
+                                                                                       ServerException {
+        final AbstractPermissionsDomain<T> permissionsDomain = dao.getDomain();
+        final T permission = permissionsDomain.newInstance(userId, instanceId, permissions.getActions());
 
         final Set<String> allowedActions = new HashSet<>(permissionsDomain.getAllowedActions());
-        final Set<String> unsupportedActions = permissionsEntity.getActions()
-                                                                .stream()
-                                                                .filter(action -> !allowedActions.contains(action))
-                                                                .collect(Collectors.toSet());
+        final Set<String> unsupportedActions = permission.getActions()
+                                                         .stream()
+                                                         .filter(action -> !allowedActions.contains(action))
+                                                         .collect(Collectors.toSet());
         if (!unsupportedActions.isEmpty()) {
             throw new ConflictException("Domain with id '" + permissions.getDomainId() + "' doesn't support next action(s): " +
                                         unsupportedActions.stream()
                                                           .collect(Collectors.joining(", ")));
         }
 
-        permissionsStorage.store(permissionsEntity);
+        dao.store(permission);
     }
 
     /**
@@ -118,8 +127,9 @@ public class PermissionsManager {
      * @throws ServerException
      *         when any other error occurs during permissions fetching
      */
-    public AbstractPermissions get(String userId, String domainId, String instanceId)
-            throws ServerException, NotFoundException, ConflictException {
+    public AbstractPermissions get(String userId, String domainId, String instanceId) throws ServerException,
+                                                                                             NotFoundException,
+                                                                                             ConflictException {
         return getPermissionsDao(domainId).get(userId, instanceId);
     }
 
@@ -134,9 +144,11 @@ public class PermissionsManager {
      * @throws ServerException
      *         when any other error occurs during permissions fetching
      */
-    public List<AbstractPermissions> getByInstance(String domainId, String instanceId)
-            throws ServerException, NotFoundException, ConflictException {
-        return getPermissionsDao(domainId).getByInstance(instanceId);
+    @SuppressWarnings("unchecked")
+    public List<AbstractPermissions> getByInstance(String domainId, String instanceId) throws ServerException,
+                                                                                              NotFoundException,
+                                                                                              ConflictException {
+        return (List<AbstractPermissions>)getPermissionsDao(domainId).getByInstance(instanceId);
     }
 
     /**
@@ -156,11 +168,11 @@ public class PermissionsManager {
      *         when any other error occurs during permissions removing
      */
     public void remove(String userId, String domainId, String instanceId) throws ConflictException, ServerException, NotFoundException {
-        final PermissionsDao permissionsStorage = getPermissionsDao(domainId);
-        if (userHasLastSetPermissions(permissionsStorage, userId, instanceId)) {
+        final PermissionsDao<? extends AbstractPermissions> permissionsDao = getPermissionsDao(domainId);
+        if (userHasLastSetPermissions(permissionsDao, userId, instanceId)) {
             throw new ConflictException("Can't remove permissions because there is not any another user with permission 'setPermissions'");
         }
-        permissionsStorage.remove(userId, instanceId);
+        permissionsDao.remove(userId, instanceId);
     }
 
     /**
@@ -189,7 +201,7 @@ public class PermissionsManager {
      * Returns supported domains
      */
     public List<AbstractPermissionsDomain> getDomains() {
-        return new ArrayList<>(domains.values());
+        return new ArrayList<>(domains);
     }
 
     /**
@@ -198,25 +210,22 @@ public class PermissionsManager {
      * @throws NotFoundException
      *         when given domain is unsupported
      */
-    public AbstractPermissionsDomain getDomain(String domain) throws NotFoundException {
-        final AbstractPermissionsDomain permissionsDomain = domains.get(domain);
-        if (permissionsDomain == null) {
-            throw new NotFoundException("Requested unsupported domain '" + domain + "'");
-        }
-        return domains.get(domain);
+    public AbstractPermissionsDomain<? extends AbstractPermissions> getDomain(String domain) throws NotFoundException {
+        return getPermissionsDao(domain).getDomain();
     }
 
 
-    private PermissionsDao getPermissionsDao(String domain) throws NotFoundException {
-        final PermissionsDao permissionsStorage = domainToDao.get(domain);
+    private PermissionsDao<? extends AbstractPermissions> getPermissionsDao(String domain) throws NotFoundException {
+        final PermissionsDao<? extends AbstractPermissions> permissionsStorage = domainToDao.get(domain);
         if (permissionsStorage == null) {
             throw new NotFoundException("Requested unsupported domain '" + domain + "'");
         }
         return permissionsStorage;
     }
 
-    private boolean userHasLastSetPermissions(PermissionsDao<AbstractPermissions> permissionsStorage, String userId, String instanceId)
-            throws ServerException, ConflictException {
+    private boolean userHasLastSetPermissions(PermissionsDao<? extends AbstractPermissions> permissionsStorage,
+                                              String userId,
+                                              String instanceId) throws ServerException, ConflictException {
         try {
             return permissionsStorage.exists(userId, instanceId, SET_PERMISSIONS)
                    && !permissionsStorage.getByInstance(instanceId)

@@ -15,8 +15,6 @@
 package com.codenvy.api.workspace.server;
 
 import com.codenvy.api.permission.server.AbstractPermissionsDomain;
-import com.codenvy.api.permission.shared.model.Permissions;
-import com.codenvy.api.workspace.server.model.Worker;
 import com.codenvy.api.workspace.server.model.impl.WorkerImpl;
 import com.google.common.collect.ImmutableList;
 

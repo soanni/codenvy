@@ -18,7 +18,6 @@ import com.codenvy.api.permission.server.AbstractPermissionsDomain;
 import com.codenvy.api.permission.server.jpa.JpaSystemPermissionsDao;
 import com.codenvy.api.permission.server.model.impl.SystemPermissionsImpl;
 
-import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.commons.test.tck.TckModuleFactory;
 import org.eclipse.che.commons.test.tck.repository.TckRepository;
@@ -28,9 +27,12 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * @author Max Shaposhnik (mshaposhnik@codenvy.com) on 8/23/16.
@@ -75,10 +77,12 @@ public class SystemPermissionsDaoTest {
     }
 
 
+    @Test
+    public void shouldReturnAllPermissionsWhenGetByInstance() throws Exception {
+        final Set<SystemPermissionsImpl> result = new HashSet<>(dao.getByInstance(null));
 
-    @Test(expectedExceptions = ServerException.class)
-    public void shouldThrowServerExceptionOnGetByInstance() throws Exception {
-        dao.getByInstance("instanceq123");
+        assertTrue(result.contains(systemPermissionses[0]));
+        assertTrue(result.contains(systemPermissionses[1]));
     }
 
     @Test(expectedExceptions = NullPointerException.class)
