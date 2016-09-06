@@ -122,18 +122,18 @@ public class WorkspacePermissionsFilter extends CheMethodInvokerFilter {
                 break;
 
             // MachineService methods
-            case "startMachine" :
-            case "stopMachine" :
+            case "startMachine":
+            case "stopMachine":
                 key = ((String)arguments[0]);
                 action = RUN;
                 break;
 
             case "getMachineById":
-            case "getMachines" :
-            case "executeCommandInMachine" :
-            case "getProcesses" :
-            case "stopProcess" :
-            case "getProcessLogs" :
+            case "getMachines":
+            case "executeCommandInMachine":
+            case "getProcesses":
+            case "stopProcess":
+            case "getProcessLogs":
                 key = ((String)arguments[0]);
                 action = USE;
                 break;
@@ -151,7 +151,8 @@ public class WorkspacePermissionsFilter extends CheMethodInvokerFilter {
         }
 
         if (!currentSubject.hasPermission(DOMAIN_ID, workspace.getId(), action)) {
-            throw new ForbiddenException("The user does not have permission to " + action + " workspace with id '" + workspace.getId() + "'");
+            throw new ForbiddenException(
+                    "The user does not have permission to " + action + " workspace with id '" + workspace.getId() + "'");
         }
     }
 

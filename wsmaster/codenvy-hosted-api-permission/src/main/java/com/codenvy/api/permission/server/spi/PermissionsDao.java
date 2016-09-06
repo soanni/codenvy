@@ -56,6 +56,10 @@ public interface PermissionsDao<T extends AbstractPermissions> {
      * @param instanceId
      *         instance id
      * @return user's permissions for specified instance
+     * @throws NullPointerException
+     *         when instance id is null and domain requires it
+     * @throws NullPointerException
+     *         when user id is null
      * @throws NotFoundException
      *         when permissions with given user and domain and instance was not found
      * @throws ServerException

@@ -18,18 +18,23 @@ import com.codenvy.api.permission.shared.model.Permissions;
 
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 
+import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.OneToOne;
+import javax.persistence.PostLoad;
+import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
+import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 /**
- * Represents users' permissions to access to some resources
+ * Represents user's permissions to access to some resources
  *
  * @author Sergii Leschenko
  */
@@ -40,6 +45,7 @@ public abstract class AbstractPermissions implements Permissions {
     @GeneratedValue
     protected String id;
 
+    @Column
     protected String userId;
 
     @OneToOne
@@ -49,16 +55,17 @@ public abstract class AbstractPermissions implements Permissions {
     @ElementCollection
     protected List<String> actions;
 
-    public AbstractPermissions() {
+    @Transient
+    private String userIdHolder;
 
-    }
+    public AbstractPermissions() {}
 
     public AbstractPermissions(Permissions permissions) {
         this(permissions.getUserId(), permissions.getActions());
     }
 
     public AbstractPermissions(String userId, List<String> actions) {
-        this.userId = userId;
+        this.userIdHolder = userId;
         this.actions = new ArrayList<>(actions);
     }
 
@@ -67,9 +74,12 @@ public abstract class AbstractPermissions implements Permissions {
      */
     @Override
     public String getUserId() {
-        return userId;
+        return userIdHolder;
     }
 
+    public void setUserId(String userId) {
+        this.userIdHolder = userId;
+    }
 
     /**
      * Returns instance id
@@ -89,6 +99,25 @@ public abstract class AbstractPermissions implements Permissions {
     @Override
     public List<String> getActions() {
         return actions;
+    }
+
+    @PreUpdate
+    @PrePersist
+    private void prePersist() {
+        if ("*".equals(userIdHolder)) {
+            userId = null;
+        } else {
+            userId = userIdHolder;
+        }
+    }
+
+    @PostLoad
+    private void postLoad() {
+        if (userId == null) {
+            userIdHolder = "*";
+        } else {
+            userIdHolder = userId;
+        }
     }
 
     @Override
@@ -115,8 +144,8 @@ public abstract class AbstractPermissions implements Permissions {
     @Override
     public String toString() {
         return "Permissions{" +
-               "user='" + userId + '\'' +
-               ", actions=" + actions +
+               "user='" + getUserId() + '\'' +
+               ", actions=" + getActions() +
                '}';
     }
 }

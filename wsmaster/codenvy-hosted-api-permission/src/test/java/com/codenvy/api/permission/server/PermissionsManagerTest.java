@@ -54,7 +54,7 @@ import static org.testng.Assert.assertTrue;
 @Listeners(MockitoTestNGListener.class)
 public class PermissionsManagerTest {
     @Mock
-    private PermissionsDao permissionsDao;
+    private PermissionsDao<TestPermissionsImpl> permissionsDao;
 
     private PermissionsManager permissionsManager;
 
@@ -69,7 +69,8 @@ public class PermissionsManagerTest {
           expectedExceptionsMessageRegExp = "Permissions Domain 'test' should be stored in only one storage. " +
                                             "Duplicated in class com.codenvy.api.permission.server.spi.PermissionsDao.* and class com.codenvy.api.permission.server.spi.PermissionsDao.*")
     public void shouldThrowExceptionIfThereAreTwoStoragesWhichServeOneDomain() throws Exception {
-        PermissionsDao anotherStorage = mock(PermissionsDao.class);
+        @SuppressWarnings("unchecked")
+        final PermissionsDao anotherStorage = mock(PermissionsDao.class);
         when(anotherStorage.getDomain()).thenReturn(new TestDomain());
 
         permissionsManager = new PermissionsManager(ImmutableSet.of(permissionsDao, anotherStorage));
@@ -77,14 +78,16 @@ public class PermissionsManagerTest {
 
     @Test
     public void shouldBeAbleToStorePermissions() throws Exception {
-        final Permissions permissions =
-                DtoFactory.newDto(PermissionsDto.class).withUserId("user").withDomainId("test").withInstanceId("test123")
-                          .withActions(singletonList(SET_PERMISSIONS));
-
+        final Permissions permissions = DtoFactory.newDto(PermissionsDto.class)
+                                                  .withUserId("user")
+                                                  .withDomainId("test")
+                                                  .withInstanceId("test123")
+                                                  .withActions(singletonList(SET_PERMISSIONS));
         permissionsManager.storePermission(permissions);
 
-        verify(permissionsDao)
-                .store(eq(new TestDomain().doCreateInstance(permissions.getUserId(), permissions.getDomainId(), permissions.getActions())));
+        verify(permissionsDao).store(new TestDomain().doCreateInstance(permissions.getUserId(),
+                                                                       permissions.getDomainId(),
+                                                                       permissions.getActions()));
     }
 
     @Test(expectedExceptions = ConflictException.class,
@@ -138,7 +141,7 @@ public class PermissionsManagerTest {
 
     @Test
     public void shouldBeAbleToGetPermissionsByUserAndDomainAndInstance() throws Exception {
-        final AbstractPermissions permissions = new TestPermissionsImpl("user", "test", "test123", singletonList("read"));
+        final TestPermissionsImpl permissions = new TestPermissionsImpl("user", "test", "test123", singletonList("read"));
         when(permissionsDao.get("user", "test123")).thenReturn(permissions);
 
         final Permissions fetchedPermissions = permissionsManager.get("user", "test", "test123");
@@ -148,8 +151,8 @@ public class PermissionsManagerTest {
 
     @Test
     public void shouldBeAbleToGetPermissionsByInstance() throws Exception {
-        final AbstractPermissions firstPermissions = new TestPermissionsImpl("user", "test", "test123", singletonList("read"));
-        final AbstractPermissions secondPermissions = new TestPermissionsImpl("user1", "test", "test123", singletonList("read"));
+        final TestPermissionsImpl firstPermissions = new TestPermissionsImpl("user", "test", "test123", singletonList("read"));
+        final TestPermissionsImpl secondPermissions = new TestPermissionsImpl("user1", "test", "test123", singletonList("read"));
 
         when(permissionsDao.getByInstance("test123")).thenReturn(Arrays.asList(firstPermissions, secondPermissions));
 
@@ -192,13 +195,13 @@ public class PermissionsManagerTest {
         permissionsManager.getDomain("unsupported");
     }
 
-    public class TestDomain extends AbstractPermissionsDomain {
+    public class TestDomain extends AbstractPermissionsDomain<TestPermissionsImpl> {
         public TestDomain() {
             super("test", Arrays.asList("read", "write", "use", "delete"));
         }
 
         @Override
-        protected AbstractPermissions doCreateInstance(String userId, String instanceId, List allowedActions) {
+        protected TestPermissionsImpl doCreateInstance(String userId, String instanceId, List allowedActions) {
             return new TestPermissionsImpl("user", "test", "test123", singletonList(SET_PERMISSIONS));
         }
     }

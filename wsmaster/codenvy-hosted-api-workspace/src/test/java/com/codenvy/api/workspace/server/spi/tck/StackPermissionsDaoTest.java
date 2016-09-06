@@ -52,32 +52,32 @@ public class StackPermissionsDaoTest {
     @Inject
     private TckRepository<StackPermissionsImpl> permissionsRepository;
     @Inject
-    private TckRepository<UserImpl>  userRepository;
+    private TckRepository<UserImpl>             userRepository;
     @Inject
-    private TckRepository<StackImpl> stackRepository;
+    private TckRepository<StackImpl>            stackRepository;
 
 
     StackPermissionsImpl[] permissions;
 
     @BeforeMethod
     public void setUp() throws TckRepositoryException {
-        permissions = new StackPermissionsImpl[]{new StackPermissionsImpl("user1", "stack1", Arrays.asList("read", "use", "run")),
-                                                 new StackPermissionsImpl("user2", "stack1", Arrays.asList("read", "use")),
-                                                 new StackPermissionsImpl("user1", "stack2", Arrays.asList("read", "run")),
-                                                 new StackPermissionsImpl("user2", "stack2",
-                                                                          Arrays.asList("read", "use", "run", "configure"))
+        permissions = new StackPermissionsImpl[] {new StackPermissionsImpl("user1", "stack1", Arrays.asList("read", "use", "run")),
+                                                  new StackPermissionsImpl("user2", "stack1", Arrays.asList("read", "use")),
+                                                  new StackPermissionsImpl("user1", "stack2", Arrays.asList("read", "run")),
+                                                  new StackPermissionsImpl("user2", "stack2",
+                                                                           Arrays.asList("read", "use", "run", "configure"))
         };
 
 
-        final UserImpl[] users = new UserImpl[]{new UserImpl("user", "user@com.com", "usr"),
-                                                new UserImpl("user1", "user1@com.com", "usr1"),
-                                                new UserImpl("user2", "user2@com.com", "usr2")};
+        final UserImpl[] users = new UserImpl[] {new UserImpl("user", "user@com.com", "usr"),
+                                                 new UserImpl("user1", "user1@com.com", "usr1"),
+                                                 new UserImpl("user2", "user2@com.com", "usr2")};
         userRepository.createAll(Arrays.asList(users));
 
         stackRepository.createAll(
                 Arrays.asList(new StackImpl("stack1", "st1", null, null, null, null, null, null, null, null),
                               new StackImpl("stack2", "st2", null, null, null, null, null, null, null, null)
-                             ));
+                ));
 
         permissionsRepository.createAll(Arrays.asList(permissions));
     }

@@ -31,8 +31,10 @@ import org.everrest.core.GenericContainerRequest;
 import org.everrest.core.RequestFilter;
 import org.everrest.core.resource.GenericResourceMethod;
 import org.mockito.InjectMocks;
+import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -104,7 +106,7 @@ public class StackPermissionsFilterTest {
 
         assertEquals(response.getStatusCode(), 204);
         verify(service).getStack("stack123");
-        verify(subject).hasPermission(eq("stack"), eq("stack123"), eq(READ));
+        verify(subject).hasPermission(eq("stack"), eq("stack123"), Matchers.eq(READ));
     }
 
     @Test
@@ -119,7 +121,7 @@ public class StackPermissionsFilterTest {
 
         assertEquals(response.getStatusCode(), 204);
         verify(service).updateStack(any(), eq("stack123"));
-        verify(subject).hasPermission(eq("stack"), eq("stack123"), eq(UPDATE));
+        verify(subject).hasPermission(eq("stack"), eq("stack123"), Matchers.eq(UPDATE));
     }
 
     @Test
@@ -134,7 +136,7 @@ public class StackPermissionsFilterTest {
 
         assertEquals(response.getStatusCode(), 204);
         verify(service).removeStack(eq("stack123"));
-        verify(subject).hasPermission(eq("stack"), eq("stack123"), eq(DELETE));
+        verify(subject).hasPermission(eq("stack"), eq("stack123"), Matchers.eq(DELETE));
     }
 
     @Test
@@ -162,7 +164,7 @@ public class StackPermissionsFilterTest {
 
         assertEquals(response.getStatusCode(), 204);
         verify(service).getIcon(eq("stack123"));
-        verify(subject).hasPermission(eq("stack"), eq("stack123"), eq(READ));
+        verify(subject).hasPermission(eq("stack"), eq("stack123"), Matchers.eq(READ));
     }
 
     @Test
@@ -178,7 +180,7 @@ public class StackPermissionsFilterTest {
 
         assertEquals(response.getStatusCode(), 204);
         verify(service).uploadIcon(any(), eq("stack123"));
-        verify(subject).hasPermission(eq("stack"), eq("stack123"), eq(UPDATE));
+        verify(subject).hasPermission(eq("stack"), eq("stack123"), Matchers.eq(UPDATE));
     }
 
     @Test
@@ -193,7 +195,8 @@ public class StackPermissionsFilterTest {
                                          .post(SECURE_PATH + "/stack/stack123/icon");
 
         assertEquals(response.getStatusCode(), 403);
-        assertEquals(unwrapError(response), "The user does not have permission to " + UPDATE + " stack with id 'stack123'");
+        Assert.assertEquals(unwrapError(response),
+                            "The user does not have permission to " + UPDATE + " stack with id 'stack123'");
         verifyZeroInteractions(service);
     }
 
@@ -209,7 +212,7 @@ public class StackPermissionsFilterTest {
 
         assertEquals(response.getStatusCode(), 204);
         verify(service).removeIcon(eq("stack123"));
-        verify(subject).hasPermission(eq("stack"), eq("stack123"), eq(UPDATE));
+        verify(subject).hasPermission(eq("stack"), eq("stack123"), Matchers.eq(UPDATE));
     }
 
     @Test(expectedExceptions = ForbiddenException.class,

@@ -15,9 +15,11 @@
 package com.codenvy.api.workspace.server.stack;
 
 import com.codenvy.api.permission.server.model.impl.AbstractPermissions;
+import com.codenvy.api.permission.shared.model.Permissions;
 
 import org.eclipse.che.api.workspace.server.model.impl.stack.StackImpl;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Index;
 import javax.persistence.JoinColumn;
@@ -25,9 +27,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 import java.util.List;
-import java.util.Objects;
 
 
 /**
@@ -35,7 +35,6 @@ import java.util.Objects;
  *
  * @author Max Shaposhnik
  */
-
 @Entity(name = "StackPermissions")
 @NamedQueries(
         {
@@ -46,26 +45,28 @@ import java.util.Objects;
                 @NamedQuery(name = "StackPermissions.getByUserId",
                             query = "SELECT stack " +
                                     "FROM StackPermissions stack " +
-                                    "WHERE stack.userId = :userId "),
+                                    "WHERE stack.userId IS NULL OR stack.userId = :userId "),
                 @NamedQuery(name = "StackPermissions.getByUserAndStackId",
                             query = "SELECT stack " +
                                     "FROM StackPermissions stack " +
                                     "WHERE stack.stackId = :stackId " +
-                                    "AND stack.userId = :userId")
+                                    "AND (stack.userId IS NULL OR stack.userId = :userId) ")
         }
 )
 @Table(indexes = @Index(columnList = "userId, stackId", unique = true))
 public class StackPermissionsImpl extends AbstractPermissions {
 
+    @Column
     private String stackId;
 
     @ManyToOne
     @JoinColumn(name = "stackId", insertable = false, updatable = false)
     private StackImpl stack;
 
+    public StackPermissionsImpl() {}
 
-    public StackPermissionsImpl() {
-
+    public StackPermissionsImpl(Permissions permissions) {
+        this(permissions.getUserId(), permissions.getInstanceId(), permissions.getActions());
     }
 
     public StackPermissionsImpl(String userId, String instanceId, List<String> allowedActions) {
@@ -86,7 +87,7 @@ public class StackPermissionsImpl extends AbstractPermissions {
     @Override
     public String toString() {
         return "StackPermissionsImpl{" +
-               "userId='" + userId + '\'' +
+               "userId='" + getUserId() + '\'' +
                ", stackId='" + stackId + '\'' +
                ", actions=" + actions +
                '}';

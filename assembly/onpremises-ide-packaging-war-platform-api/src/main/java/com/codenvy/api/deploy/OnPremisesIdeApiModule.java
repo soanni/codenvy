@@ -15,10 +15,11 @@
 package com.codenvy.api.deploy;
 
 import com.codenvy.api.AdminApiModule;
+import com.codenvy.api.machine.server.jpa.OnPremisesJpaMachineJpaModule;
 import com.codenvy.api.permission.server.PermissionChecker;
 import com.codenvy.api.user.server.AdminUserService;
-import com.codenvy.api.workspace.server.jpa.PermissionsJpaModule;
-import com.codenvy.api.workspace.server.jpa.OnPremisesJpaWorkspaceDao;
+import com.codenvy.api.workspace.server.jpa.OnPremisesJpaWorkspaceModule;
+import com.codenvy.api.workspace.server.spi.jpa.OnPremisesJpaWorkspaceDao;
 import com.codenvy.auth.aws.ecr.AwsEcrAuthResolver;
 import com.codenvy.auth.sso.client.ServerClient;
 import com.codenvy.auth.sso.client.TokenHandler;
@@ -46,8 +47,8 @@ import com.palominolabs.metrics.guice.InstrumentationModule;
 
 import org.eclipse.che.account.spi.AccountDao;
 import org.eclipse.che.account.spi.jpa.JpaAccountDao;
-import org.eclipse.che.api.auth.AuthenticationDao;
 import org.eclipse.che.api.agent.server.wsagent.WsAgentLauncher;
+import org.eclipse.che.api.auth.AuthenticationDao;
 import org.eclipse.che.api.auth.AuthenticationService;
 import org.eclipse.che.api.core.jdbc.jpa.eclipselink.EntityListenerInjectionManagerInitializer;
 import org.eclipse.che.api.core.jdbc.jpa.guice.JpaInitializer;
@@ -61,10 +62,12 @@ import org.eclipse.che.api.factory.server.FactoryParametersResolver;
 import org.eclipse.che.api.factory.server.FactoryService;
 import org.eclipse.che.api.factory.server.jpa.JpaFactoryDao;
 import org.eclipse.che.api.factory.server.spi.FactoryDao;
-import org.eclipse.che.api.machine.server.jpa.MachineJpaModule;
-import org.eclipse.che.api.machine.server.recipe.RecipeLoader;
+import org.eclipse.che.api.machine.server.jpa.JpaRecipeDao;
+import org.eclipse.che.api.machine.server.jpa.JpaSnapshotDao;
 import org.eclipse.che.api.machine.server.recipe.RecipeService;
 import org.eclipse.che.api.machine.server.recipe.providers.RecipeProvider;
+import org.eclipse.che.api.machine.server.spi.RecipeDao;
+import org.eclipse.che.api.machine.server.spi.SnapshotDao;
 import org.eclipse.che.api.project.server.handlers.ProjectHandler;
 import org.eclipse.che.api.project.server.template.ProjectTemplateDescriptionLoader;
 import org.eclipse.che.api.project.server.template.ProjectTemplateRegistry;
@@ -80,9 +83,10 @@ import org.eclipse.che.api.workspace.server.WorkspaceService;
 import org.eclipse.che.api.workspace.server.WorkspaceServiceLinksInjector;
 import org.eclipse.che.api.workspace.server.WorkspaceValidator;
 import org.eclipse.che.api.workspace.server.event.WorkspaceMessenger;
+import org.eclipse.che.api.workspace.server.jpa.JpaStackDao;
 import org.eclipse.che.api.workspace.server.jpa.JpaWorkspaceDao;
 import org.eclipse.che.api.workspace.server.jpa.WorkspaceJpaModule;
-import org.eclipse.che.api.workspace.server.stack.StackLoader;
+import org.eclipse.che.api.workspace.server.spi.StackDao;
 import org.eclipse.che.api.workspace.server.stack.StackService;
 import org.eclipse.che.commons.schedule.executor.ScheduleModule;
 import org.eclipse.che.everrest.CheAsynchronousJobPool;
@@ -164,19 +168,25 @@ public class OnPremisesIdeApiModule extends AbstractModule {
         install(new UserJpaModule());
         install(new SshJpaModule());
         install(new WorkspaceJpaModule());
-        install(new PermissionsJpaModule());
-        install(new MachineJpaModule());
+        install(new OnPremisesJpaWorkspaceModule());
+        install(new OnPremisesJpaMachineJpaModule());
         bind(AccountDao.class).to(JpaAccountDao.class);
         bind(FactoryDao.class).to(JpaFactoryDao.class);
+        bind(StackDao.class).to(JpaStackDao.class);
+        bind(RecipeDao.class).to(JpaRecipeDao.class);
+        bind(SnapshotDao.class).to(JpaSnapshotDao.class);
         bind(JpaWorkspaceDao.class).to(OnPremisesJpaWorkspaceDao.class);
         bind(AuthenticationDao.class).to(com.codenvy.api.dao.authentication.AuthenticationDaoImpl.class);
-        bind(RecipeLoader.class);
-        final Multibinder<String> recipeBinder = Multibinder.newSetBinder(binder(), String.class, Names.named("predefined.recipe.path"));
+
+        final Multibinder<String> recipeBinder = Multibinder.newSetBinder(binder(),
+                                                                          String.class,
+                                                                          Names.named("predefined.recipe.path"));
         recipeBinder.addBinding().toProvider(RecipeProvider.class);
         recipeBinder.addBinding().toInstance("predefined-recipes.json");
 
         bind(StackService.class);
-        bind(StackLoader.class);
+        bind(com.codenvy.api.machine.server.recipe.OnPremisesRecipeLoader.class);
+        bind(com.codenvy.api.workspace.server.stack.OnPremisesStackLoader.class);
 
         bind(WorkspaceValidator.class).to(org.eclipse.che.api.workspace.server.DefaultWorkspaceValidator.class);
         bind(WorkspaceManager.class).to(com.codenvy.api.workspace.LimitsCheckingWorkspaceManager.class);
@@ -285,7 +295,7 @@ public class OnPremisesIdeApiModule extends AbstractModule {
         install(new org.eclipse.che.plugin.docker.machine.proxy.DockerProxyModule());
 
         install(new com.codenvy.api.permission.server.PermissionsModule());
-        install(new PermissionsJpaModule());
+        install(new OnPremisesJpaWorkspaceModule());
         install(new com.codenvy.api.workspace.server.WorkspaceApiModule());
 
         install(new FactoryModuleBuilder()

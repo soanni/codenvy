@@ -14,8 +14,6 @@
  */
 package com.codenvy.api.workspace.server.filters;
 
-import com.codenvy.api.workspace.server.stack.StackDomain;
-
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.workspace.server.stack.StackService;
@@ -30,6 +28,7 @@ import javax.ws.rs.Path;
 import static com.codenvy.api.workspace.server.stack.StackDomain.DELETE;
 import static com.codenvy.api.workspace.server.stack.StackDomain.DOMAIN_ID;
 import static com.codenvy.api.workspace.server.stack.StackDomain.READ;
+import static com.codenvy.api.workspace.server.stack.StackDomain.SEARCH;
 import static com.codenvy.api.workspace.server.stack.StackDomain.UPDATE;
 
 /**
@@ -57,7 +56,7 @@ public class StackPermissionsFilter extends CheMethodInvokerFilter {
                 stackId = ((String)arguments[0]);
                 action = READ;
 
-                if (currentSubject.hasPermission(StackDomain.DOMAIN_ID, stackId, StackDomain.SEARCH)) {
+                if (currentSubject.hasPermission(DOMAIN_ID, stackId, SEARCH)) {
                     //allow to read stack if user has 'search' permission
                     return;
                 }

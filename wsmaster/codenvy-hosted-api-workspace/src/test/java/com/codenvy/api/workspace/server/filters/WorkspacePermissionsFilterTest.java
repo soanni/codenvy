@@ -34,6 +34,7 @@ import org.everrest.core.GenericContainerRequest;
 import org.everrest.core.RequestFilter;
 import org.everrest.core.resource.GenericResourceMethod;
 import org.mockito.InjectMocks;
+import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.testng.MockitoTestNGListener;
@@ -193,7 +194,7 @@ public class WorkspacePermissionsFilterTest {
 
         assertEquals(response.getStatusCode(), 204);
         verify(machineService).stopMachine(eq("workspace123"), any());
-        verify(subject).hasPermission(eq("workspace"), eq("workspace123"), eq(RUN));
+        verify(subject).hasPermission(eq("workspace"), eq("workspace123"), Matchers.eq(RUN));
     }
 
     @Test
