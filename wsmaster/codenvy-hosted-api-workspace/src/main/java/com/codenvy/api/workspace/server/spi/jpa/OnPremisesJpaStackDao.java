@@ -40,7 +40,7 @@ public class OnPremisesJpaStackDao extends JpaStackDao {
     @Inject
     private Provider<EntityManager> managerProvider;
 
-    private static final String findByPermissionsQuery = " SELECT stack FROM StackPermissionsImpl perm " +
+    private static final String findByPermissionsQuery = " SELECT stack FROM StackPermissions perm " +
                                                          "        LEFT JOIN perm.stack stack  " +
                                                          "        WHERE (perm.userId IS NULL OR perm.userId  = :userId) " +
                                                          "        AND 'search' MEMBER OF perm.actions";
