@@ -44,6 +44,8 @@ import com.codenvy.auth.sso.server.organization.UserCreationValidator;
 import com.codenvy.auth.sso.server.organization.UserCreator;
 import com.codenvy.plugin.github.factory.resolver.GithubFactoryParametersResolver;
 import com.codenvy.plugin.gitlab.factory.resolver.GitlabFactoryParametersResolver;
+import com.codenvy.service.systemram.DockerBasedSystemRamInfoProvider;
+import com.codenvy.service.systemram.SystemRamInfoProvider;
 import com.google.inject.AbstractModule;
 import com.google.inject.Key;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
@@ -212,6 +214,10 @@ public class OnPremisesIdeApiModule extends AbstractModule {
         bind(com.codenvy.service.http.WorkspaceInfoCache.class);
 
         bind(com.codenvy.service.password.PasswordService.class);
+
+        bind(com.codenvy.service.systemram.SystemRamService.class);
+
+        bind(SystemRamInfoProvider.class).to(DockerBasedSystemRamInfoProvider.class);
 
         //authentication
 
