@@ -17,6 +17,7 @@ package com.codenvy.api.deploy;
 import com.codenvy.api.AdminApiModule;
 import com.codenvy.api.machine.server.jpa.OnPremisesJpaMachineJpaModule;
 import com.codenvy.api.permission.server.PermissionChecker;
+import com.codenvy.api.permission.server.jpa.SystemPermissionsJpaModule;
 import com.codenvy.api.user.server.AdminUserService;
 import com.codenvy.api.workspace.server.jpa.OnPremisesJpaWorkspaceModule;
 import com.codenvy.api.workspace.server.spi.jpa.OnPremisesJpaWorkspaceDao;
@@ -294,6 +295,7 @@ public class OnPremisesIdeApiModule extends AbstractModule {
 
         install(new org.eclipse.che.plugin.docker.machine.proxy.DockerProxyModule());
 
+        install(new SystemPermissionsJpaModule());
         install(new com.codenvy.api.permission.server.PermissionsModule());
         install(new OnPremisesJpaWorkspaceModule());
         install(new com.codenvy.api.workspace.server.WorkspaceApiModule());
