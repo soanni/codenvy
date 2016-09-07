@@ -16,9 +16,11 @@ package com.codenvy.api.deploy;
 
 import com.codenvy.api.AdminApiModule;
 import com.codenvy.api.machine.server.jpa.OnPremisesJpaMachineJpaModule;
+import com.codenvy.api.machine.server.jpa.OnPremisesJpaRecipeDao;
 import com.codenvy.api.permission.server.PermissionChecker;
 import com.codenvy.api.user.server.AdminUserService;
 import com.codenvy.api.workspace.server.jpa.OnPremisesJpaWorkspaceModule;
+import com.codenvy.api.workspace.server.spi.jpa.OnPremisesJpaStackDao;
 import com.codenvy.api.workspace.server.spi.jpa.OnPremisesJpaWorkspaceDao;
 import com.codenvy.auth.aws.ecr.AwsEcrAuthResolver;
 import com.codenvy.auth.sso.client.ServerClient;
@@ -176,6 +178,8 @@ public class OnPremisesIdeApiModule extends AbstractModule {
         bind(RecipeDao.class).to(JpaRecipeDao.class);
         bind(SnapshotDao.class).to(JpaSnapshotDao.class);
         bind(JpaWorkspaceDao.class).to(OnPremisesJpaWorkspaceDao.class);
+        bind(JpaStackDao.class).to(OnPremisesJpaStackDao.class);
+        bind(JpaRecipeDao.class).to(OnPremisesJpaRecipeDao.class);
         bind(AuthenticationDao.class).to(com.codenvy.api.dao.authentication.AuthenticationDaoImpl.class);
 
         final Multibinder<String> recipeBinder = Multibinder.newSetBinder(binder(),

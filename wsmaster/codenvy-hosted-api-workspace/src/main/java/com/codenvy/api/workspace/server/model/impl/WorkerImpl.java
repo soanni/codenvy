@@ -23,9 +23,9 @@ import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import javax.persistence.Entity;
 import javax.persistence.Index;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import java.util.List;
 
@@ -57,7 +57,7 @@ public class WorkerImpl extends AbstractPermissions implements Worker {
 
     private String workspaceId;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "workspaceId", insertable = false, updatable = false)
     private WorkspaceImpl workspace;
 
