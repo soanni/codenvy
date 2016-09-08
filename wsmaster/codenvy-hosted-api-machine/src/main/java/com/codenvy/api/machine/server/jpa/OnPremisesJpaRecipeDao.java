@@ -19,6 +19,7 @@ import com.google.inject.persist.Transactional;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.machine.server.jpa.JpaRecipeDao;
 import org.eclipse.che.api.machine.server.recipe.RecipeImpl;
+import org.eclipse.che.api.machine.server.spi.RecipeDao;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
