@@ -43,14 +43,14 @@ public class OnPremisesJpaRecipeDao extends JpaRecipeDao {
                                                                 "       LEFT JOIN perm.recipe recipe  " +
                                                                 "       WHERE (perm.userId IS NULL OR perm.userId  = :userId)" +
                                                                 "       AND 'search' MEMBER OF perm.actions " +
-                                                                "       AND recipe.type IS NULL OR recipe.type = :recipeType ";
+                                                                "       AND (recipe.type IS NULL OR recipe.type = :recipeType) ";
 
     private static final String findByPermissionsTagsAndTypeQuery = "SELECT recipe FROM RecipePermissions perm" +
                                                                     "       LEFT JOIN perm.recipe recipe  " +
                                                                     "       LEFT JOIN recipe.tags tag     " +
                                                                     "       WHERE (perm.userId IS NULL OR perm.userId  = :userId)" +
                                                                     "       AND 'search' MEMBER OF perm.actions " +
-                                                                    "       AND recipe.type IS NULL OR recipe.type = :recipeType " +
+                                                                    "       AND (recipe.type IS NULL OR recipe.type = :recipeType) " +
                                                                     "       AND tag IN :tags " +
                                                                     "       GROUP BY recipe.id HAVING COUNT(tag) = :tagsSize";
 
