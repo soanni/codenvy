@@ -62,21 +62,21 @@ public class OnPremisesJpaRecipeDao extends JpaRecipeDao {
                                    int skipCount,
                                    int maxItems) throws ServerException {
 
-            final TypedQuery<RecipeImpl> query;
-            if (tags == null || tags.isEmpty()) {
-                query = managerProvider.get().createQuery(findByPermissionsAndTypeQuery, RecipeImpl.class);
-            } else {
-                query = managerProvider.get()
-                                       .createQuery(findByPermissionsTagsAndTypeQuery, RecipeImpl.class)
-                                       .setParameter("tags", tags)
-                                       .setParameter("tagsSize", tags.size());
-            }
+        final TypedQuery<RecipeImpl> query;
+        if (tags == null || tags.isEmpty()) {
+            query = managerProvider.get().createQuery(findByPermissionsAndTypeQuery, RecipeImpl.class);
+        } else {
+            query = managerProvider.get()
+                                   .createQuery(findByPermissionsTagsAndTypeQuery, RecipeImpl.class)
+                                   .setParameter("tags", tags)
+                                   .setParameter("tagsSize", tags.size());
+        }
         try {
             return query.setParameter("userId", userId)
-                             .setParameter("recipeType", type)
-                             .setFirstResult(skipCount)
-                             .setMaxResults(maxItems)
-                             .getResultList();
+                        .setParameter("recipeType", type)
+                        .setFirstResult(skipCount)
+                        .setMaxResults(maxItems)
+                        .getResultList();
         } catch (RuntimeException ex) {
             throw new ServerException(ex.getLocalizedMessage(), ex);
         }
