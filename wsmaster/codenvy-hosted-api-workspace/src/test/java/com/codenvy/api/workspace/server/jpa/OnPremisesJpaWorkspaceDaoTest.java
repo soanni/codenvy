@@ -12,11 +12,15 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.api.machine.server.jpa;
+package com.codenvy.api.workspace.server.jpa;
 
+import com.codenvy.api.machine.server.jpa.OnPremisesJpaMachineModule;
 import com.codenvy.api.machine.server.recipe.RecipePermissionsImpl;
 import com.codenvy.api.permission.server.PermissionsModule;
 import com.codenvy.api.permission.server.jpa.SystemPermissionsJpaModule;
+import com.codenvy.api.workspace.server.model.impl.WorkerImpl;
+import com.codenvy.api.workspace.server.spi.jpa.OnPremisesJpaStackDao;
+import com.codenvy.api.workspace.server.spi.jpa.OnPremisesJpaWorkspaceDao;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -25,9 +29,11 @@ import com.google.inject.persist.jpa.JpaPersistModule;
 
 import org.eclipse.che.api.core.jdbc.jpa.eclipselink.EntityListenerInjectionManagerInitializer;
 import org.eclipse.che.api.core.jdbc.jpa.guice.JpaInitializer;
-import org.eclipse.che.api.machine.server.jpa.JpaRecipeDao;
-import org.eclipse.che.api.machine.server.recipe.RecipeImpl;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
+import org.eclipse.che.api.workspace.server.jpa.JpaStackDao;
+import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
+import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
+import org.eclipse.che.api.workspace.server.model.impl.stack.StackImpl;
 import org.eclipse.che.commons.test.tck.repository.JpaTckRepository;
 import org.eclipse.che.commons.test.tck.repository.TckRepository;
 import org.testng.annotations.AfterClass;
@@ -38,7 +44,6 @@ import org.testng.annotations.Test;
 
 import javax.persistence.EntityManager;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static org.testng.Assert.assertEquals;
@@ -47,38 +52,36 @@ import static org.testng.Assert.assertTrue;
 /**
  * @author Max Shaposhnik
  */
-public class OnPremisesJpaRecipeDaoTest {
-
+public class OnPremisesJpaWorkspaceDaoTest {
     private EntityManager manager;
 
-    private OnPremisesJpaRecipeDao dao;
+    private OnPremisesJpaWorkspaceDao dao;
 
-    RecipePermissionsImpl[] permissionses;
+    WorkerImpl[] workers;
 
     UserImpl[] users;
 
-    RecipeImpl[] recipes;
+    WorkspaceImpl[] workspaces;
 
     @BeforeClass
     public void setupEntities() throws Exception {
-        permissionses = new RecipePermissionsImpl[] {new RecipePermissionsImpl("user1", "recipe1", Arrays.asList("read", "use", "search")),
-                                                     new RecipePermissionsImpl("user1", "recipe2", Arrays.asList("read", "search")),
-                                                     new RecipePermissionsImpl("user1", "recipe3", Arrays.asList("read", "run")),
-                                                     new RecipePermissionsImpl("user2", "recipe1", Arrays.asList("read", "use"))};
+        workers = new WorkerImpl[]{new WorkerImpl("ws1", "user1", Arrays.asList("read", "use", "search")),
+                                             new WorkerImpl("ws2", "user1", Arrays.asList("read", "search")),
+                                             new WorkerImpl("ws3", "user1", Arrays.asList("none", "run")),
+                                             new WorkerImpl("ws1", "user2", Arrays.asList("read", "use"))};
 
-        users = new UserImpl[] {new UserImpl("user1", "user1@com.com", "usr1"),
-                                new UserImpl("user2", "user2@com.com", "usr2")};
+        users = new UserImpl[]{new UserImpl("user1", "user1@com.com", "usr1"),
+                               new UserImpl("user2", "user2@com.com", "usr2")};
 
-        recipes = new RecipeImpl[] {
-                new RecipeImpl("recipe1", "rc1", null, null, null, Arrays.asList("tag1", "tag2"), null),
-                new RecipeImpl("recipe2", "rc2", null, "testType", null, null, null),
-                new RecipeImpl("recipe3", "rc3", null, null, null, null, null)};
-
+        workspaces = new WorkspaceImpl[] {
+                new WorkspaceImpl("ws1", users[0].getAccount(), new WorkspaceConfigImpl("wrksp1", "", "cfg1", null, null, null)),
+                new WorkspaceImpl("ws2", users[0].getAccount(), new WorkspaceConfigImpl("wrksp2", "", "cfg2", null, null, null)),
+                new WorkspaceImpl("ws3", users[0].getAccount(), new WorkspaceConfigImpl("wrksp3", "", "cfg3", null, null, null))};
         Injector injector =
                 Guice.createInjector(new TestModule(), new OnPremisesJpaMachineModule(), new PermissionsModule(),
                                      new SystemPermissionsJpaModule());
         manager = injector.getInstance(EntityManager.class);
-        dao = injector.getInstance(OnPremisesJpaRecipeDao.class);
+        dao = injector.getInstance(OnPremisesJpaWorkspaceDao.class);
     }
 
     @BeforeMethod
@@ -88,12 +91,12 @@ public class OnPremisesJpaRecipeDaoTest {
             manager.persist(user);
         }
 
-        for (RecipeImpl recipe : recipes) {
-            manager.persist(recipe);
+        for (WorkspaceImpl ws : workspaces) {
+            manager.persist(ws);
         }
 
-        for (RecipePermissionsImpl recipePermissions : permissionses) {
-            manager.persist(recipePermissions);
+        for (WorkerImpl worker : workers) {
+            manager.persist(worker);
         }
         manager.getTransaction().commit();
         manager.clear();
@@ -103,11 +106,11 @@ public class OnPremisesJpaRecipeDaoTest {
     public void cleanup() {
         manager.getTransaction().begin();
 
-        manager.createQuery("SELECT p FROM RecipePermissions p", RecipePermissionsImpl.class)
+        manager.createQuery("SELECT e FROM Worker e", WorkerImpl.class)
                .getResultList()
                .forEach(manager::remove);
 
-        manager.createQuery("SELECT r FROM Recipe r", RecipeImpl.class)
+        manager.createQuery("SELECT w FROM Workspace w", WorkspaceImpl.class)
                .getResultList()
                .forEach(manager::remove);
 
@@ -124,24 +127,11 @@ public class OnPremisesJpaRecipeDaoTest {
 
 
     @Test
-    public void shouldFindRecipeByPermissionsAndType() throws Exception {
-        List<RecipeImpl> results = dao.search(users[0].getId(), null, "testType", 0, 0);
+    public void shouldFindStackByPermissions() throws Exception {
+        List<WorkspaceImpl> results = dao.getWorkspaces(users[0].getId());
         assertEquals(results.size(), 2);
-        assertTrue(results.contains(recipes[0]));
-        assertTrue(results.contains(recipes[1]));
-    }
-
-    @Test
-    public void shouldFindRecipeByPermissionsAndTags() throws Exception {
-        List<RecipeImpl> results = dao.search(users[0].getId(), Collections.singletonList("tag2"), null, 0, 0);
-        assertEquals(results.size(), 1);
-        assertEquals(results.get(0), recipes[0]);
-    }
-
-    @Test
-    public void shouldNotFindRecipeUnexistingTags() throws Exception {
-        List<RecipeImpl> results = dao.search(users[0].getId(), Collections.singletonList("unexisted_tag2"), null, 0, 0);
-        assertTrue(results.isEmpty());
+        assertTrue(results.contains(workspaces[0]));
+        assertTrue(results.contains(workspaces[1]));
     }
 
     private class TestModule extends AbstractModule {
@@ -149,12 +139,12 @@ public class OnPremisesJpaRecipeDaoTest {
         @Override
         protected void configure() {
 
-            bind(JpaRecipeDao.class).to(OnPremisesJpaRecipeDao.class);
+            bind(JpaStackDao.class).to(OnPremisesJpaStackDao.class);
 
             bind(new TypeLiteral<TckRepository<RecipePermissionsImpl>>() {
             }).toInstance(new JpaTckRepository<>(RecipePermissionsImpl.class));
             bind(new TypeLiteral<TckRepository<UserImpl>>() {}).toInstance(new JpaTckRepository<>(UserImpl.class));
-            bind(new TypeLiteral<TckRepository<RecipeImpl>>() {}).toInstance(new JpaTckRepository<>(RecipeImpl.class));
+            bind(new TypeLiteral<TckRepository<StackImpl>>() {}).toInstance(new JpaTckRepository<>(StackImpl.class));
 
             install(new JpaPersistModule("main"));
             bind(JpaInitializer.class).asEagerSingleton();

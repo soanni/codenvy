@@ -29,7 +29,7 @@ import javax.persistence.TypedQuery;
 import java.util.List;
 
 /**
- * JPA {@link RecipeDao} implementation that respects permissions on search with user.
+ * JPA {@link RecipeDao} implementation that respects permissions on search by user.
  *
  * @author Max Shaposhnik (mshaposhnik@codenvy.com)
  */

@@ -30,7 +30,7 @@ import javax.persistence.TypedQuery;
 import java.util.List;
 
 /**
- *  JPA {@link StackDao} implementation that respects permissions on search with user.
+ *  JPA {@link StackDao} implementation that respects permissions on search by user.
  *
  * @author Max Shaposhnik
  */

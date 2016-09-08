@@ -18,7 +18,9 @@ import com.codenvy.api.machine.server.jpa.OnPremisesJpaMachineModule;
 import com.codenvy.api.machine.server.recipe.RecipePermissionsImpl;
 import com.codenvy.api.permission.server.PermissionsModule;
 import com.codenvy.api.permission.server.jpa.SystemPermissionsJpaModule;
+import com.codenvy.api.workspace.server.model.impl.WorkerImpl;
 import com.codenvy.api.workspace.server.spi.jpa.OnPremisesJpaStackDao;
+import com.codenvy.api.workspace.server.spi.jpa.OnPremisesJpaWorkspaceDao;
 import com.codenvy.api.workspace.server.stack.StackPermissionsImpl;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -30,6 +32,8 @@ import org.eclipse.che.api.core.jdbc.jpa.eclipselink.EntityListenerInjectionMana
 import org.eclipse.che.api.core.jdbc.jpa.guice.JpaInitializer;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.jpa.JpaStackDao;
+import org.eclipse.che.api.workspace.server.jpa.JpaWorkspaceDao;
+import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.api.workspace.server.model.impl.stack.StackImpl;
 import org.eclipse.che.commons.test.tck.repository.JpaTckRepository;
 import org.eclipse.che.commons.test.tck.repository.TckRepository;
@@ -141,19 +145,24 @@ public class OnPremisesJpaStackDaoTest {
         assertEquals(results.get(0), stacks[0]);
     }
 
-
+    @Test
+    public void shouldNotFindRecipeByUnexistingTags() throws Exception {
+        List<StackImpl> results = dao.searchStacks(users[0].getId(), Collections.singletonList("unexisted_tag2"), 0, 0);
+        assertTrue(results.isEmpty());
+    }
 
     private class TestModule extends AbstractModule {
 
         @Override
         protected void configure() {
 
-            bind(JpaStackDao.class).to(OnPremisesJpaStackDao.class);
+            bind(JpaWorkspaceDao.class).to(OnPremisesJpaWorkspaceDao.class);
 
-            bind(new TypeLiteral<TckRepository<RecipePermissionsImpl>>() {
-            }).toInstance(new JpaTckRepository<>(RecipePermissionsImpl.class));
+            bind(new TypeLiteral<TckRepository<StackPermissionsImpl>>() {
+            }).toInstance(new JpaTckRepository<>(StackPermissionsImpl.class));
             bind(new TypeLiteral<TckRepository<UserImpl>>() {}).toInstance(new JpaTckRepository<>(UserImpl.class));
-            bind(new TypeLiteral<TckRepository<StackImpl>>() {}).toInstance(new JpaTckRepository<>(StackImpl.class));
+            bind(new TypeLiteral<TckRepository<WorkerImpl>>() {}).toInstance(new JpaTckRepository<>(WorkerImpl.class));
+            bind(new TypeLiteral<TckRepository<WorkspaceImpl>>() {}).toInstance(new JpaTckRepository<>(WorkspaceImpl.class));
 
             install(new JpaPersistModule("main"));
             bind(JpaInitializer.class).asEagerSingleton();
