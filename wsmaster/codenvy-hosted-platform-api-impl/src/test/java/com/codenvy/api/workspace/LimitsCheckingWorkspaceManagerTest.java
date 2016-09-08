@@ -37,6 +37,9 @@ import org.testng.Assert;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 
 import static com.codenvy.api.workspace.TestObjects.createConfig;
@@ -48,11 +51,14 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertNull;
@@ -556,5 +562,58 @@ public class LimitsCheckingWorkspaceManagerTest {
         manager.checkRamAndPropagateLimitedThroughputStart(createConfig("256mb", "256mb", null), null, "user123", callback);
 
         assertNull(manager.startSemaphore);
+    }
+
+    @Test(timeOut = 3000)
+    public void shouldPermitToCheckRamOnlyForFiveThreadsAtTheSameTime() throws Exception {
+        when(systemRamInfoProvider.getSystemRamInfo()).thenReturn(new SystemRamInfo(0, parseSize("3 GiB")));
+        final LimitsCheckingWorkspaceManager manager = spy(new LimitsCheckingWorkspaceManager(2,
+                                                                                              "3gb", // <- workspaces ram limit
+                                                                                              "1gb",
+                                                                                              5,
+                                                                                              systemRamInfoProvider,
+                                                                                              null,
+                                                                                              null,
+                                                                                              null,
+                                                                                              null,
+                                                                                              null,
+                                                                                              environmentParser,
+                                                                                              false,
+                                                                                              false,
+                                                                                              2000));
+        doReturn(singletonList(createRuntime("1gb", "1gb"))).when(manager).getByNamespace(anyString()); // <- currently running 2gb
+        final CountDownLatch invokeProcessLatch7 = new CountDownLatch(7);
+        final CountDownLatch invokeProcessLatch6 = new CountDownLatch(6);
+        doAnswer(invocationOnMock -> {
+            invokeProcessLatch7.countDown();
+            //Pause the thread when it is acquired the permit to check RAM.
+            invokeProcessLatch6.countDown();
+            invokeProcessLatch6.await();
+            return null;
+        }).when(manager).checkRamAndPropagateStart(anyObject(), anyString(), anyString(), anyObject());
+        Runnable runnable = () -> {
+            try {
+                final WorkspaceCallback callback = mock(WorkspaceCallback.class);
+                manager.checkRamAndPropagateLimitedThroughputStart(createConfig("1gb"), null, "user123", callback);
+            } catch (Exception e) {
+            }
+        };
+        ExecutorService executor = Executors.newFixedThreadPool(7);
+        executor.submit(runnable);
+        executor.submit(runnable);
+        executor.submit(runnable);
+        executor.submit(runnable);
+        executor.submit(runnable);
+        executor.submit(runnable);
+        executor.submit(runnable);
+
+        //Wait for throughput limit is reached and check that RAM check was performed only for allowed number of threads.
+        verify(manager, timeout(300).times(5)).checkRamAndPropagateStart(anyObject(), anyString(), anyString(), anyObject());
+
+        //Execute paused threads to release check RAM permits for other threads.
+        invokeProcessLatch6.countDown();
+        //Check that other threads was permitted to check RAM.
+        invokeProcessLatch7.await();
+        verify(manager, times(7)).checkRamAndPropagateStart(anyObject(), anyString(), anyString(), anyObject());
     }
 }

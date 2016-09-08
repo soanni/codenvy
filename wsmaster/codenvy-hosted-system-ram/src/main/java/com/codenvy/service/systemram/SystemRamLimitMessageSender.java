@@ -63,7 +63,7 @@ class SystemRamLimitMessageSender {
     }
 
     @VisibleForTesting
-    @ScheduleDelay(initialDelay = 60, delayParameterName = "system_ram.limit.check.scheduler.period")
+    @ScheduleDelay(initialDelay = 60, delayParameterName = "system.ram.limit_check_period_sec")
     synchronized void checkRamLimitAndSendMessageIfNeeded() {
         try {
             boolean isSystemRamLimitExceeded = systemRamInfoProvider.getSystemRamInfo().isSystemRamLimitExceeded();

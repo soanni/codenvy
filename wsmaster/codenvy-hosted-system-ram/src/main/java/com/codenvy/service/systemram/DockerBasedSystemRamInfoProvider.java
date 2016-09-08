@@ -59,7 +59,7 @@ public class DockerBasedSystemRamInfoProvider implements SystemRamInfoProvider {
         String[][] systemStatus = systemInfo.getSystemStatus();
         String[][] statusOutput = driverStatus == null ? systemStatus : driverStatus;
         if (statusOutput == null) {
-            LOG.error("Empty system information was received from docker. All system info from docker {}", systemInfo);
+            LOG.error("Empty system information was received from docker. Whole system info from docker {}", systemInfo);
             throw new ServerException(SYSTEM_RAM_INFO_ERROR);
         }
 
