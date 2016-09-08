@@ -27,7 +27,7 @@ import com.google.inject.multibindings.Multibinder;
 /**
  * @author Anton Korneta
  */
-public class OnPremisesJpaMachineJpaModule extends AbstractModule {
+public class OnPremisesJpaMachineModule extends AbstractModule {
 
     @Override
     protected void configure() {

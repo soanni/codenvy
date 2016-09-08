@@ -14,7 +14,7 @@
  */
 package com.codenvy.integration.jpa.cascaderemoval;
 
-import com.codenvy.api.machine.server.jpa.OnPremisesJpaMachineJpaModule;
+import com.codenvy.api.machine.server.jpa.OnPremisesJpaMachineModule;
 import com.codenvy.api.machine.server.recipe.RecipeDomain;
 import com.codenvy.api.machine.server.recipe.RecipePermissionsImpl;
 import com.codenvy.api.machine.server.jpa.JpaRecipePermissionsDao;
@@ -180,7 +180,7 @@ public class JpaEntitiesCascadeRemovalTest {
                 install(new MachineJpaModule());
                 install(new FactoryJpaModule());
                 install(new OnPremisesJpaWorkspaceModule());
-                install(new OnPremisesJpaMachineJpaModule());
+                install(new OnPremisesJpaMachineModule());
             }
         });
 

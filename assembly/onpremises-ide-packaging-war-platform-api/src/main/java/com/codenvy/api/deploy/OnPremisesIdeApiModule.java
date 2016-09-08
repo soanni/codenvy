@@ -15,9 +15,10 @@
 package com.codenvy.api.deploy;
 
 import com.codenvy.api.AdminApiModule;
-import com.codenvy.api.machine.server.jpa.OnPremisesJpaMachineJpaModule;
 import com.codenvy.api.machine.server.jpa.OnPremisesJpaRecipeDao;
+import com.codenvy.api.machine.server.jpa.OnPremisesJpaMachineModule;
 import com.codenvy.api.permission.server.PermissionChecker;
+import com.codenvy.api.permission.server.jpa.SystemPermissionsJpaModule;
 import com.codenvy.api.user.server.AdminUserService;
 import com.codenvy.api.workspace.server.jpa.OnPremisesJpaWorkspaceModule;
 import com.codenvy.api.workspace.server.spi.jpa.OnPremisesJpaStackDao;
@@ -171,7 +172,7 @@ public class OnPremisesIdeApiModule extends AbstractModule {
         install(new SshJpaModule());
         install(new WorkspaceJpaModule());
         install(new OnPremisesJpaWorkspaceModule());
-        install(new OnPremisesJpaMachineJpaModule());
+        install(new OnPremisesJpaMachineModule());
         bind(AccountDao.class).to(JpaAccountDao.class);
         bind(FactoryDao.class).to(JpaFactoryDao.class);
         bind(StackDao.class).to(JpaStackDao.class);
@@ -298,6 +299,7 @@ public class OnPremisesIdeApiModule extends AbstractModule {
 
         install(new org.eclipse.che.plugin.docker.machine.proxy.DockerProxyModule());
 
+        install(new SystemPermissionsJpaModule());
         install(new com.codenvy.api.permission.server.PermissionsModule());
         install(new OnPremisesJpaWorkspaceModule());
         install(new com.codenvy.api.workspace.server.WorkspaceApiModule());
