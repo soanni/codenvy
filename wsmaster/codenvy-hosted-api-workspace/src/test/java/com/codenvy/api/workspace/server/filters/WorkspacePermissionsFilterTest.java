@@ -499,7 +499,7 @@ public class WorkspacePermissionsFilterTest {
                                          .post(SECURE_PATH + "/workspace/{id}/environment");
 
         assertEquals(response.getStatusCode(), 204);
-        verify(workspaceService).addEnvironment(eq("workspace123"), any());
+        verify(workspaceService).addEnvironment(eq("workspace123"), any(), anyString());
         verify(subject).hasPermission(eq("workspace"), eq("workspace123"), eq("configure"));
     }
 

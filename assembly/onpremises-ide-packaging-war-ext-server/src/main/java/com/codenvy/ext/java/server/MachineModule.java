@@ -22,7 +22,6 @@ import com.google.inject.Provides;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Names;
 
-import org.eclipse.che.ApiEndpointProvider;
 import org.eclipse.che.EventBusURLProvider;
 import org.eclipse.che.UserTokenProvider;
 import org.eclipse.che.api.auth.oauth.OAuthTokenProvider;
@@ -107,7 +106,6 @@ public class MachineModule extends AbstractModule {
         bind(AsynchronousJobPool.class).to(CheAsynchronousJobPool.class);
         bind(ServiceBindingHelper.bindingKey(AsynchronousJobService.class, "/async/{ws-id}")).to(AsynchronousJobService.class);
 
-        bind(String.class).annotatedWith(Names.named("api.endpoint")).toProvider(ApiEndpointProvider.class);
         bind(String.class).annotatedWith(Names.named("user.token")).toProvider(UserTokenProvider.class);
 
         bind(PermissionChecker.class).to(com.codenvy.api.permission.server.HttpPermissionCheckerImpl.class);

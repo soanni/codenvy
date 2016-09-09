@@ -55,10 +55,14 @@ import org.eclipse.che.api.core.jdbc.jpa.eclipselink.EntityListenerInjectionMana
 import org.eclipse.che.api.core.jdbc.jpa.guice.JpaInitializer;
 import org.eclipse.che.api.core.notification.WSocketEventBusServer;
 import org.eclipse.che.api.core.rest.ApiInfoService;
+import org.eclipse.che.api.core.rest.CheJsonProvider;
+import org.eclipse.che.api.core.rest.MessageBodyAdapter;
+import org.eclipse.che.api.core.rest.MessageBodyAdapterInterceptor;
 import org.eclipse.che.api.environment.server.MachineServiceLinksInjector;
 import org.eclipse.che.api.factory.server.FactoryAcceptValidator;
 import org.eclipse.che.api.factory.server.FactoryCreateValidator;
 import org.eclipse.che.api.factory.server.FactoryEditValidator;
+import org.eclipse.che.api.factory.server.FactoryMessageBodyAdapter;
 import org.eclipse.che.api.factory.server.FactoryParametersResolver;
 import org.eclipse.che.api.factory.server.FactoryService;
 import org.eclipse.che.api.factory.server.jpa.JpaFactoryDao;
@@ -78,8 +82,11 @@ import org.eclipse.che.api.user.server.PreferencesService;
 import org.eclipse.che.api.user.server.ProfileService;
 import org.eclipse.che.api.user.server.TokenValidator;
 import org.eclipse.che.api.user.server.UserService;
+import org.eclipse.che.api.workspace.server.stack.StackMessageBodyAdapter;
+import org.eclipse.che.api.workspace.server.WorkspaceConfigMessageBodyAdapter;
 import org.eclipse.che.api.user.server.jpa.UserJpaModule;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
+import org.eclipse.che.api.workspace.server.WorkspaceMessageBodyAdapter;
 import org.eclipse.che.api.workspace.server.WorkspaceService;
 import org.eclipse.che.api.workspace.server.WorkspaceServiceLinksInjector;
 import org.eclipse.che.api.workspace.server.WorkspaceValidator;
@@ -102,6 +109,8 @@ import org.everrest.core.impl.async.AsynchronousJobService;
 import org.everrest.guice.ServiceBindingHelper;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static com.google.inject.matcher.Matchers.subclassesOf;
+import static org.eclipse.che.inject.Matchers.names;
 
 /**
  * Guice container configuration file. Replaces old REST application composers and servlet context listeners.
@@ -329,7 +338,8 @@ public class OnPremisesIdeApiModule extends AbstractModule {
         Multibinder<org.eclipse.che.api.machine.server.spi.InstanceProvider> machineImageProviderMultibinder =
                 Multibinder.newSetBinder(binder(), org.eclipse.che.api.machine.server.spi.InstanceProvider.class);
         machineImageProviderMultibinder.addBinding()
-                                       .to(com.codenvy.machine.HostedDockerInstanceProvider.class);
+                                       .to(org.eclipse.che.plugin.docker.machine.DockerInstanceProvider.class);
+
         bind(WsAgentLauncher.class).to(com.codenvy.machine.launcher.WsAgentWithAuthLauncherImpl.class);
 
         //workspace activity service
@@ -348,5 +358,18 @@ public class OnPremisesIdeApiModule extends AbstractModule {
 
         install(new org.eclipse.che.plugin.machine.ssh.SshMachineModule());
         bind(com.codenvy.api.factory.server.filters.FactoryPermissionsFilter.class);
+
+        bind(org.eclipse.che.api.environment.server.compose.ComposeMachineInstanceProvider.class)
+                .to(com.codenvy.machine.HostedComposeMachineProviderImpl.class);
+
+        final Multibinder<MessageBodyAdapter> adaptersMultibinder = Multibinder.newSetBinder(binder(), MessageBodyAdapter.class);
+        adaptersMultibinder.addBinding().to(FactoryMessageBodyAdapter.class);
+        adaptersMultibinder.addBinding().to(WorkspaceConfigMessageBodyAdapter.class);
+        adaptersMultibinder.addBinding().to(WorkspaceMessageBodyAdapter.class);
+        adaptersMultibinder.addBinding().to(StackMessageBodyAdapter.class);
+
+        final MessageBodyAdapterInterceptor interceptor = new MessageBodyAdapterInterceptor();
+        requestInjection(interceptor);
+        bindInterceptor(subclassesOf(CheJsonProvider.class), names("readFrom"), interceptor);
     }
 }

@@ -15,8 +15,9 @@
 package com.codenvy.plugin.urlfactory;
 
 import org.eclipse.che.api.factory.shared.dto.FactoryDto;
-import org.eclipse.che.api.machine.shared.dto.MachineConfigDto;
-import org.eclipse.che.api.machine.shared.dto.MachineSourceDto;
+import org.eclipse.che.api.workspace.shared.dto.EnvironmentDto;
+import org.eclipse.che.api.workspace.shared.dto.EnvironmentRecipeDto;
+import org.eclipse.che.api.workspace.shared.dto.ExtendedMachineDto;
 import org.eclipse.che.api.workspace.shared.dto.WorkspaceConfigDto;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.mockito.InjectMocks;
@@ -26,12 +27,14 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 import static com.codenvy.plugin.urlfactory.URLFactoryBuilder.DEFAULT_DOCKER_IMAGE;
-import static com.codenvy.plugin.urlfactory.URLFactoryBuilder.DEFAULT_DOCKER_TYPE;
+import static com.codenvy.plugin.urlfactory.URLFactoryBuilder.MACHINE_NAME;
+import static com.codenvy.plugin.urlfactory.URLFactoryBuilder.MEMORY_LIMIT_BYTES;
 import static java.lang.Boolean.FALSE;
+import static java.util.Collections.singletonList;
+import static java.util.Collections.singletonMap;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 
 /**
@@ -60,46 +63,87 @@ public class URLFactoryBuilderTest {
     @InjectMocks
     private URLFactoryBuilder urlFactoryBuilder;
 
-
     /**
      * Check if not specifying a custom docker file we have the default value
      */
     @Test
-    public void checkDefaultDockerfile() throws Exception {
+    public void checkDefaultImage() throws Exception {
 
-        String myLocation = "http://foo-location";
-        when(URLChecker.exists(myLocation)).thenReturn(false);
+        EnvironmentRecipeDto recipeDto = newDto(EnvironmentRecipeDto.class).withLocation(DEFAULT_DOCKER_IMAGE)
+                                                                           .withType("dockerimage");
+        ExtendedMachineDto machine = newDto(ExtendedMachineDto.class).withAgents(singletonList("ws-agent"))
+                                                                     .withAttributes(singletonMap("memoryLimitBytes", MEMORY_LIMIT_BYTES));
 
-        WorkspaceConfigDto workspaceConfigDto = urlFactoryBuilder.buildWorkspaceConfig("foo", "dumm", myLocation);
+        // setup environment
+        EnvironmentDto environmentDto = newDto(EnvironmentDto.class).withRecipe(recipeDto)
+                                                                    .withMachines(singletonMap(MACHINE_NAME, machine));
+        // setup environment
+        WorkspaceConfigDto expectedWsConfig = newDto(WorkspaceConfigDto.class)
+                .withDefaultEnv("foo")
+                .withEnvironments(singletonMap("foo", environmentDto))
+                .withName("dumm");
 
-        MachineConfigDto machineConfigDto = workspaceConfigDto.getEnvironments().get(0).devMachine();
+        WorkspaceConfigDto actualWsConfigDto = urlFactoryBuilder.buildWorkspaceConfig("foo", "dumm", null);
 
-        assertEquals(machineConfigDto.getType(), "docker");
-        MachineSourceDto machineSourceDto = machineConfigDto.getSource();
-        assertNotNull(machineSourceDto);
-        assertEquals(machineSourceDto.getLocation(), DEFAULT_DOCKER_IMAGE);
-        assertEquals(machineSourceDto.getType(), DEFAULT_DOCKER_TYPE);
+        assertEquals(actualWsConfigDto, expectedWsConfig);
     }
 
 
     /**
-     * Check that by specifying a custom dockerfile it's stored in the machine source
+     * Check that by specifying a location of custom dockerfile it's stored in the machine source if URL is accessible
      */
     @Test
     public void checkWithCustomDockerfile() throws Exception {
 
         String myLocation = "http://foo-location";
+        EnvironmentRecipeDto recipeDto = newDto(EnvironmentRecipeDto.class).withLocation(myLocation)
+                                                                           .withType("dockerfile")
+                                                                           .withContentType("text/x-dockerfile");
+        ExtendedMachineDto machine = newDto(ExtendedMachineDto.class).withAgents(singletonList("ws-agent"))
+                                                                     .withAttributes(singletonMap("memoryLimitBytes", MEMORY_LIMIT_BYTES));
+
+        // setup environment
+        EnvironmentDto environmentDto = newDto(EnvironmentDto.class).withRecipe(recipeDto)
+                                                                    .withMachines(singletonMap(MACHINE_NAME, machine));
+
+        WorkspaceConfigDto expectedWsConfig = newDto(WorkspaceConfigDto.class)
+                .withDefaultEnv("foo")
+                .withEnvironments(singletonMap("foo", environmentDto))
+                .withName("dumm");
+
         when(URLChecker.exists(myLocation)).thenReturn(true);
 
-        WorkspaceConfigDto workspaceConfigDto = urlFactoryBuilder.buildWorkspaceConfig("foo", "dumm", myLocation);
+        WorkspaceConfigDto actualWsConfigDto = urlFactoryBuilder.buildWorkspaceConfig("foo", "dumm", myLocation);
 
-        MachineConfigDto machineConfigDto = workspaceConfigDto.getEnvironments().get(0).devMachine();
+        assertEquals(actualWsConfigDto, expectedWsConfig);
+    }
 
-        assertEquals(machineConfigDto.getType(), "docker");
-        MachineSourceDto machineSourceDto = machineConfigDto.getSource();
-        assertNotNull(machineSourceDto);
-        assertEquals(machineSourceDto.getLocation(), myLocation);
-        assertEquals(machineSourceDto.getType(), "dockerfile");
+    /**
+     * Check that by specifying a location of custom dockerfile it's stored in the machine source if URL is accessible
+     */
+    @Test
+    public void checkWithNonAccessibleCustomDockerfile() throws Exception {
+
+        String myLocation = "http://foo-location";
+        EnvironmentRecipeDto recipeDto = newDto(EnvironmentRecipeDto.class).withLocation(DEFAULT_DOCKER_IMAGE)
+                                                                           .withType("dockerimage");
+        ExtendedMachineDto machine = newDto(ExtendedMachineDto.class).withAgents(singletonList("ws-agent"))
+                                                                     .withAttributes(singletonMap("memoryLimitBytes", MEMORY_LIMIT_BYTES));
+
+        // setup environment
+        EnvironmentDto environmentDto = newDto(EnvironmentDto.class).withRecipe(recipeDto)
+                                                                    .withMachines(singletonMap(MACHINE_NAME, machine));
+
+        WorkspaceConfigDto expectedWsConfig = newDto(WorkspaceConfigDto.class)
+                .withDefaultEnv("foo")
+                .withEnvironments(singletonMap("foo", environmentDto))
+                .withName("dumm");
+
+        when(URLChecker.exists(myLocation)).thenReturn(false);
+
+        WorkspaceConfigDto actualWsConfigDto = urlFactoryBuilder.buildWorkspaceConfig("foo", "dumm", myLocation);
+
+        assertEquals(actualWsConfigDto, expectedWsConfig);
     }
 
     /**

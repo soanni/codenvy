@@ -456,14 +456,13 @@ export class ShareWorkspaceController {
     let environments = workspace.config.environments;
     let defaultEnvName = workspace.config.defaultEnv;
 
-    let defaultEnvironment = this.lodash.find(environments, (environment) => {
-      return environment.name === defaultEnvName;
+    let defaultEnvironment = environments[defaultEnvName];
+
+    let devMachine = this.lodash.find(defaultEnvironment.machines, (machine) => {
+      return machine.agents.indexOf('ws-agent') >= 0;
     });
 
-    let devMachine = this.lodash.find(defaultEnvironment.machineConfigs, (config) => {
-      return config.dev;
-    });
-
+    //TODO check after environment model changes completed
     let recipeLocation = devMachine.source.location;
     if (!recipeLocation || recipeLocation.length === 0) {
       return null;
