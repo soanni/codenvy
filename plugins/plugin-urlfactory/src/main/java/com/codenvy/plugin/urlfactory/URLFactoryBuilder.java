@@ -17,10 +17,9 @@ package com.codenvy.plugin.urlfactory;
 import com.google.common.base.Strings;
 
 import org.eclipse.che.api.factory.shared.dto.FactoryDto;
-import org.eclipse.che.api.machine.shared.dto.LimitsDto;
-import org.eclipse.che.api.machine.shared.dto.MachineConfigDto;
-import org.eclipse.che.api.machine.shared.dto.MachineSourceDto;
 import org.eclipse.che.api.workspace.shared.dto.EnvironmentDto;
+import org.eclipse.che.api.workspace.shared.dto.EnvironmentRecipeDto;
+import org.eclipse.che.api.workspace.shared.dto.ExtendedMachineDto;
 import org.eclipse.che.api.workspace.shared.dto.WorkspaceConfigDto;
 import org.eclipse.che.dto.server.DtoFactory;
 
@@ -28,9 +27,12 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import static java.util.Collections.singletonList;
+import static java.util.Collections.singletonMap;
+import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
 /**
  * Handle the creation of some elements used inside a {@link FactoryDto}
+ *
  * @author Florent Benoit
  */
 @Singleton
@@ -44,7 +46,8 @@ public class URLFactoryBuilder {
     /**
      * Default docker type (if repository has no dockerfile)
      */
-    protected static final String DEFAULT_DOCKER_TYPE = "image";
+    protected static final String MEMORY_LIMIT_BYTES  = Long.toString(2000L * 1024L * 1024L);
+    protected static final String MACHINE_NAME        = "ws-machine";
 
     /**
      * Check if URL is existing or not
@@ -58,18 +61,11 @@ public class URLFactoryBuilder {
     @Inject
     private URLFetcher URLFetcher;
 
-
-    /**
-     * Build a default machine source
-     * @return machine source.
-     */
-    protected MachineSourceDto buildDefaultMachineSource() {
-        return DtoFactory.newDto(MachineSourceDto.class).withType(DEFAULT_DOCKER_TYPE).withLocation(DEFAULT_DOCKER_IMAGE);
-    }
-
     /**
      * Build a default factory using the provided json file or create default one
-     * @param createFactoryParams optional parameters
+     *
+     * @param createFactoryParams
+     *         optional parameters
      * @return a factory
      */
     public FactoryDto createFactory(CreateFactoryParams createFactoryParams) {
@@ -83,50 +79,47 @@ public class URLFactoryBuilder {
         }
 
         // else return a default factory
-       return DtoFactory.newDto(FactoryDto.class).withV("4.0");
+        return newDto(FactoryDto.class).withV("4.0");
     }
 
 
     /**
      * Help to generate default workspace configuration
-     * @param environmentName the name of the environment to create
-     * @param name the name of the workspace
-     * @param dockerFileLocation the optional location for codenvy dockerfileto use
+     *
+     * @param environmentName
+     *         the name of the environment to create
+     * @param name
+     *         the name of the workspace
+     * @param dockerFileLocation
+     *         the optional location for codenvy dockerfile to use
      * @return a workspace configuration
      */
-    public WorkspaceConfigDto buildWorkspaceConfig(String environmentName, String name, String dockerFileLocation) {
+    public WorkspaceConfigDto buildWorkspaceConfig(String environmentName,
+                                                   String name,
+                                                   String dockerFileLocation) {
 
         // if remote repository contains a codenvy docker file, use it
         // else use the default image.
-        final MachineSourceDto machineSourceDto;
+        EnvironmentRecipeDto recipeDto;
         if (dockerFileLocation != null && URLChecker.exists(dockerFileLocation)) {
-            machineSourceDto = DtoFactory.newDto(MachineSourceDto.class).withType("dockerfile").withLocation(dockerFileLocation);
+            recipeDto = newDto(EnvironmentRecipeDto.class).withLocation(dockerFileLocation)
+                                                          .withType("dockerfile")
+                                                          .withContentType("text/x-dockerfile");
         } else {
-            machineSourceDto = buildDefaultMachineSource();
+            recipeDto = newDto(EnvironmentRecipeDto.class).withLocation(DEFAULT_DOCKER_IMAGE)
+                                                          .withType("dockerimage");
         }
-
-        // set the memory limit
-        LimitsDto limitsDto = DtoFactory.newDto(LimitsDto.class).withRam(2000);
-
-        // Setup machine configuration
-        MachineConfigDto machineConfigDto = DtoFactory.newDto(MachineConfigDto.class)
-                                                      .withLimits(limitsDto)
-                                                      .withType("docker")
-                                                      .withDev(true)
-                                                      .withSource(machineSourceDto)
-                                                      .withName("ws-machine");
-
-
+        ExtendedMachineDto machine = newDto(ExtendedMachineDto.class).withAgents(singletonList("ws-agent"))
+                                                                     .withAttributes(singletonMap("memoryLimitBytes", MEMORY_LIMIT_BYTES));
 
         // setup environment
-        EnvironmentDto environmentDto = DtoFactory.newDto(EnvironmentDto.class)
-                                                  .withName(environmentName)
-                                                  .withMachineConfigs(singletonList(machineConfigDto));
+        EnvironmentDto environmentDto = newDto(EnvironmentDto.class).withRecipe(recipeDto)
+                                                                    .withMachines(singletonMap(MACHINE_NAME, machine));
 
         // workspace configuration using the environment
-        return DtoFactory.newDto(WorkspaceConfigDto.class)
-                         .withDefaultEnv(environmentName)
-                         .withEnvironments(singletonList(environmentDto))
-                         .withName(name);
+        return newDto(WorkspaceConfigDto.class)
+                .withDefaultEnv(environmentName)
+                .withEnvironments(singletonMap(environmentName, environmentDto))
+                .withName(name);
     }
 }

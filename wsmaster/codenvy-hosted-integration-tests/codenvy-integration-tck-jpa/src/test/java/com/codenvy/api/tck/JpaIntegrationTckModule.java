@@ -252,7 +252,7 @@ public class JpaIntegrationTckModule extends TckModule {
                                                              "defaultEnv",
                                                              Collections.emptyList(),
                                                              Collections.emptyList(),
-                                                             Collections.emptyList());
+                                                             Collections.emptyMap());
             final AccountImpl[] accounts = new AccountImpl[] {new AccountImpl("id1", "test0", "test"),
                                                               new AccountImpl("id2", "test1", "test"),
                                                               new AccountImpl("id3", "test2", "test")};

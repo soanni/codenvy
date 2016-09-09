@@ -278,7 +278,7 @@ export class FactoryInformationCtrl {
     if (!this.copyOriginFactory) {
       return;
     }
-    let machineConfig = this.copyOriginFactory.workspace.environments[0].machineConfigs[0];
+    let machineConfig = this.copyOriginFactory.workspace.environments[0].machines[0];
     machineConfig.source.type = 'recipe';
     machineConfig.source.location = recipeURL;
 
