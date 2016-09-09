@@ -18,6 +18,7 @@ import org.eclipse.che.api.core.ServerException;
 
 /**
  * Provides system RAM information.
+ * The specific of system RAM is depends on the implementation.
  *
  * @author Igor Vinokur
  */
