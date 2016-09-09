@@ -255,7 +255,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                 return new MacroCommand(commands, "Configure Codenvy");
 
             case 2:
-                if (versionToUpdate.is4Major()) {
+                if (versionToUpdate.is4Compatible()) {
                     propertiesFiles = configManager.getCodenvyPropertiesFiles(getTmpCodenvyDir(), InstallType.SINGLE_SERVER);
 
                     if (propertiesFiles.hasNext()) {
@@ -555,7 +555,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                                               file)));
 
             // replace old hostname on new hostname in regex "^node\d+\.<hostname>$" of additional node section of puppet manifests in Codenvy 4.x
-            if (Version.is4Major(config.getValue(Config.VERSION))) {
+            if (Version.is4Compatible(config.getValue(Config.VERSION))) {
                 commands.add(createCommand(format("sudo sed -i 's/\\^node\\\\d+\\\\.%s\\$/\\^node\\\\d+\\\\.%s\\$/g' %3$s",
                                                   oldHostName,
                                                   newHostName,

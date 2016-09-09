@@ -19,7 +19,6 @@ import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.UnsupportedArtifactVersionException;
 import com.codenvy.im.commands.Command;
-import com.codenvy.im.license.CodenvyLicenseManager;
 import com.codenvy.im.managers.helper.NodeManagerHelper;
 import com.codenvy.im.managers.helper.NodeManagerHelperCodenvy3Impl;
 import com.codenvy.im.managers.helper.NodeManagerHelperCodenvy4Impl;
@@ -28,6 +27,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import org.eclipse.che.api.core.rest.HttpJsonRequestFactory;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -42,12 +42,12 @@ public class NodeManager {
 
     @Inject
     public NodeManager(ConfigManager configManager,
-                       CodenvyLicenseManager licenseManager) throws IOException {
+                       HttpJsonRequestFactory httpJsonRequestFactory) throws IOException {
         this.configManager = configManager;
 
         HELPERS = ImmutableMap.of(
             3, new NodeManagerHelperCodenvy3Impl(configManager),
-            4, new NodeManagerHelperCodenvy4Impl(configManager, licenseManager)
+            4, new NodeManagerHelperCodenvy4Impl(configManager, httpJsonRequestFactory)
         );
     }
 
@@ -112,7 +112,7 @@ public class NodeManager {
     public void updatePuppetConfig(String oldHostName, String newHostName) throws IOException {
         Version codenvyVersion = Version.valueOf(configManager.loadInstalledCodenvyConfig().getValue(Config.VERSION));
 
-        if (! codenvyVersion.is4Major()) {
+        if (! codenvyVersion.is4Compatible()) {
             return;
         }
 
@@ -165,7 +165,7 @@ public class NodeManager {
         Version codenvyVersion = Version.valueOf(configManager.loadInstalledCodenvyConfig().getValue(Config.VERSION));
         if (codenvyVersion.is3Major()) {
             return HELPERS.get(3);
-        } else if (codenvyVersion.is4Major()) {
+        } else if (codenvyVersion.is4Compatible()) {
             return HELPERS.get(4);
         } else {
             throw new UnsupportedArtifactVersionException(ArtifactFactory.createArtifact(CDECArtifact.NAME), codenvyVersion);

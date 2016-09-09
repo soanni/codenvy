@@ -77,7 +77,7 @@ public class AddNodeCommand extends AbstractIMCommand {
     }
 
     protected void validateCodenvyConfig() throws IOException {
-        if (isCodenvy4Installed()) {
+        if (isCodenvy4CompatibleInstalled()) {
             Config config = configManager.loadInstalledCodenvyConfig();
 
             // check on adding default node
@@ -95,9 +95,9 @@ public class AddNodeCommand extends AbstractIMCommand {
         }
     }
 
-    protected boolean isCodenvy4Installed() throws IOException {
+    protected boolean isCodenvy4CompatibleInstalled() throws IOException {
         Optional<Version> version = createArtifact(CDECArtifact.NAME).getInstalledVersion();
-        return version.isPresent() && version.get().is4Major();
+        return version.isPresent() && version.get().is4Compatible();
     }
 
     protected void updateCodenvyConfig() throws IOException {

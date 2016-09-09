@@ -26,7 +26,6 @@ import org.eclipse.che.api.core.rest.HttpJsonRequest;
 import org.eclipse.che.api.core.rest.HttpJsonRequestFactory;
 import org.eclipse.che.api.core.rest.HttpJsonResponse;
 import org.everrest.assured.EverrestJetty;
-import org.everrest.assured.util.AvailablePortFinder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
@@ -44,16 +43,15 @@ import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.util.Base64;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Random;
 
+import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
-import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
 @Listeners(value = {EverrestJetty.class, MockitoTestNGListener.class})
 public class MailSenderTest {
@@ -74,9 +72,8 @@ public class MailSenderTest {
 
     public static void assertMail(SimpleSmtpServer server, String from, String to, String replyTo, String subject, String mimeType,
                                   String body, String attachmentContentID, String attachmentFileName) {
-        assertEquals(server.getReceivedEmailSize(), 1);
-        Iterator emailIter = server.getReceivedEmail();
-        SmtpMessage email = (SmtpMessage)emailIter.next();
+        assertEquals(server.getReceivedEmails().size(), 1);
+        SmtpMessage email = server.getReceivedEmails().iterator().next();
 
         assertEquals(email.getHeaderValue("Subject"), subject);
         assertEquals(email.getHeaderValue("From"), from);
@@ -93,15 +90,14 @@ public class MailSenderTest {
     @BeforeMethod
     public void setup(ITestContext context) throws IOException {
         //      mailSender = new MailSender("/mail-configuration.properties");
-        int nextAvailable = AvailablePortFinder.getNextAvailable(10000 + portRandomizer.nextInt(2000));
+        server = SimpleSmtpServer.start(SimpleSmtpServer.AUTO_SMTP_PORT);
         String testConfigContent = Resources.toString(Resources.getResource("mail-configuration.properties"), Charset.defaultCharset())
-                                            .replace("mail.smtp.port=9000", "mail.smtp.port=" + nextAvailable);
+                                            .replace("mail.smtp.port=9000", "mail.smtp.port=" + server.getPort());
         testConfig = File.createTempFile("mail-config", "properties");
         testConfig.deleteOnExit();
         Files.append(testConfigContent, testConfig, Charset.defaultCharset());
 
 
-        server = SimpleSmtpServer.start(nextAvailable);
         mailSender = new MailSender(new SessionHolder(testConfig.getAbsolutePath()));
         mailSenderClient = new MailSenderClient("http://localhost:" + context.getAttribute(EverrestJetty.JETTY_PORT) + "/rest/");
     }

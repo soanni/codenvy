@@ -28,7 +28,7 @@ import java.util.Map;
 
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.spy;
+import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 
 /**

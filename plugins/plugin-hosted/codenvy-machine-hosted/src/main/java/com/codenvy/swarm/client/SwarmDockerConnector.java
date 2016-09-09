@@ -134,7 +134,7 @@ public class SwarmDockerConnector extends DockerConnector {
      * [10] -> ["Labels", "executiondriver=native-0.2, kernel..."]
      * </pre>
      */
-    private List<DockerNode> getAvailableNodes() throws IOException {
+    public List<DockerNode> getAvailableNodes() throws IOException {
         SystemInfo systemInfo = getSystemInfo();
         final String[][] systemDescription = systemInfo.getSystemStatus() != null ? systemInfo.getSystemStatus()
                                                                                   : systemInfo.getDriverStatus();

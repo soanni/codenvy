@@ -1949,7 +1949,7 @@ printPostInstallInfo_codenvy() {
     fi
 
     if [ -z ${SYSTEM_ADMIN_PASSWORD} ]; then
-        if [[ "${VERSION}" =~ ^(4).* ]]; then
+        if [[ "${VERSION}" =~ ^([4-5]).* ]]; then
             SYSTEM_ADMIN_PASSWORD=$(readProperty "admin_ldap_password")
         else
             SYSTEM_ADMIN_PASSWORD=$(readProperty "system_ldap_password")
@@ -2169,7 +2169,7 @@ pauseTimer
 pauseInternetAccessChecker
 pauseFooterUpdater
 
-if [[ "${ARTIFACT}" == "codenvy" ]] && [[ "${VERSION}" =~ ^(4).* ]]; then
+if [[ "${ARTIFACT}" == "codenvy" ]] && [[ "${VERSION}" =~ ^([4-5]).* ]]; then
     adminName=$(readProperty 'admin_ldap_user_name')
     adminPassword=$(readProperty 'admin_ldap_password')
     toolVersion=$(if [[ "${VERSION}" =~ .*SNAPSHOT$ ]]; then echo "nightly"; else echo ${VERSION}; fi)

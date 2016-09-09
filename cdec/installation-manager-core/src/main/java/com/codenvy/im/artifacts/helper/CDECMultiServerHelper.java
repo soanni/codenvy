@@ -42,7 +42,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.codenvy.im.commands.CommandLibrary.createAppendTextIfAbsentToFileCommand;
 import static com.codenvy.im.commands.CommandLibrary.createCompressCommand;
 import static com.codenvy.im.commands.CommandLibrary.createCopyFromLocalToRemoteCommand;
 import static com.codenvy.im.commands.CommandLibrary.createCopyFromRemoteToLocalCommand;
@@ -350,7 +349,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                 return new MacroCommand(commands, "Configure Codenvy");
 
             case 2:
-                if (versionToUpdate.is4Major()) {
+                if (versionToUpdate.is4Compatible()) {
                     propertiesFiles = configManager.getCodenvyPropertiesFiles(getTmpCodenvyDir(), InstallType.SINGLE_SERVER);
 
                     if (propertiesFiles.hasNext()) {

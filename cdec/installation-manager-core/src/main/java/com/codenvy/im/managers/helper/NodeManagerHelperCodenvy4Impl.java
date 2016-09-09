@@ -19,17 +19,16 @@ import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.commands.MacroCommand;
 import com.codenvy.im.commands.decorators.PuppetErrorInterrupter;
-import com.codenvy.im.license.CodenvyLicense;
-import com.codenvy.im.license.CodenvyLicenseManager;
-import com.codenvy.im.license.InvalidLicenseException;
-import com.codenvy.im.license.LicenseException;
-import com.codenvy.im.license.LicenseNotFoundException;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.NodeException;
 import com.codenvy.im.managers.UnknownInstallationTypeException;
+
+import org.eclipse.che.api.core.ApiException;
+import org.eclipse.che.api.core.rest.HttpJsonRequestFactory;
+import org.eclipse.che.api.core.rest.HttpJsonResponse;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -56,11 +55,14 @@ public class NodeManagerHelperCodenvy4Impl extends NodeManagerHelper {
     public static final String YUM_CONF_FILE = "/etc/yum.conf";
     public static final String WGETRC_FILE   = "/etc/wgetrc";
 
-    private CodenvyLicenseManager licenseManager;
+    protected static final String LEGALITY_NODE_LICENSE_SERVICE = "/license/legality/node";
+    protected static final String NODE_NUMBER_PARAM             = "nodeNumber";
 
-    public NodeManagerHelperCodenvy4Impl(ConfigManager configManager, CodenvyLicenseManager licenseManager) {
+    private final HttpJsonRequestFactory httpJsonRequestFactory;
+
+    public NodeManagerHelperCodenvy4Impl(ConfigManager configManager, HttpJsonRequestFactory httpJsonRequestFactory) {
         super(configManager);
-        this.licenseManager = licenseManager;
+        this.httpJsonRequestFactory = httpJsonRequestFactory;
     }
 
     @Override
@@ -271,28 +273,17 @@ public class NodeManagerHelperCodenvy4Impl extends NodeManagerHelper {
     @Override
     public void validateLicense() throws IOException {
         Config config = configManager.loadInstalledCodenvyConfig();
-        if (getNodeConfigHelper(config).getNodeNumber() == 0) {
-            return;
-        }
-
+        int nodeNumber = getNodeConfigHelper(config).getNodeNumber() + 1;
         try {
-            CodenvyLicense codenvyLicense = licenseManager.load();
 
-            CodenvyLicense.LicenseType licenseType = codenvyLicense.getLicenseType();
-            if (codenvyLicense.isExpired()) {
-                switch (licenseType) {
-                    case EVALUATION_PRODUCT_KEY:
-                        throw new IllegalStateException("Your Codenvy subscription only allows a single server.");
-                    case PRODUCT_KEY:
-                    default:
-                        // do nothing
-                }
+            HttpJsonResponse response = httpJsonRequestFactory.fromUrl(configManager.getApiEndpoint() + LEGALITY_NODE_LICENSE_SERVICE)
+                                                              .useGetMethod()
+                                                              .addQueryParam(NODE_NUMBER_PARAM, nodeNumber)
+                                                              .request();
+            if (!Boolean.valueOf(response.asProperties().get("value"))) {
+                throw new IllegalStateException("Your Codenvy subscription only allows a single server.");
             }
-        } catch (LicenseNotFoundException e) {
-            throw new IllegalStateException("Your Codenvy subscription only allows a single server.");
-        } catch (InvalidLicenseException e) {
-            throw new IllegalStateException("Codenvy License is invalid or has unappropriated format.");
-        } catch (LicenseException e) {
+        } catch (ApiException e) {
             throw new IllegalStateException("Codenvy License can't be validated.", e);
         }
     }

@@ -126,7 +126,7 @@ public class LdapManager {
         Version codenvyVersion = Version.valueOf(configManager.loadInstalledCodenvyConfig().getValue(Config.VERSION));
         if (codenvyVersion.is3Major()) {
             return HELPERS.get(3);
-        } else if (codenvyVersion.is4Major()) {
+        } else if (codenvyVersion.is4Compatible()) {
             return HELPERS.get(4);
         } else {
             throw new UnsupportedArtifactVersionException(ArtifactFactory.createArtifact(CDECArtifact.NAME),

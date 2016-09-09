@@ -31,7 +31,6 @@ import static java.nio.file.Files.write;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
 
 /**
  * @author Anatoliy Bazko

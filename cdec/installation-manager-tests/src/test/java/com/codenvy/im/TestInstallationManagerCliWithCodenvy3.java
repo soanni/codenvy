@@ -35,47 +35,42 @@ public class TestInstallationManagerCliWithCodenvy3 extends BaseIntegrationTest 
 
     @Test
     public void testInstallMultiNodeAndChangeConfig() throws Exception {
-        doTest("install/test-install-multi-nodes-and-change-config.sh");
+        doTest("codenvy3/install/test-install-multi-nodes-and-change-config-with-codenvy3.sh");
     }
 
     @Test
     public void testInstallSingleNodeAndChangeConfig() throws Exception {
-        doTest("install/test-install-single-node-and-change-config.sh");
-    }
-
-    @Test
-    public void testInstallSudoPasswordRequired() throws Exception {
-        doTest("install/test-install-sudo-password-required.sh");
+        doTest("codenvy3/install/test-install-single-node-and-change-config-with-codenvy3.sh");
     }
 
     @Test
     public void testUpdateSingleNodeFromBinary() throws Exception {
-        doTest("test-update-single-node-from-binary.sh");
+        doTest("codenvy3/update/test-update-single-node-from-binary-with-codenvy3.sh");
     }
 
     @Test
     public void testUpdateMultiNodesFromBinary() throws Exception {
-        doTest("test-update-multi-nodes-from-binary.sh");
+        doTest("codenvy3/update/test-update-multi-nodes-from-binary-with-codenvy3.sh");
     }
 
     @Test
     public void testAddRemoveCodenvyNodes() throws Exception {
-        doTest("test-add-remove-codenvy-nodes.sh");
+        doTest("codenvy3/node/test-add-remove-codenvy-nodes-with-codenvy3.sh");
     }
 
     @Test
     public void testBackupRestoreSingleNode() throws Exception {
-        doTest("test-backup-restore-single-node.sh");
+        doTest("codenvy3/backup/test-backup-restore-single-node-with-codenvy3.sh");
     }
 
     @Test(priority = 9)
     public void testMigrationData() throws Exception {
-        doTest("test-migration-data.sh");
+        doTest("codenvy3/update/test-migration-data-with-codenvy3.sh");
     }
 
     @Test(priority = 10)
     public void testBackupRestoreMultiNodes() throws Exception {
-        doTest("test-backup-restore-multi-nodes.sh");
+        doTest("codenvy3/update/test-backup-restore-multi-nodes-with-codenvy3.sh");
     }
 
 }

@@ -17,7 +17,6 @@ package com.codenvy.im.update;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.utils.Version;
 
 import org.apache.commons.io.IOUtils;

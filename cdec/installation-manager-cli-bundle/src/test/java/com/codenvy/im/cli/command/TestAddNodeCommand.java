@@ -95,7 +95,7 @@ public class TestAddNodeCommand extends AbstractTestCommand {
 
     @Test
     public void testCodenvy4AddNodeThrowsErrorIfConfigWrong() throws Exception {
-        doReturn(Boolean.TRUE).when(spyCommand).isCodenvy4Installed();
+        doReturn(Boolean.TRUE).when(spyCommand).isCodenvy4CompatibleInstalled();
         doReturn(new NodeInfo()).when(mockInstallationManagerProxy).addNode(TEST_DNS_NAME);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -108,7 +108,7 @@ public class TestAddNodeCommand extends AbstractTestCommand {
 
     @Test
     public void testCodenvy4AddNode() throws Exception {
-        doReturn(Boolean.TRUE).when(spyCommand).isCodenvy4Installed();
+        doReturn(Boolean.TRUE).when(spyCommand).isCodenvy4CompatibleInstalled();
         doReturn(new NodeInfo()).when(mockInstallationManagerProxy).addNode(TEST_DNS_NAME);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);

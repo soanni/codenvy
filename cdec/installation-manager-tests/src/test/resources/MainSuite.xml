@@ -49,9 +49,9 @@
         </classes>
     </test>
 
-    <test name="im-cli-with-codenvy4">
+    <test name="im-cli-with-codenvy">
         <classes>
-            <class name="com.codenvy.im.TestInstallationManagerCliWithCodenvy4"/>
+            <class name="com.codenvy.im.TestInstallationManagerCliWithCodenvy"/>
         </classes>
     </test>
 </suite>

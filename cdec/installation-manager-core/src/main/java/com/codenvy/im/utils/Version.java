@@ -242,27 +242,14 @@ public class Version implements Comparable<Version> {
                + (isSnapshot ? SNAPSHOT : "");
     }
 
-    public static boolean is4Major(String versionStr) {
+    public static boolean is4Compatible(String versionStr) {
         if (versionStr == null) {
             return false;
         }
 
         try {
             Version version = valueOf(versionStr);
-            return version.is4Major();
-        } catch(IllegalVersionException e) {
-            return false;
-        }
-    }
-
-    public static boolean is3Major(String versionStr) {
-        if (versionStr == null) {
-            return false;
-        }
-
-        try {
-            Version version = valueOf(versionStr);
-            return version.is3Major();
+            return version.is4Compatible();
         } catch(IllegalVersionException e) {
             return false;
         }
@@ -285,6 +272,14 @@ public class Version implements Comparable<Version> {
 
     public boolean is4Major() {
         return compareToMajor(4) == 0;
+    }
+
+    public boolean is5Major() {
+        return compareToMajor(5) == 0;
+    }
+
+    public boolean is4Compatible() {
+        return is4Major() || is5Major();
     }
 
 }

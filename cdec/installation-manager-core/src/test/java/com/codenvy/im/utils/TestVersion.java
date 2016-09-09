@@ -26,7 +26,7 @@ import static org.testng.Assert.assertTrue;
  */
 public class TestVersion {
 
-    public static final String INVALID_VERSION_STR = "invalid_version";
+    public static final String INVALID_VER = "invalid_version";
 
     @Test(dataProvider = "testValidVersion")
     public void testValidVersion(String version) throws Exception {
@@ -202,15 +202,15 @@ public class TestVersion {
                 {"1.0.2-beta-1", "1.0.2-RC1", -1}};
     }
 
-    @Test(dataProvider = "testIsSuitedFor")
-    public void testIsSuitedFor(String version, String pattern, boolean expected) throws Exception {
+    @Test(dataProvider = "dataForTestIsSuitedFor")
+    public void dataForTestIsSuitedFor(String version, String pattern, boolean expected) throws Exception {
         boolean actual = Version.valueOf(version).isSuitedFor(pattern);
 
         assertEquals(actual, expected, pattern);
     }
 
-    @DataProvider(name = "testIsSuitedFor")
-    public static Object[][] testIsSuitedFor() {
+    @DataProvider
+    public static Object[][] dataForTestIsSuitedFor() {
         return new Object[][] {
                 {"1.0.1", "1\\.0\\.1", true},
                 {"1.0.1", "1\\.0\\.(.*)", true},
@@ -230,25 +230,30 @@ public class TestVersion {
         };
     }
 
-    @Test
-    public void testIsCertainMajor() throws Exception {
-        assertFalse(Version.valueOf("2.0.0").is3Major());
-        assertFalse(Version.is3Major(null));
-        assertFalse(Version.is3Major("4.0.0"));
-        assertFalse(Version.is3Major(INVALID_VERSION_STR));  // shouldn't throw "IllegalArgumentException"
+    @Test()
+    public void testIsCertainMajor(boolean expectedIs3Major,
+                                   boolean expectedIs4Major,
+                                   boolean expectedIs4Compatible,
+                                   boolean expectedIs5Major,
+                                   String version) throws Exception {
+        assertEquals(Version.valueOf(version).is3Major(), expectedIs3Major);
+        assertEquals(Version.valueOf(version).is4Major(), expectedIs4Major);
+        assertEquals(Version.valueOf(version).is4Compatible(), expectedIs4Compatible);
+        assertEquals(Version.is4Compatible(version), expectedIs4Compatible);
+        assertEquals(Version.valueOf(version).is5Major(), expectedIs5Major);
+    }
 
-        assertTrue(Version.valueOf("3.14.0-SNAPSHOT").is3Major());
-        assertTrue(Version.is3Major("3.14.0"));
-
-        assertFalse(Version.valueOf("3.0.0").is4Major());
-        assertFalse(Version.is4Major(null));
-        assertFalse(Version.is4Major("3.0.0"));
-        assertFalse(Version.is4Major(INVALID_VERSION_STR));  // shouldn't throw "IllegalArgumentException"
-
-        assertTrue(Version.valueOf("4.0.0-beta-2").is4Major());
-        assertTrue(Version.is4Major("4.0.0-beta-2-SNAPSHOT"));
-        assertTrue(Version.is4Major("4.0.0-RC1-SNAPSHOT"));
-        assertTrue(Version.is4Major("4.0.0-GA-SNAPSHOT"));
+    @DataProvider
+    public static Object[][] dataForTestIsMajor() {
+        return new Object[][] {
+            {false, false, false, false, null},
+            {false, false, false, false, INVALID_VER},
+            {false, false, false, false, "2.0.0-RC1-SNAPSHOT"},
+            {true,  false, false, false, "3.0.4"},
+            {false, true,  true,  false, "4.5.0-SNAPSHOT"},
+            {false, false, true,  true,  "5.0.0-M1"},
+            {false, false, false, false, "6.3.1-GA-SNAPSHOT"},
+        };
     }
 
 }

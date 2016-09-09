@@ -15,7 +15,6 @@
 package com.codenvy.im.service;
 
 import com.codenvy.api.permission.server.SystemDomain;
-import com.jayway.restassured.response.Response;
 
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
@@ -34,16 +33,10 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 import static com.codenvy.api.permission.server.SystemDomain.MANAGE_CODENVY_ACTION;
-import static com.jayway.restassured.RestAssured.given;
-import static org.everrest.assured.JettyHttpServer.ADMIN_USER_NAME;
-import static org.everrest.assured.JettyHttpServer.ADMIN_USER_PASSWORD;
-import static org.everrest.assured.JettyHttpServer.SECURE_PATH;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
 
 /**
  * Tests for {@link InstallationManagerPermissionsFilter}
@@ -63,43 +56,7 @@ public class InstallationManagerPermissionsFilterTest {
     private static Subject subject;
 
     @Mock
-    LicenseService licenseService;
-
-    @Mock
     InstallationManagerService installationManagerService;
-
-    @Test
-    public void shouldNotCheckPermissionsOnLicenseChecking() throws Exception {
-        final Response response = given().auth()
-                                         .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
-                                         .when()
-                                         .get(SECURE_PATH + "/license/legality");
-
-        assertEquals(response.getStatusCode(), 204);
-        verify(licenseService).isCodenvyUsageLegal();
-        verifyZeroInteractions(subject);
-    }
-
-    @Test
-    public void shouldCheckManageCodenvyPermissionsOnRequestingAnyMethodsFromLicenseServiceExceptLicenseChecking() throws Exception {
-        EnvironmentContext.getCurrent().setSubject(subject);
-        when(subject.hasPermission(SystemDomain.DOMAIN_ID, null, MANAGE_CODENVY_ACTION)).thenReturn(true);
-        final GenericResourceMethod GenericResourceMethod = mock(GenericResourceMethod.class);
-
-        final Method[] imMethods = LicenseService.class.getDeclaredMethods();
-
-        int publicMethods = 0;
-        for (Method imMethod : imMethods) {
-            if (Modifier.isPublic(imMethod.getModifiers()) && !"isCodenvyUsageLegal".equals(imMethod.getName())) {
-                when(GenericResourceMethod.getMethod()).thenReturn(imMethod);
-                permissionsFilter.filter(GenericResourceMethod, new Object[] {});
-                publicMethods++;
-            }
-        }
-
-        //all methods should be covered with permissions
-        verify(subject, times(publicMethods)).checkPermission(SystemDomain.DOMAIN_ID, null, MANAGE_CODENVY_ACTION);
-    }
 
     @Test
     public void shouldCheckManageCodenvyPermissionsOnRequestingAnyMethodsFromInstallationManagerService() throws Exception {
