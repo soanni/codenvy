@@ -50,7 +50,12 @@ import java.util.List;
                             query = "SELECT recipe " +
                                     "FROM RecipePermissions recipe " +
                                     "WHERE recipe.recipeId = :recipeId " +
-                                    "AND (recipe.userId IS NULL OR recipe.userId = :userId) ")
+                                    "AND recipe.userId = :userId"),
+                @NamedQuery(name = "RecipePermissions.getByRecipeIdPublic",
+                            query = "SELECT recipe " +
+                                    "FROM RecipePermissions recipe " +
+                                    "WHERE recipe.recipeId = :recipeId " +
+                                    "AND recipe.userId IS NULL ")
         }
 )
 @Table(indexes = {@Index(columnList = "userId, recipeId", unique = true),

@@ -37,6 +37,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.persistence.EntityManager;
+import javax.validation.constraints.AssertTrue;
 import javax.persistence.spi.PersistenceUnitTransactionType;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -44,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 
 import static java.util.Arrays.asList;
+import static org.testng.Assert.assertEquals;
 import static org.eclipse.persistence.config.PersistenceUnitProperties.JDBC_DRIVER;
 import static org.eclipse.persistence.config.PersistenceUnitProperties.JDBC_PASSWORD;
 import static org.eclipse.persistence.config.PersistenceUnitProperties.JDBC_URL;
@@ -140,6 +142,29 @@ public class JpaRecipePermissionsDaoTest {
         BeforeRecipeRemovedEvent event = new BeforeRecipeRemovedEvent(recipes[0]);
         removePermissionsBeforeRecipeRemovedEventSubscriber.onEvent(event);
         assertTrue(dao.getByInstance("recipe1").isEmpty());
+    }
+
+    @Test
+    public void shouldGetRecipePermissionByInstanceIdAndWildcard() throws Exception {
+        manager.getTransaction().begin();
+        manager.persist(new RecipePermissionsImpl(null, "recipe1", asList("read", "use", "run")));
+        manager.getTransaction().commit();
+
+        RecipePermissionsImpl result = dao.get("*", "recipe1");
+        assertEquals(result.getInstanceId(), "recipe1");
+        assertEquals(result.getUserId(), null);
+    }
+
+
+    @Test
+    public void shouldGetRecipePermissionByInstanceIdAndUserIdIfPublicPermissionExistsWithSameInstanceId() throws Exception {
+        manager.getTransaction().begin();
+        manager.persist(new RecipePermissionsImpl(null, "recipe1", asList("read", "use", "run")));
+        manager.getTransaction().commit();
+
+        RecipePermissionsImpl result = dao.get("user1", "recipe1");
+        assertEquals(result.getInstanceId(), "recipe1");
+        assertEquals(result.getUserId(), "user1");
     }
 
     @Test
