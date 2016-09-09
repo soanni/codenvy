@@ -14,12 +14,16 @@
  */
 package com.codenvy.api.user.server;
 
+import com.codenvy.api.permission.server.PermissionsManager;
+import com.codenvy.api.permission.server.SystemDomain;
+import com.codenvy.api.permission.server.model.impl.SystemPermissionsImpl;
 import com.google.inject.Singleton;
 
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.jdbc.jpa.guice.JpaInitializer;
+import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.slf4j.Logger;
@@ -44,6 +48,9 @@ public class AdminUserCreator {
     private UserManager userManager;
 
     @Inject
+    PermissionsManager permissionsManager;
+
+    @Inject
     @SuppressWarnings("unused")
     // this work around needed for Guice to help initialize components in right sequence,
     // because instance of JpaInitializer should be created before components that dependent on dao (such as UserManager)
@@ -63,15 +70,24 @@ public class AdminUserCreator {
 
     @PostConstruct
     public void create() throws ServerException {
+        User adminUser;
         try {
-            userManager.getById(name);
+            adminUser = userManager.getById(name);
         } catch (NotFoundException ex) {
             try {
-                userManager.create(new UserImpl(name, email, name, password, emptyList()), false);
+                adminUser =  userManager.create(new UserImpl(name, email, name, password, emptyList()), false);
                 LOG.info("Admin user '" + name + "' successfully created");
             } catch (ConflictException cfEx) {
                 LOG.warn("Admin user creation failed", cfEx.getLocalizedMessage());
+                return;
             }
+        }
+        // Add all possible system permissions
+        try {
+            permissionsManager.storePermission(
+                    new SystemPermissionsImpl(adminUser.getId(), permissionsManager.getDomain(SystemDomain.DOMAIN_ID).getAllowedActions()));
+        } catch (NotFoundException | ConflictException e) {
+            LOG.warn("Admin user permissions creation failed", e.getLocalizedMessage());
         }
     }
 }
