@@ -21,7 +21,6 @@ import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.commands.MacroCommand;
 import com.codenvy.im.commands.WaitOnAliveArtifactCommand;
 import com.codenvy.im.commands.decorators.PuppetErrorInterrupter;
-import com.codenvy.im.license.CodenvyLicenseManager;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallType;

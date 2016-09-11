@@ -19,10 +19,6 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.event.Event;
-import com.codenvy.im.license.CodenvyLicense;
-import com.codenvy.im.license.CodenvyLicenseManager;
-import com.codenvy.im.license.InvalidLicenseException;
-import com.codenvy.im.license.LicenseNotFoundException;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.BackupManager;
 import com.codenvy.im.managers.Config;
@@ -66,15 +62,13 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import static com.codenvy.im.utils.Commons.toJson;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
@@ -106,10 +100,6 @@ public class TestInstallationManagerFacade extends BaseTest {
     @Mock
     private ConfigManager              configManager;
     @Mock
-    private CodenvyLicenseManager      codenvyLicenseManager;
-    @Mock
-    private CodenvyLicense             codenvyLicense;
-    @Mock
     private Artifact                   mockArtifact;
 
     @BeforeMethod
@@ -125,8 +115,7 @@ public class TestInstallationManagerFacade extends BaseTest {
                                                                       backupManager,
                                                                       storageManager,
                                                                       installManager,
-                                                                      downloadManager,
-                                                                      codenvyLicenseManager));
+                                                                      downloadManager));
     }
 
     @Test

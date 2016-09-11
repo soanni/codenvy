@@ -17,11 +17,6 @@ package com.codenvy.im.facade;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.event.Event;
-import com.codenvy.im.license.CodenvyLicense;
-import com.codenvy.im.license.CodenvyLicenseManager;
-import com.codenvy.im.license.InvalidLicenseException;
-import com.codenvy.im.license.LicenseException;
-import com.codenvy.im.license.LicenseNotFoundException;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.BackupManager;
 import com.codenvy.im.managers.DownloadAlreadyStartedException;
@@ -88,7 +83,6 @@ public class InstallationManagerFacade {
     protected final StorageManager             storageManager;
     protected final InstallManager             installManager;
     protected final DownloadManager            downloadManager;
-    protected final CodenvyLicenseManager      licenseManager;
 
     private final String saasServerEndpoint;
 
@@ -102,12 +96,10 @@ public class InstallationManagerFacade {
                                      BackupManager backupManager,
                                      StorageManager storageManager,
                                      InstallManager installManager,
-                                     DownloadManager downloadManager,
-                                     CodenvyLicenseManager licenseManager) {
+                                     DownloadManager downloadManager) {
         this.saasRepositoryServiceProxy = saasRepositoryServiceProxy;
         this.installManager = installManager;
         this.downloadManager = downloadManager;
-        this.licenseManager = licenseManager;
         this.transport = transport;
         this.saasAuthServiceProxy = saasAuthServiceProxy;
         this.ldapManager = ldapManager;
@@ -580,36 +572,5 @@ public class InstallationManagerFacade {
      */
     public void logSaasAnalyticsEvent(Event event, @Nullable String authToken) throws IOException {
         saasRepositoryServiceProxy.logAnalyticsEvent(event, authToken);
-    }
-
-    /**
-     * @see CodenvyLicenseManager#delete()
-     */
-    public void deleteCodenvyLicense() throws LicenseException {
-        licenseManager.delete();
-    }
-
-    /**
-     * @see CodenvyLicenseManager#load()
-     *
-     * @throws LicenseNotFoundException
-     *         if license not found
-     * @throws InvalidLicenseException
-     *         if license not valid
-     * @throws LicenseException
-     *         if error occurred while loading license
-     */
-    public CodenvyLicense loadCodenvyLicense() throws LicenseException {
-        return licenseManager.load();
-    }
-
-    /**
-     * @see CodenvyLicenseManager#store(CodenvyLicense)
-     *
-     * @throws LicenseException
-     *         if error occurred while storing
-     */
-    public void storeCodenvyLicense(CodenvyLicense codenvyLicense) throws LicenseException {
-        licenseManager.store(codenvyLicense);
     }
 }

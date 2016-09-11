@@ -19,7 +19,6 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.VersionLabel;
-import com.codenvy.im.license.CodenvyLicenseManager;
 import com.codenvy.im.managers.BackupManager;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.DownloadManager;
@@ -50,8 +49,8 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.doReturn;
-import static org.powermock.api.mockito.PowerMockito.spy;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
 
 public class IMArtifactLabeledFacadeTest extends BaseTest {
@@ -76,8 +75,6 @@ public class IMArtifactLabeledFacadeTest extends BaseTest {
     private DownloadManager            downloadManager;
     @Mock
     private ConfigManager              configManager;
-    @Mock
-    private CodenvyLicenseManager      codenvyLicenseManager;
 
     private IMArtifactLabeledFacade         facade;
     private ImmutableMap<Artifact, Version> versions;
@@ -102,8 +99,7 @@ public class IMArtifactLabeledFacadeTest extends BaseTest {
                                                  backupManager,
                                                  storageManager,
                                                  installManager,
-                                                 downloadManager,
-                                                 codenvyLicenseManager));
+                                                 downloadManager));
     }
 
     @Test

@@ -16,7 +16,6 @@ package com.codenvy.im.facade;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.license.CodenvyLicenseManager;
 import com.codenvy.im.managers.BackupManager;
 import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.managers.InstallManager;
@@ -65,8 +64,7 @@ public class IMCliFilteredFacade extends IMArtifactLabeledFacade {
                                BackupManager backupManager,
                                StorageManager storageManager,
                                InstallManager installManager,
-                               DownloadManager downloadManager,
-                               CodenvyLicenseManager licenseManager) {
+                               DownloadManager downloadManager) {
         super(saasServerEndpoint,
               transport,
               saasAuthServiceProxy,
@@ -76,8 +74,7 @@ public class IMCliFilteredFacade extends IMArtifactLabeledFacade {
               backupManager,
               storageManager,
               installManager,
-              downloadManager,
-              licenseManager);
+              downloadManager);
     }
 
     /** {@inheritDoc} */

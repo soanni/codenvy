@@ -14,6 +14,9 @@
  */
 package com.codenvy.api.user.server;
 
+import com.codenvy.api.permission.server.AbstractPermissionsDomain;
+import com.codenvy.api.permission.server.PermissionsManager;
+import com.codenvy.api.permission.server.model.impl.SystemPermissionsImpl;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -34,6 +37,10 @@ import org.testng.annotations.Test;
 import javax.annotation.PostConstruct;
 
 import static java.util.Collections.emptyList;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -54,10 +61,20 @@ public class AdminUserCreatorTest {
     @Mock
     private UserManager userManager;
 
+    @Mock
+    private PermissionsManager permissionsManager;
+
     private Injector injector;
 
     @BeforeMethod
     public void setUp() throws Exception {
+        final AbstractPermissionsDomain mock = mock(AbstractPermissionsDomain.class);
+        final UserImpl user = new UserImpl("qwe", "qwe", "qwe", "qwe", emptyList());
+        doNothing().when(permissionsManager).storePermission(any(SystemPermissionsImpl.class));
+        when(permissionsManager.getDomain(anyString())).thenReturn(cast(mock));
+        when(mock.getAllowedActions()).thenReturn(emptyList());
+        when(userManager.getById(anyString())).thenReturn(user);
+        when(userManager.create(any(UserImpl.class), anyBoolean())).thenReturn(user);
         injector = Guice.createInjector(Stage.PRODUCTION, new AbstractModule() {
             @Override
             protected void configure() {
@@ -67,8 +84,14 @@ public class AdminUserCreatorTest {
                 bindConstant().annotatedWith(Names.named("codenvy.admin.name")).to(NAME);
                 bindConstant().annotatedWith(Names.named("codenvy.admin.initial_password")).to(PASSWORD);
                 bindConstant().annotatedWith(Names.named("codenvy.admin.email")).to(EMAIL);
+                bind(PermissionsManager.class).toInstance(permissionsManager);
             }
         });
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <R, T extends R> T cast(R qwe) {
+        return (T)qwe;
     }
 
     @Test

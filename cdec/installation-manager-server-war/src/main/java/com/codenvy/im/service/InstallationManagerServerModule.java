@@ -36,8 +36,6 @@ public class InstallationManagerServerModule extends AbstractModule {
     protected void configure() {
         bind(ApiExceptionMapper.class);
         bind(InstallationManagerService.class);
-        bind(LicenseService.class);
-        bind(ReportSender.class);
         Multibinder.newSetBinder(this.binder(), Artifact.class).addBinding().to(InstallManagerArtifact.class);
         Multibinder.newSetBinder(this.binder(), Artifact.class).addBinding().to(CDECArtifact.class);
 

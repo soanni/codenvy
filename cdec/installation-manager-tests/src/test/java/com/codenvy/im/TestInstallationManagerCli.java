@@ -21,37 +21,37 @@ public class TestInstallationManagerCli extends BaseIntegrationTest {
 
     @Test
     public void testInstallImCli() throws Exception {
-        doTest("install/test-install-im-cli.sh");
+        doTest("cli/install/test-install-im-cli.sh");
     }
 
     @Test
     public void testInstallImCliInRhelOs() throws Exception {
-        doTest("install/test-install-im-cli-in-rhel-os.sh");
+        doTest("cli/install/test-install-im-cli-in-rhel-os.sh");
     }
 
     @Test
     public void testInstallExceptionCases() throws Exception {
-        doTest("install/test-install-exception-cases.sh");
+        doTest("cli/install/test-install-exception-cases.sh");
     }
 
     @Test
     public void testInstallUpdateImCliClient() throws Exception {
-        doTest("install/test-install-update-im-cli-client.sh");
+        doTest("cli/install/test-install-update-im-cli-client.sh");
     }
 
     @Test
     public void testLoginWithUsernameAndPassword() throws Exception {
-        doTest("login/test-login-to-saas-through-im-cli.sh");
+        doTest("cli/login/test-login-to-saas-through-im-cli.sh");
     }
 
     @Test
     public void testDownloadAllUpdates() throws Exception {
-        doTest("download/test-download-all-updates.sh");
+        doTest("cli/download/test-download-all-updates.sh");
     }
 
     @Test
     public void testHelpCommand() throws Exception {
-        doTest("help/test-help.sh");
+        doTest("cli/help/test-help.sh");
     }
 
 }

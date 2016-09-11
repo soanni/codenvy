@@ -35,10 +35,12 @@ public class BaseIntegrationTest {
     protected Logger log = LoggerFactory.getLogger(this.getClass());
 
     private Path baseDir;
+    private Path pathToLibScript;
 
     @BeforeClass
     public void setUp() throws Exception {
         baseDir = Paths.get(getClass().getClassLoader().getResource("bin").getFile());
+        pathToLibScript = baseDir.resolve("lib.sh");
 
         doExecute(baseDir.toFile(), "chmod", "+x", "lib.sh");
         doExecute(baseDir.toFile(), "chmod", "+x", "config.sh");
@@ -46,12 +48,12 @@ public class BaseIntegrationTest {
 
     protected void doTest(String testScript) throws Exception {
         doExecute(baseDir.toFile(), "chmod", "+x", testScript);
-        doExecute(baseDir.toFile(), "./" + testScript);
+        doExecute(baseDir.toFile(), "./" + testScript, pathToLibScript.toString());
     }
 
     protected void doTest(String testScript, String argument) throws Exception {
         doExecute(baseDir.toFile(), "chmod", "+x", testScript);
-        doExecute(baseDir.toFile(), "./" + testScript, argument);
+        doExecute(baseDir.toFile(), "./" + testScript, pathToLibScript.toString(), argument);
     }
 
     private void doExecute(File directory, String... commands) throws IOException, InterruptedException {

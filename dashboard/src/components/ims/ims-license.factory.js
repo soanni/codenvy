@@ -32,20 +32,20 @@ export class ImsLicenseApi {
     this.$compile = $compile;
 
     // remote call
-    this.remoteLicenseAPI = this.$resource('/im/license', {}, {
+    this.remoteLicenseAPI = this.$resource('/api/license', {}, {
       getLicense: {
-        method: 'GET', url: '/im/license', responseType: 'text', transformResponse: (data) => {
+        method: 'GET', url: '/api/license', responseType: 'text', transformResponse: (data) => {
           return {key: data};
         }
       },
       setLicense: {
-        method: 'POST', url: '/im/license', isArray: false,
+        method: 'POST', url: '/api/license', isArray: false,
         headers: {
           'Content-Type': 'text/plain'
         }
       },
-      getProperties: {method: 'GET', url: '/im/license/properties'},
-      getLegality: {method: 'GET', url: '/im/license/legality'}
+      getProperties: {method: 'GET', url: '/api/license/properties'},
+      getLegality: {method: 'GET', url: '/api/license/legality'}
     });
 
     // current license

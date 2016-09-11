@@ -16,7 +16,6 @@ package com.codenvy.im.facade;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.VersionLabel;
-import com.codenvy.im.license.CodenvyLicenseManager;
 import com.codenvy.im.managers.BackupManager;
 import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.managers.DownloadNotStartedException;
@@ -66,8 +65,7 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
                                    BackupManager backupManager,
                                    StorageManager storageManager,
                                    InstallManager installManager,
-                                   DownloadManager downloadManager,
-                                   CodenvyLicenseManager licenseManager) {
+                                   DownloadManager downloadManager) {
         super(saasServerEndpoint,
               transport,
               saasAuthServiceProxy,
@@ -77,8 +75,7 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
               backupManager,
               storageManager,
               installManager,
-              downloadManager,
-              licenseManager);
+              downloadManager);
     }
 
 

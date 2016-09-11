@@ -20,11 +20,11 @@
     <parent>
         <artifactId>onpremises-assembly-parent</artifactId>
         <groupId>com.codenvy.onpremises</groupId>
-        <version>4.8.0-SNAPSHOT</version>
+        <version>5.0.0-M1-SNAPSHOT</version>
     </parent>
     <groupId>com.codenvy.onpremises.wsmaster</groupId>
     <artifactId>codenvy-master-parent</artifactId>
-    <version>4.8.0-SNAPSHOT</version>
+    <version>5.0.0-M1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Codenvy Master Parent</name>
     <modules>
@@ -53,5 +53,6 @@
         <module>codenvy-hosted-api-factory</module>
         <module>codenvy-hosted-api-permission-shared</module>
         <module>codenvy-hosted-integration-tests</module>
+        <module>codenvy-hosted-api-license</module>
     </modules>
 </project>

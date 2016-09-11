@@ -20,7 +20,7 @@
     <parent>
         <artifactId>onpremises-ide-parent</artifactId>
         <groupId>com.codenvy.onpremises</groupId>
-        <version>4.8.0-SNAPSHOT</version>
+        <version>5.0.0-M1-SNAPSHOT</version>
     </parent>
     <artifactId>onpremises-ide-packaging-war-platform-api</artifactId>
     <packaging>war</packaging>
@@ -45,6 +45,10 @@
         <dependency>
             <groupId>com.codenvy.onpremises.wsmaster</groupId>
             <artifactId>codenvy-hosted-api-jdbc-vendor-postgresql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.codenvy.onpremises.wsmaster</groupId>
+            <artifactId>codenvy-hosted-api-license</artifactId>
         </dependency>
         <dependency>
             <groupId>com.codenvy.onpremises.wsmaster</groupId>
@@ -181,6 +185,10 @@
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
             <artifactId>che-core-api-account</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.che.core</groupId>
+            <artifactId>che-core-api-agent</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.core</groupId>

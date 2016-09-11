@@ -20,11 +20,11 @@
     <parent>
         <artifactId>maven-depmgt-pom</artifactId>
         <groupId>org.eclipse.che.depmgt</groupId>
-        <version>4.8.0-SNAPSHOT</version>
+        <version>5.0.0-M1-SNAPSHOT</version>
     </parent>
     <groupId>com.codenvy.onpremises</groupId>
     <artifactId>onpremises-assembly-parent</artifactId>
-    <version>4.8.0-SNAPSHOT</version>
+    <version>5.0.0-M1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Onpremises :: Parent</name>
     <modules>
@@ -46,12 +46,12 @@
     </scm>
     <properties>
         <aws.java.sdk.version>1.11.22</aws.java.sdk.version>
-        <che.lib.version>4.8.0-SNAPSHOT</che.lib.version>
-        <che.version>4.8.0-SNAPSHOT</che.version>
+        <che.lib.version>5.0.0-M1-SNAPSHOT</che.lib.version>
+        <che.version>5.0.0-M1-SNAPSHOT</che.version>
         <codenvy.analytics.version>3.13.4</codenvy.analytics.version>
         <com.braintreepayments.gateway.version>2.39.2</com.braintreepayments.gateway.version>
         <com.codahale.metrics.version>3.0.2</com.codahale.metrics.version>
-        <com.dumbster.version>1.6</com.dumbster.version>
+        <com.dumbster.version>1.7.1</com.dumbster.version>
         <com.github.cloudfoundry-community.nats-client.version>0.5.1</com.github.cloudfoundry-community.nats-client.version>
         <com.license4j.version>4.6.0</com.license4j.version>
         <com.nimbusds.version>3.0</com.nimbusds.version>
@@ -69,7 +69,6 @@
         <org.flyway.version>3.1</org.flyway.version>
         <org.mongodb.version>3.2.1</org.mongodb.version>
         <org.osgi.version>5.0.0</org.osgi.version>
-        <org.powermock.version>1.5.5</org.powermock.version>
         <org.scala.lang.version>2.10.4</org.scala.lang.version>
         <org.thymeleaf.version>2.1.4.RELEASE</org.thymeleaf.version>
         <site.classifier>onprem-se</site.classifier>
@@ -189,6 +188,20 @@
                 <groupId>com.codenvy.lib</groupId>
                 <artifactId>codenvy-websocket-terminal</artifactId>
                 <version>${project.version}</version>
+                <type>tar.gz</type>
+                <classifier>linux_amd64</classifier>
+            </dependency>
+            <dependency>
+                <groupId>com.codenvy.lib</groupId>
+                <artifactId>codenvy-websocket-terminal</artifactId>
+                <version>${project.version}</version>
+                <type>tar.gz</type>
+                <classifier>linux_arm7</classifier>
+            </dependency>
+            <dependency>
+                <groupId>com.codenvy.lib</groupId>
+                <artifactId>codenvy-websocket-terminal</artifactId>
+                <version>${project.version}</version>
                 <type>zip</type>
                 <classifier>linux_amd64</classifier>
             </dependency>
@@ -222,6 +235,12 @@
                 <artifactId>onpremises-ide-packaging-tomcat-codenvy-allinone</artifactId>
                 <version>${project.version}</version>
                 <type>zip</type>
+            </dependency>
+            <dependency>
+                <groupId>com.codenvy.onpremises</groupId>
+                <artifactId>onpremises-ide-packaging-tomcat-ext-server</artifactId>
+                <version>${project.version}</version>
+                <type>tar.gz</type>
             </dependency>
             <dependency>
                 <groupId>com.codenvy.onpremises</groupId>
@@ -334,6 +353,11 @@
             <dependency>
                 <groupId>com.codenvy.onpremises.wsmaster</groupId>
                 <artifactId>codenvy-hosted-api-jdbc-vendor-postgresql</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.codenvy.onpremises.wsmaster</groupId>
+                <artifactId>codenvy-hosted-api-license</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -662,6 +686,22 @@
                 <version>${com.github.cloudfoundry-community.nats-client.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.github.fakemongo</groupId>
+                <artifactId>fongo</artifactId>
+                <version>${com.github.fakemongo.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.kirviq</groupId>
+                <artifactId>dumbster</artifactId>
+                <version>${com.dumbster.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>activation</artifactId>
+                        <groupId>javax.activation</groupId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
                 <groupId>com.h2database</groupId>
                 <artifactId>h2</artifactId>
                 <version>${jdbc.h2-driver.version}</version>
@@ -700,17 +740,6 @@
                     <exclusion>
                         <artifactId>commons-lang3</artifactId>
                         <groupId>org.apache.commons</groupId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>dumbster</groupId>
-                <artifactId>dumbster</artifactId>
-                <version>${com.dumbster.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <artifactId>activation</artifactId>
-                        <groupId>javax.activation</groupId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -758,6 +787,11 @@
             </dependency>
             <dependency>
                 <groupId>org.eclipse.che.core</groupId>
+                <artifactId>che-core-api-agent</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.che.core</groupId>
                 <artifactId>che-core-api-jdbc</artifactId>
                 <version>${che.version}</version>
             </dependency>
@@ -771,6 +805,13 @@
                 <artifactId>che-core-api-user</artifactId>
                 <version>${che.version}</version>
                 <classifier>tests</classifier>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.che.lib</groupId>
+                <artifactId>che-websocket-terminal</artifactId>
+                <version>${che.lib.version}</version>
+                <type>zip</type>
+                <classifier>linux_arm7</classifier>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.che.lib</groupId>
@@ -817,17 +858,6 @@
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
                 <version>${jdbc.postgresql-driver.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.powermock</groupId>
-                <artifactId>powermock-api-mockito</artifactId>
-                <version>${org.powermock.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <artifactId>objenesis</artifactId>
-                        <groupId>org.objenesis</groupId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.scala-lang</groupId>

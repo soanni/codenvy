@@ -48,7 +48,7 @@ import com.palominolabs.metrics.guice.InstrumentationModule;
 
 import org.eclipse.che.account.spi.AccountDao;
 import org.eclipse.che.account.spi.jpa.JpaAccountDao;
-import org.eclipse.che.api.agent.server.wsagent.WsAgentLauncher;
+import org.eclipse.che.api.agent.server.launcher.AgentLauncher;
 import org.eclipse.che.api.auth.AuthenticationDao;
 import org.eclipse.che.api.auth.AuthenticationService;
 import org.eclipse.che.api.core.jdbc.jpa.eclipselink.EntityListenerInjectionManagerInitializer;
@@ -82,9 +82,8 @@ import org.eclipse.che.api.user.server.PreferencesService;
 import org.eclipse.che.api.user.server.ProfileService;
 import org.eclipse.che.api.user.server.TokenValidator;
 import org.eclipse.che.api.user.server.UserService;
-import org.eclipse.che.api.workspace.server.stack.StackMessageBodyAdapter;
-import org.eclipse.che.api.workspace.server.WorkspaceConfigMessageBodyAdapter;
 import org.eclipse.che.api.user.server.jpa.UserJpaModule;
+import org.eclipse.che.api.workspace.server.WorkspaceConfigMessageBodyAdapter;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.api.workspace.server.WorkspaceMessageBodyAdapter;
 import org.eclipse.che.api.workspace.server.WorkspaceService;
@@ -95,6 +94,7 @@ import org.eclipse.che.api.workspace.server.jpa.JpaStackDao;
 import org.eclipse.che.api.workspace.server.jpa.JpaWorkspaceDao;
 import org.eclipse.che.api.workspace.server.jpa.WorkspaceJpaModule;
 import org.eclipse.che.api.workspace.server.spi.StackDao;
+import org.eclipse.che.api.workspace.server.stack.StackMessageBodyAdapter;
 import org.eclipse.che.api.workspace.server.stack.StackService;
 import org.eclipse.che.commons.schedule.executor.ScheduleModule;
 import org.eclipse.che.everrest.CheAsynchronousJobPool;
@@ -164,7 +164,7 @@ public class OnPremisesIdeApiModule extends AbstractModule {
         Multibinder<FactoryParametersResolver> factoryParametersResolverMultibinder =
                 Multibinder.newSetBinder(binder(), FactoryParametersResolver.class);
         factoryParametersResolverMultibinder.addBinding()
-                                                  .to(GithubFactoryParametersResolver.class);
+                                            .to(GithubFactoryParametersResolver.class);
         factoryParametersResolverMultibinder.addBinding()
                                             .to(GitlabFactoryParametersResolver.class);
 
@@ -273,7 +273,8 @@ public class OnPremisesIdeApiModule extends AbstractModule {
                         new ConjunctionRequestFilter(
                                 new RegexpRequestFilter("^/api/permissions$"),
                                 new RequestMethodFilter("GET")
-                        )
+                        ),
+                        new UriStartFromRequestFilter("/api/license/legality")
                 )
         );
 
@@ -300,7 +301,6 @@ public class OnPremisesIdeApiModule extends AbstractModule {
                           .toProvider(com.codenvy.machine.MaintenanceConstraintProvider.class);
 
         install(new org.eclipse.che.plugin.docker.machine.ext.DockerTerminalModule());
-        bind(org.eclipse.che.api.agent.server.terminal.MachineTerminalLauncher.class);
 
         install(new org.eclipse.che.plugin.docker.machine.proxy.DockerProxyModule());
 
@@ -340,12 +340,18 @@ public class OnPremisesIdeApiModule extends AbstractModule {
         machineImageProviderMultibinder.addBinding()
                                        .to(org.eclipse.che.plugin.docker.machine.DockerInstanceProvider.class);
 
-        bind(WsAgentLauncher.class).to(com.codenvy.machine.launcher.WsAgentWithAuthLauncherImpl.class);
+        bind(org.eclipse.che.api.agent.server.AgentRegistry.class)
+                .to(org.eclipse.che.api.agent.server.impl.LocalAgentRegistryImpl.class);
+
+        Multibinder<AgentLauncher> agentLaunchers = Multibinder.newSetBinder(binder(), AgentLauncher.class);
+        agentLaunchers.addBinding().to(com.codenvy.machine.launcher.WsAgentWithAuthLauncherImpl.class);
+        agentLaunchers.addBinding().to(org.eclipse.che.api.workspace.server.launcher.TerminalAgentLauncherImpl.class);
+        agentLaunchers.addBinding().to(org.eclipse.che.api.workspace.server.launcher.SshAgentLauncherImpl.class);
+
+        install(new org.eclipse.che.api.agent.server.AgentModule());
 
         //workspace activity service
         install(new com.codenvy.activity.server.inject.WorkspaceActivityModule());
-
-        bind(org.eclipse.che.api.agent.server.terminal.MachineTerminalLauncher.class);
 
         MapBinder<String, com.codenvy.machine.MachineServerProxyTransformer> mapBinder =
                 MapBinder.newMapBinder(binder(),

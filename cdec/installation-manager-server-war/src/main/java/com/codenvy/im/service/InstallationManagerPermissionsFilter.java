@@ -27,12 +27,12 @@ import javax.ws.rs.Path;
 import static com.codenvy.api.permission.server.SystemDomain.MANAGE_CODENVY_ACTION;
 
 /**
- * Filter that covers calls to {@link LicenseService} and {@link InstallationManagerService} with authorization
+ * Filter that covers calls to {@link InstallationManagerService} with authorization
  *
  * @author Sergii Leschenko
  */
 @Filter
-@Path("/{serviceName:[(license)(im)]}{path:.*}")
+@Path("/{serviceName:[(im)]}{path:.*}")
 public class InstallationManagerPermissionsFilter extends CheMethodInvokerFilter {
     @Override
     protected void filter(GenericResourceMethod GenericResourceMethod, Object[] arguments) throws ApiException {

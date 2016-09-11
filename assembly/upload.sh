@@ -39,7 +39,7 @@ echo 'Uploading:'
 
     # override package name without version for dev servers
     if [ ${SERVER} != "prod" ]; then
-        FILE_NAME=`echo ${FILE_NAME} | sed 's/-[0-9].*\.zip/.zip/g'`
+        FILE_NAME=`echo ${FILE_NAME} | sed 's/-[0-9].*\.zip/.zip/g' | sed 's/-[0-9].*\.tar.gz/.tar.gz/g'`
     fi
     ssh -i ~/.ssh/${SSH_KEY_NAME} -o StrictHostKeyChecking=no ${SSH_USER_NAME}@${PUPPET_DNS} "mv -f /tmp/${FILE_NAME_WITH_POSTFIX} /mnt/u03/puppet/files/servers/${UPLOAD_DESTINATION}/${FILE_NAME}"
 }
@@ -48,8 +48,8 @@ selectTomcatToUpload() {
    case "$SCOPE" in
       "aio")
          AIO=`ls onpremises-ide-packaging-tomcat-codenvy-allinone/target/onpremises-ide-packaging-tomcat-codenvy-allinone-*.zip`
-         EXT_SERVER=`ls onpremises-ide-packaging-tomcat-ext-server/target/onpremises-ide-packaging-tomcat-ext-server-*.zip`
-         TERMINAL=`ls onpremises-ide-packaging-zip-terminal/target/onpremises-ide-packaging-zip-terminal-*.zip`
+         EXT_SERVER=`ls onpremises-ide-packaging-tomcat-ext-server/target/onpremises-ide-packaging-tomcat-ext-server-*.tar.gz`
+         TERMINAL=`ls onpremises-ide-packaging-zip-terminal/target/onpremises-ide-packaging-zip-terminal-*.tar.gz`
          doUploadTomcat ${AIO} ${SERVER}/${SCOPE}
          doUploadTomcat ${EXT_SERVER} ${SERVER}/${SCOPE}
          doUploadTomcat ${TERMINAL} ${SERVER}/${SCOPE}
@@ -59,8 +59,8 @@ selectTomcatToUpload() {
          doUploadTomcat ${API} ${SERVER}/${SCOPE}
       ;;
      "machine")
-         EXT_SERVER=`ls onpremises-ide-packaging-tomcat-ext-server/target/onpremises-ide-packaging-tomcat-ext-server-*.zip`
-         TERMINAL=`ls onpremises-ide-packaging-zip-terminal/target/onpremises-ide-packaging-zip-terminal-*.zip`
+         EXT_SERVER=`ls onpremises-ide-packaging-tomcat-ext-server/target/onpremises-ide-packaging-tomcat-ext-server-*.tar.gz`
+         TERMINAL=`ls onpremises-ide-packaging-zip-terminal/target/onpremises-ide-packaging-zip-terminal-*.tar.gz`
          doUploadTomcat ${EXT_SERVER} ${SERVER}/${SCOPE}
          doUploadTomcat ${TERMINAL} ${SERVER}/${SCOPE}
       ;;
@@ -71,8 +71,8 @@ selectTomcatToUpload() {
      "all")
          API=`ls onpremises-ide-packaging-tomcat-api/target/onpremises-ide-packaging-tomcat-api-*.zip`
          SITE=`ls onpremises-ide-packaging-tomcat-site/target/onpremises-ide-packaging-tomcat-site-*.zip`
-         EXT_SERVER=`ls onpremises-ide-packaging-tomcat-ext-server/target/onpremises-ide-packaging-tomcat-ext-server-*.zip`
-         TERMINAL=`ls onpremises-ide-packaging-zip-terminal/target/onpremises-ide-packaging-zip-terminal-*.zip`
+         EXT_SERVER=`ls onpremises-ide-packaging-tomcat-ext-server/target/onpremises-ide-packaging-tomcat-ext-server-*.tar.gz`
+         TERMINAL=`ls onpremises-ide-packaging-zip-terminal/target/onpremises-ide-packaging-zip-terminal-*.tar.gz`
          doUploadTomcat ${API} ${SERVER}/api
          doUploadTomcat ${SITE} ${SERVER}/site
          doUploadTomcat ${EXT_SERVER} ${SERVER}/machine
