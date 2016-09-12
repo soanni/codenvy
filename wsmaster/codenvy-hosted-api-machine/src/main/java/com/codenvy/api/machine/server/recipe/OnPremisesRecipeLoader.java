@@ -39,6 +39,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -69,7 +70,7 @@ public class OnPremisesRecipeLoader {
                                   JpaRecipePermissionsDao permissionsDao,
                                   RecipeDao recipeDao) {
         this.permissionsDao = permissionsDao;
-        this.recipesPaths = firstNonNull(recipesPaths, emptySet());
+        this.recipesPaths = firstNonNull(recipesPaths, Collections.<String>emptySet());
         this.recipeDao = recipeDao;
     }
 

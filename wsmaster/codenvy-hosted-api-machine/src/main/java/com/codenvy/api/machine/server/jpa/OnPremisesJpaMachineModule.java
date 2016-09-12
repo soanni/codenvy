@@ -24,6 +24,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
 
+import org.eclipse.che.api.machine.server.jpa.JpaRecipeDao;
+
 /**
  * @author Anton Korneta
  */
@@ -31,6 +33,8 @@ public class OnPremisesJpaMachineModule extends AbstractModule {
 
     @Override
     protected void configure() {
+
+        bind(JpaRecipeDao.class).to(OnPremisesJpaRecipeDao.class);
         bind(new TypeLiteral<AbstractPermissionsDomain<RecipePermissionsImpl>>() {}).to(RecipeDomain.class);
 
         final Multibinder<PermissionsDao<? extends AbstractPermissions>> daos =
