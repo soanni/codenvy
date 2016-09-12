@@ -70,7 +70,8 @@ public class OnPremisesJpaStackDaoTest {
     public void setupEntities() throws Exception {
         permissionses = new StackPermissionsImpl[] {new StackPermissionsImpl("user1", "stack1", Arrays.asList("read", "use", "search")),
                                                     new StackPermissionsImpl("user1", "stack2", Arrays.asList("read", "search")),
-                                                    new StackPermissionsImpl("user1", "stack3", Arrays.asList("read", "run")),
+                                                    new StackPermissionsImpl("*",     "stack3", Arrays.asList("read", "search")),
+                                                    new StackPermissionsImpl("user1", "stack4", Arrays.asList("read", "run")),
                                                     new StackPermissionsImpl("user2", "stack1", Arrays.asList("read", "use"))};
 
         users = new UserImpl[] {new UserImpl("user1", "user1@com.com", "usr1"),
@@ -79,7 +80,8 @@ public class OnPremisesJpaStackDaoTest {
         stacks = new StackImpl[] {
                 new StackImpl("stack1", "st1", null, null, null, Arrays.asList("tag1", "tag2"), null, null, null, null),
                 new StackImpl("stack2", "st2", null, null, null, null, null, null, null, null),
-                new StackImpl("stack3", "st3", null, null, null, null, null, null, null, null)};
+                new StackImpl("stack3", "st3", null, null, null, Arrays.asList("tag1", "tag2"), null, null, null, null),
+                new StackImpl("stack4", "st4", null, null, null, null, null, null, null, null)};
 
         Injector injector =
                 Guice.createInjector(new TestModule(), new OnPremisesJpaMachineModule(), new PermissionsModule(),
@@ -133,20 +135,22 @@ public class OnPremisesJpaStackDaoTest {
     @Test
     public void shouldFindStackByPermissions() throws Exception {
         List<StackImpl> results = dao.searchStacks(users[0].getId(), null, 0, 0);
-        assertEquals(results.size(), 2);
+        assertEquals(results.size(), 3);
         assertTrue(results.contains(stacks[0]));
         assertTrue(results.contains(stacks[1]));
+        assertTrue(results.contains(stacks[2]));
     }
 
     @Test
     public void shouldFindRecipeByPermissionsAndTags() throws Exception {
         List<StackImpl> results = dao.searchStacks(users[0].getId(), Collections.singletonList("tag2"), 0, 0);
-        assertEquals(results.size(), 1);
-        assertEquals(results.get(0), stacks[0]);
+        assertEquals(results.size(), 2);
+        assertTrue(results.contains(stacks[0]));
+        assertTrue(results.contains(stacks[2]));
     }
 
     @Test
-    public void shouldNotFindRecipeByUnexistingTags() throws Exception {
+    public void shouldNotFindRecipeByNonexistentTags() throws Exception {
         List<StackImpl> results = dao.searchStacks(users[0].getId(), Collections.singletonList("unexisted_tag2"), 0, 0);
         assertTrue(results.isEmpty());
     }

@@ -178,9 +178,6 @@ public class OnPremisesIdeApiModule extends AbstractModule {
         bind(StackDao.class).to(JpaStackDao.class);
         bind(RecipeDao.class).to(JpaRecipeDao.class);
         bind(SnapshotDao.class).to(JpaSnapshotDao.class);
-        bind(JpaWorkspaceDao.class).to(OnPremisesJpaWorkspaceDao.class);
-        bind(JpaStackDao.class).to(OnPremisesJpaStackDao.class);
-        bind(JpaRecipeDao.class).to(OnPremisesJpaRecipeDao.class);
         bind(AuthenticationDao.class).to(com.codenvy.api.dao.authentication.AuthenticationDaoImpl.class);
 
         final Multibinder<String> recipeBinder = Multibinder.newSetBinder(binder(),

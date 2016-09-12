@@ -63,7 +63,8 @@ public class OnPremisesJpaRecipeDaoTest {
     public void setupEntities() throws Exception {
         permissionses = new RecipePermissionsImpl[] {new RecipePermissionsImpl("user1", "recipe1", Arrays.asList("read", "use", "search")),
                                                      new RecipePermissionsImpl("user1", "recipe2", Arrays.asList("read", "search")),
-                                                     new RecipePermissionsImpl("user1", "recipe3", Arrays.asList("read", "run")),
+                                                     new RecipePermissionsImpl("user1",     "recipe3", Arrays.asList("read", "search")),
+                                                     new RecipePermissionsImpl("user1", "recipe4", Arrays.asList("read", "run")),
                                                      new RecipePermissionsImpl("user2", "recipe1", Arrays.asList("read", "use"))};
 
         users = new UserImpl[] {new UserImpl("user1", "user1@com.com", "usr1"),
@@ -72,7 +73,8 @@ public class OnPremisesJpaRecipeDaoTest {
         recipes = new RecipeImpl[] {
                 new RecipeImpl("recipe1", "rc1", null, null, null, Arrays.asList("tag1", "tag2"), null),
                 new RecipeImpl("recipe2", "rc2", null, "testType", null, null, null),
-                new RecipeImpl("recipe3", "rc3", null, null, null, null, null)};
+                new RecipeImpl("recipe3", "rc3", null, null, null, Arrays.asList("tag1", "tag2"), null),
+                new RecipeImpl("recipe4", "rc4", null, null, null, null, null)};
 
         Injector injector =
                 Guice.createInjector(new TestModule(), new OnPremisesJpaMachineModule(), new PermissionsModule(),
@@ -126,20 +128,22 @@ public class OnPremisesJpaRecipeDaoTest {
     @Test
     public void shouldFindRecipeByPermissionsAndType() throws Exception {
         List<RecipeImpl> results = dao.search(users[0].getId(), null, "testType", 0, 0);
-        assertEquals(results.size(), 2);
+        assertEquals(results.size(), 3);
         assertTrue(results.contains(recipes[0]));
         assertTrue(results.contains(recipes[1]));
+        assertTrue(results.contains(recipes[2]));
     }
 
     @Test
     public void shouldFindRecipeByPermissionsAndTags() throws Exception {
         List<RecipeImpl> results = dao.search(users[0].getId(), Collections.singletonList("tag2"), null, 0, 0);
-        assertEquals(results.size(), 1);
-        assertEquals(results.get(0), recipes[0]);
+        assertEquals(results.size(), 2);
+        assertTrue(results.contains(recipes[0]));
+        assertTrue(results.contains(recipes[2]));
     }
 
     @Test
-    public void shouldNotFindRecipeUnexistingTags() throws Exception {
+    public void shouldNotFindRecipeNonexistentTags() throws Exception {
         List<RecipeImpl> results = dao.search(users[0].getId(), Collections.singletonList("unexisted_tag2"), null, 0, 0);
         assertTrue(results.isEmpty());
     }

@@ -24,11 +24,16 @@ import com.codenvy.api.workspace.server.model.impl.WorkerImpl;
 import com.codenvy.api.workspace.server.spi.WorkerDao;
 import com.codenvy.api.workspace.server.spi.jpa.JpaStackPermissionsDao;
 import com.codenvy.api.workspace.server.spi.jpa.JpaWorkerDao;
+import com.codenvy.api.workspace.server.spi.jpa.OnPremisesJpaStackDao;
+import com.codenvy.api.workspace.server.spi.jpa.OnPremisesJpaWorkspaceDao;
 import com.codenvy.api.workspace.server.stack.StackDomain;
 import com.codenvy.api.workspace.server.stack.StackPermissionsImpl;
 import com.google.inject.AbstractModule;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
+
+import org.eclipse.che.api.workspace.server.jpa.JpaStackDao;
+import org.eclipse.che.api.workspace.server.jpa.JpaWorkspaceDao;
 
 /**
  * @author Max Shaposhnik
@@ -38,6 +43,8 @@ public class OnPremisesJpaWorkspaceModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(WorkerDao.class).to(JpaWorkerDao.class);
+        bind(JpaWorkspaceDao.class).to(OnPremisesJpaWorkspaceDao.class);
+        bind(JpaStackDao.class).to(OnPremisesJpaStackDao.class);
 
         bind(JpaWorkerDao.RemoveWorkersBeforeWorkspaceRemovedEventSubscriber.class).asEagerSingleton();
         bind(JpaWorkerDao.RemoveWorkersBeforeUserRemovedEventSubscriber.class).asEagerSingleton();
