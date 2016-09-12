@@ -686,11 +686,6 @@
                 <version>${com.github.cloudfoundry-community.nats-client.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.github.fakemongo</groupId>
-                <artifactId>fongo</artifactId>
-                <version>${com.github.fakemongo.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>com.github.kirviq</groupId>
                 <artifactId>dumbster</artifactId>
                 <version>${com.dumbster.version}</version>
