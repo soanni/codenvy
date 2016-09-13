@@ -45,12 +45,17 @@ import java.util.List;
                 @NamedQuery(name = "StackPermissions.getByUserId",
                             query = "SELECT stack " +
                                     "FROM StackPermissions stack " +
-                                    "WHERE stack.userId IS NULL OR stack.userId = :userId "),
+                                    "WHERE stack.userId = :userId "),
                 @NamedQuery(name = "StackPermissions.getByUserAndStackId",
                             query = "SELECT stack " +
                                     "FROM StackPermissions stack " +
                                     "WHERE stack.stackId = :stackId " +
-                                    "AND (stack.userId IS NULL OR stack.userId = :userId) ")
+                                    "AND stack.userId = :userId "),
+                @NamedQuery(name = "StackPermissions.getByStackIdPublic",
+                            query = "SELECT stack " +
+                                    "FROM StackPermissions stack " +
+                                    "WHERE stack.stackId = :stackId " +
+                                    "AND stack.userId IS NULL ")
         }
 )
 @Table(indexes = {@Index(columnList = "userId, stackId", unique = true),

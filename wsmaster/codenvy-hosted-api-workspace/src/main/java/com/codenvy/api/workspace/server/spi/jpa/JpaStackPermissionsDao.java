@@ -83,11 +83,18 @@ public class JpaStackPermissionsDao extends AbstractJpaPermissionsDao<StackPermi
     @Transactional
     protected StackPermissionsImpl doGet(@Nullable String userId, String instanceId) throws ServerException, NotFoundException {
         try {
-            return managerProvider.get()
-                                  .createNamedQuery("StackPermissions.getByUserAndStackId", StackPermissionsImpl.class)
-                                  .setParameter("stackId", instanceId)
-                                  .setParameter("userId", userId)
-                                  .getSingleResult();
+            if (userId == null) {
+                return managerProvider.get()
+                                      .createNamedQuery("StackPermissions.getByStackIdPublic", StackPermissionsImpl.class)
+                                      .setParameter("stackId", instanceId)
+                                      .getSingleResult();
+            } else {
+                return managerProvider.get()
+                                      .createNamedQuery("StackPermissions.getByUserAndStackId", StackPermissionsImpl.class)
+                                      .setParameter("stackId", instanceId)
+                                      .setParameter("userId", userId)
+                                      .getSingleResult();
+            }
         } catch (NoResultException e) {
             throw new NotFoundException(format("Permissions on stack '%s' of user '%s' was not found.", instanceId, userId));
         } catch (RuntimeException e) {

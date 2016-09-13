@@ -96,11 +96,18 @@ public class JpaRecipePermissionsDao extends AbstractJpaPermissionsDao<RecipePer
     @Transactional
     protected RecipePermissionsImpl doGet(@Nullable String userId, String instanceId) throws ServerException, NotFoundException {
         try {
-            return managerProvider.get()
-                                  .createNamedQuery("RecipePermissions.getByUserAndRecipeId", RecipePermissionsImpl.class)
-                                  .setParameter("recipeId", instanceId)
-                                  .setParameter("userId", userId)
-                                  .getSingleResult();
+            if (userId == null) {
+                return managerProvider.get()
+                                      .createNamedQuery("RecipePermissions.getByRecipeIdPublic", RecipePermissionsImpl.class)
+                                      .setParameter("recipeId", instanceId)
+                                      .getSingleResult();
+            } else {
+                return managerProvider.get()
+                                      .createNamedQuery("RecipePermissions.getByUserAndRecipeId", RecipePermissionsImpl.class)
+                                      .setParameter("recipeId", instanceId)
+                                      .setParameter("userId", userId)
+                                      .getSingleResult();
+            }
         } catch (NoResultException e) {
             throw new NotFoundException(format("Permissions on recipe '%s' of user '%s' was not found.", instanceId, userId));
         } catch (RuntimeException e) {
