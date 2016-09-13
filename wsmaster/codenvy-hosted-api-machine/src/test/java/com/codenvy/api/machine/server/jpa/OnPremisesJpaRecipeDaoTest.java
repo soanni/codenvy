@@ -37,10 +37,18 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.persistence.EntityManager;
+import javax.persistence.spi.PersistenceUnitTransactionType;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import static org.eclipse.persistence.config.PersistenceUnitProperties.JDBC_DRIVER;
+import static org.eclipse.persistence.config.PersistenceUnitProperties.JDBC_PASSWORD;
+import static org.eclipse.persistence.config.PersistenceUnitProperties.JDBC_URL;
+import static org.eclipse.persistence.config.PersistenceUnitProperties.JDBC_USER;
+import static org.eclipse.persistence.config.PersistenceUnitProperties.TRANSACTION_TYPE;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -159,11 +167,21 @@ public class OnPremisesJpaRecipeDaoTest {
             }).toInstance(new JpaTckRepository<>(RecipePermissionsImpl.class));
             bind(new TypeLiteral<TckRepository<UserImpl>>() {}).toInstance(new JpaTckRepository<>(UserImpl.class));
             bind(new TypeLiteral<TckRepository<RecipeImpl>>() {}).toInstance(new JpaTckRepository<>(RecipeImpl.class));
+            Map properties = new HashMap();
+            if (System.getProperty("jdbc.driver") != null) {
+                properties.put(TRANSACTION_TYPE,
+                               PersistenceUnitTransactionType.RESOURCE_LOCAL.name());
 
-            install(new JpaPersistModule("main"));
+                properties.put(JDBC_DRIVER, System.getProperty("jdbc.driver"));
+                properties.put(JDBC_URL, System.getProperty("jdbc.url"));
+                properties.put(JDBC_USER, System.getProperty("jdbc.user"));
+                properties.put(JDBC_PASSWORD, System.getProperty("jdbc.password"));
+            }
+            JpaPersistModule main = new JpaPersistModule("main");
+            main.properties(properties);
+            install(main);
             bind(JpaInitializer.class).asEagerSingleton();
             bind(EntityListenerInjectionManagerInitializer.class).asEagerSingleton();
-            bind(org.eclipse.che.api.core.h2.jdbc.jpa.eclipselink.H2ExceptionHandler.class);
         }
     }
 }
