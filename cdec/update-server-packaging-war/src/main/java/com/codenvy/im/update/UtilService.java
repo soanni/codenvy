@@ -14,7 +14,10 @@
  */
 package com.codenvy.im.update;
 
+import com.codenvy.report.shared.dto.Ip;
+import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.rest.annotations.GenerateLink;
+import org.eclipse.che.dto.server.DtoFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +28,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+
+import static java.lang.String.format;
 
 /**
  * Utils API.
@@ -41,18 +45,20 @@ public class UtilService {
     public UtilService() {
     }
 
-    /** Get client's IP. */
+    /**
+     * Get client's IP.
+     */
     @GenerateLink(rel = "return client's external IP")
     @GET
     @Path("/client-ip")
-    @Produces(MediaType.TEXT_PLAIN)
-    public Response getClientIp(@Context HttpServletRequest requestContext) {
+    @Produces(MediaType.APPLICATION_JSON)
+    public Ip getClientIp(@Context HttpServletRequest requestContext) throws ServerException {
         try {
             String clientIp = requestContext.getRemoteAddr();
-            return Response.status(Response.Status.OK).entity(clientIp).build();
+            return DtoFactory.newDto(Ip.class).withValue(clientIp);
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unexpected error. " + e.getMessage()).build();
+            throw new ServerException(format("Unexpected error: '%s'.", e.getMessage()));
         }
     }
 

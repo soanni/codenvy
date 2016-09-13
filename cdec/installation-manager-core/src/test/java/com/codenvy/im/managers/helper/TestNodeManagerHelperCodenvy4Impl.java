@@ -18,18 +18,17 @@ import com.codenvy.im.BaseTest;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.commands.MacroCommand;
+import com.codenvy.im.managers.Codenvy4xLicenseManager;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.NodeException;
+import com.codenvy.im.utils.HttpTransport;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import org.eclipse.che.api.core.ApiException;
-import org.eclipse.che.api.core.rest.HttpJsonRequest;
-import org.eclipse.che.api.core.rest.HttpJsonRequestFactory;
-import org.eclipse.che.api.core.rest.HttpJsonResponse;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.AfterMethod;
@@ -43,11 +42,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.codenvy.im.managers.helper.NodeManagerHelperCodenvy4Impl.NODE_NUMBER_PARAM;
 import static java.lang.String.format;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
@@ -60,18 +57,18 @@ import static org.testng.Assert.assertTrue;
 /** @author Dmytro Nochevnov */
 public class TestNodeManagerHelperCodenvy4Impl extends BaseTest {
 
+    private static final String VALIDATION_NODE_JSON = "{\"value\" : \"true\"}";
+
     @Mock
-    private ConfigManager          mockConfigManager;
+    private ConfigManager           mockConfigManager;
     @Mock
-    private NodeConfigHelper       mockNodeConfigHelper;
+    private NodeConfigHelper        mockNodeConfigHelper;
     @Mock
-    private Command                mockCommand;
+    private Command                 mockCommand;
     @Mock
-    private HttpJsonRequestFactory httpJsonRequestFactory;
+    private HttpTransport           transport;
     @Mock
-    private HttpJsonRequest        validateLicenseRequest;
-    @Mock
-    private HttpJsonResponse       validateLicenseResponse;
+    private Codenvy4xLicenseManager codenvy4xLicenseManager;
 
     private static final String TEST_NODE_DNS = "node1.hostname";
     private static final String TEST_HOST_URL = "hostname";
@@ -91,7 +88,7 @@ public class TestNodeManagerHelperCodenvy4Impl extends BaseTest {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
-        spyHelperCodenvy4 = spy(new NodeManagerHelperCodenvy4Impl(mockConfigManager, httpJsonRequestFactory));
+        spyHelperCodenvy4 = spy(new NodeManagerHelperCodenvy4Impl(mockConfigManager, codenvy4xLicenseManager, transport));
 
         doReturn(ImmutableList.of(Paths.get("/etc/puppet/" + Config.SINGLE_SERVER_4_0_PROPERTIES)).iterator())
             .when(mockConfigManager).getCodenvyPropertiesFiles(InstallType.SINGLE_SERVER);
@@ -113,10 +110,7 @@ public class TestNodeManagerHelperCodenvy4Impl extends BaseTest {
     }
 
     private void initLicenseValidationRequest() throws ApiException, IOException {
-        when(httpJsonRequestFactory.fromUrl(anyString())).thenReturn(validateLicenseRequest);
-        when(validateLicenseRequest.useGetMethod()).thenReturn(validateLicenseRequest);
-        when(validateLicenseRequest.addQueryParam(eq(NODE_NUMBER_PARAM), anyString())).thenReturn(validateLicenseRequest);
-        when(validateLicenseRequest.request()).thenReturn(validateLicenseResponse);
+        when(transport.doGet(anyString())).thenReturn(VALIDATION_NODE_JSON);
     }
 
     @Test
@@ -416,30 +410,22 @@ public class TestNodeManagerHelperCodenvy4Impl extends BaseTest {
 
     @Test
     public void licenseShouldBeValid() throws IOException, ApiException {
-        Map<String, String> properties = new HashMap<>();
-        properties.put("value", "true");
-        when(validateLicenseResponse.asProperties()).thenReturn(properties);
-
         spyHelperCodenvy4.validateLicense();
 
-        verify(httpJsonRequestFactory).fromUrl(anyString());
-        verify(validateLicenseRequest).useGetMethod();
-        verify(validateLicenseRequest).request();
-        verify(validateLicenseResponse).asProperties();
+        verify(transport).doGet(anyString());
+        verify(mockConfigManager).getApiEndpoint();
     }
 
     @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Your Codenvy subscription only allows a single server.")
     public void licenseShouldBeInValid() throws IOException, ApiException {
-        Map<String, String> properties = new HashMap<>();
-        properties.put("value", "false");
-        when(validateLicenseResponse.asProperties()).thenReturn(properties);
+        when(transport.doGet(anyString())).thenReturn("{\"value\" : \"false\"}");
 
         spyHelperCodenvy4.validateLicense();
     }
 
     @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Codenvy License can't be validated.")
     public void processVerifyLicenseShouldBeFailed() throws IOException, ApiException {
-        doThrow(ApiException.class).when(validateLicenseRequest).request();
+        doThrow(IOException.class).when(transport).doGet(anyString());
 
         spyHelperCodenvy4.validateLicense();
     }

@@ -3,6 +3,10 @@
 # tells bash that it should exit the script if any statement returns value > 0
 set -e
 
+CURRENT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+LOG_FILE="$CODENVY_IM_BASE/migration.log"
+rm -f $LOG_FILE
+
 oldLicensePath=/usr/local/codenvy/im/storage/config.properties
 licensePropertyKey="codenvy-license-key"
 licensePropertiesRegex="$licensePropertyKey=[a-zA-Z0-9]*$"
@@ -10,21 +14,21 @@ newLicenseDirectoryPath=/home/codenvy/codenvy-data/license
 newLicensePath="$newLicenseDirectoryPath/license"
 
 createLicenseDirectoryPath() {
-  mkdir -p $newLicenseDirectoryPath
-  chown -R codenvy:codenvy $newLicenseDirectoryPath
+  sudo mkdir -p $newLicenseDirectoryPath
+  sudo chown -R codenvy:codenvy $newLicenseDirectoryPath
 }
 
 copyLicenseToNewLocation() {
   license=$1
 
   #create new license file
-  touch $newLicensePath
-  chown -R codenvy:codenvy $newLicensePath
+  sudo touch $newLicensePath
+  sudo chown -R codenvy:codenvy $newLicensePath
 
   #write license key to the new license file
-  echo $license >> $newLicensePath
+  echo $license | sudo tee --append $newLicensePath &> /dev/null
 
-  echo "License was successfully migrated to new location"
+  echo "License was successfully migrated from $oldLicensePath to $newLicensePath" >> $LOG_FILE
 }
 
 createLicenseDirectoryPath

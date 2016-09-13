@@ -39,6 +39,7 @@ import com.codenvy.auth.sso.server.organization.UserCreationValidator;
 import com.codenvy.auth.sso.server.organization.UserCreator;
 import com.codenvy.plugin.github.factory.resolver.GithubFactoryParametersResolver;
 import com.codenvy.plugin.gitlab.factory.resolver.GitlabFactoryParametersResolver;
+import com.codenvy.report.ReportModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Key;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
@@ -378,5 +379,8 @@ public class OnPremisesIdeApiModule extends AbstractModule {
         final MessageBodyAdapterInterceptor interceptor = new MessageBodyAdapterInterceptor();
         requestInjection(interceptor);
         bindInterceptor(subclassesOf(CheJsonProvider.class), names("readFrom"), interceptor);
+
+        // install report sender
+        install(new ReportModule());
     }
 }

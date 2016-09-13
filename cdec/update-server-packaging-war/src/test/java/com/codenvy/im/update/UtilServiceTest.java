@@ -14,11 +14,13 @@
  */
 package com.codenvy.im.update;
 
+import com.codenvy.report.shared.dto.Ip;
+import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.dto.server.DtoFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.Response;
 
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -37,24 +39,22 @@ public class UtilServiceTest {
     }
 
     @Test
-    public void shouldReturnClientIp() {
+    public void shouldReturnClientIp() throws Exception {
         HttpServletRequest mockRequestContext = mock(HttpServletRequest.class);
         String testUserIp = "10.20.30.40";
         doReturn(testUserIp).when(mockRequestContext).getRemoteAddr();
 
-        Response response = testUtilService.getClientIp(mockRequestContext);
-        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
-        assertEquals(response.getEntity(), "10.20.30.40");
+        Ip ip = testUtilService.getClientIp(mockRequestContext);
+        assertEquals(ip, DtoFactory.newDto(Ip.class).withValue("10.20.30.40"));
     }
 
-    @Test
-    public void shouldReturnErrorWhenGettingClientIpFailed() {
+    @Test(expectedExceptions = ServerException.class,
+          expectedExceptionsMessageRegExp = "Unexpected error: 'error'.")
+    public void shouldReturnErrorWhenGettingClientIpFailed() throws ServerException {
         HttpServletRequest mockRequestContext = mock(HttpServletRequest.class);
         doThrow(new RuntimeException("error")).when(mockRequestContext).getRemoteAddr();
 
-        Response response = testUtilService.getClientIp(mockRequestContext);
-        assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-        assertEquals(response.getEntity(), "Unexpected error. error");
+        testUtilService.getClientIp(mockRequestContext);
     }
 
 }

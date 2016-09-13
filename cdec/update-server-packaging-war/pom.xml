@@ -41,6 +41,10 @@
         </dependency>
         <dependency>
             <groupId>com.codenvy.onpremises.wsmaster</groupId>
+            <artifactId>codenvy-hosted-report-shared</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.codenvy.onpremises.wsmaster</groupId>
             <artifactId>codenvy-hosted-sso-client</artifactId>
         </dependency>
         <dependency>

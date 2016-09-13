@@ -14,8 +14,11 @@
  */
 package com.codenvy.im.update;
 
-import com.codenvy.im.report.ReportParameters;
-import com.codenvy.im.report.ReportType;
+import com.codenvy.report.ReportParameters;
+import com.codenvy.report.ReportType;
+import com.codenvy.im.utils.InjectorBootstrap;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import org.eclipse.che.api.core.rest.annotations.GenerateLink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,9 +30,12 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Objects;
+
+import static java.lang.String.format;
 
 /**
- * Utils API.
+ * Report API.
  *
  * @author Dmytro Nochevnov
  */
@@ -47,18 +53,32 @@ public class ReportService {
     @GET
     @Path("/parameters/{report_type}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getReportParameters(@PathParam("report_type") String reportType) {
+    public Response getReportParameters(@PathParam("report_type") String reportTypeStr) {
         try {
-            if (reportType == null || ReportType.valueOf(reportType.toUpperCase()) == null) {
-                throw new RuntimeException("Report type is unknown.");
-            }
-
-            ReportParameters parameters = ReportType.valueOf(reportType.toUpperCase()).getParameters();
+            ReportType reportType = ReportType.valueOf(reportTypeStr.toUpperCase());
+            ReportParameters parameters = getParameters(reportType);
             return Response.ok(parameters).build();
+        } catch (IllegalArgumentException iae) {
+            return Response.status(Response.Status.NOT_FOUND)
+                           .entity(format("Report type '%s' not found.", reportTypeStr))
+                           .build();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unexpected error. " + e.getMessage()).build();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                           .entity(format("Unexpected error: '%s'.", e.getMessage()))
+                           .build();
         }
+    }
+
+    /** is package private for testing propose **/
+    ReportParameters getParameters(ReportType reportType) {
+        String parameterPrefix = reportType.name().toLowerCase();
+        ReportParameters parameters = new ReportParameters(
+            InjectorBootstrap.INJECTOR.getInstance(Key.get(String.class, Names.named(parameterPrefix + ".title"))),
+            InjectorBootstrap.INJECTOR.getInstance(Key.get(String.class, Names.named(parameterPrefix + ".sender"))),
+            InjectorBootstrap.INJECTOR.getInstance(Key.get(String.class, Names.named(parameterPrefix + ".receiver")))
+        );
+        return parameters;
     }
 
 }
