@@ -25,6 +25,7 @@ import org.eclipse.che.api.core.ServerException;
  */
 public interface PermissionChecker {
     /**
+     * TODO Add comment about public permissions
      * @param user
      *         user id
      * @param domain

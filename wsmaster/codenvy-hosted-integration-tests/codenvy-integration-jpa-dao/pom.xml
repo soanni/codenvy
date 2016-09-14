@@ -20,7 +20,7 @@
     <parent>
         <artifactId>codenvy-hosted-integration-tests</artifactId>
         <groupId>com.codenvy.integration.tests</groupId>
-        <version>4.8.0-SNAPSHOT</version>
+        <version>5.0.0-M1-SNAPSHOT</version>
     </parent>
     <artifactId>codenvy-integration-jpa-dao</artifactId>
     <packaging>jar</packaging>
@@ -51,18 +51,10 @@
             <artifactId>codenvy-hosted-api-workspace</artifactId>
             <classifier>tests</classifier>
         </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.core</groupId>
-            <artifactId>che-core-commons-test</artifactId>
-        </dependency>
+
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.codenvy.onpremises.wsmaster</groupId>
-            <artifactId>codenvy-hosted-api-jdbc-vendor-postgresql</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

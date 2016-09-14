@@ -64,7 +64,6 @@ public abstract class AbstractJpaPermissionsDao<T extends AbstractPermissions> i
     @Override
     @Transactional
     public boolean exists(String userId, String instanceId, String action) throws ServerException {
-        requireNonNull(instanceId, "Instance identifier required");
         requireNonNull(userId, "User identifier required");
         requireNonNull(action, "Action name required");
         T permissions;

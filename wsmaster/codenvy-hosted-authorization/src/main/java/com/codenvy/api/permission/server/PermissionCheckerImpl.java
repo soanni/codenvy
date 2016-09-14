@@ -37,6 +37,7 @@ public class PermissionCheckerImpl implements PermissionChecker {
     public boolean hasPermission(String user, String domain, String instance, String action) throws ServerException,
                                                                                                     NotFoundException,
                                                                                                     ConflictException {
-        return permissionsManager.exists(user, domain, instance, action);
+        return permissionsManager.exists(user, domain, instance, action)
+                || permissionsManager.exists("*", domain, instance, action);
     }
 }
