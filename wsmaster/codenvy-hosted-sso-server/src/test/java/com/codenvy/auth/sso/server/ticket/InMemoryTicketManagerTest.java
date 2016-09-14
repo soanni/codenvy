@@ -18,9 +18,6 @@ package com.codenvy.auth.sso.server.ticket;
 import com.codenvy.api.dao.authentication.AccessTicket;
 import com.codenvy.api.dao.authentication.TicketManager;
 
-import org.eclipse.che.commons.subject.Subject;
-import org.eclipse.che.commons.subject.SubjectImpl;
-
 import org.testng.annotations.Test;
 
 import java.util.Collections;
@@ -30,7 +27,7 @@ import static org.testng.Assert.assertNull;
 
 public class InMemoryTicketManagerTest {
     private final static String TOKEN = "123456789";
-    Subject subjectPrincipal = new SubjectImpl("user", "123", "t1", false);
+    String subjectPrincipal = "sdfsd345345";
 
 
     @Test

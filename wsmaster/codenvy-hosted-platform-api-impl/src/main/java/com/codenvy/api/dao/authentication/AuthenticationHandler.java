@@ -15,7 +15,6 @@
 package com.codenvy.api.dao.authentication;
 
 import org.eclipse.che.api.auth.AuthenticationException;
-import org.eclipse.che.commons.subject.Subject;
 
 /**
  * Authentication using username and password.
@@ -24,13 +23,11 @@ import org.eclipse.che.commons.subject.Subject;
  */
 public interface AuthenticationHandler {
     /**
-     * Authenticate user.
+     *  Check user password.
      *
-     * @return - user principal if authentication is done, throw an {@link com.codenvy.api.auth.AuthenticationException}
-     * otherwise.
      * @throws AuthenticationException
      */
-    Subject authenticate(final String login, final String password) throws AuthenticationException;
+    void authenticate(final String login, final String password) throws AuthenticationException;
 
     /** @return - type of authentication handler */
     String getType();
