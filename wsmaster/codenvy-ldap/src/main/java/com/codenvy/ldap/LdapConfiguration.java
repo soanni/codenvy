@@ -395,7 +395,7 @@ public class LdapConfiguration {
              saslAuthorizationId,
              saslSecurityStrength !=null ? SecurityStrength.valueOf(saslSecurityStrength) : null,
              saslMutualAuth,
-             saslQualityOfProtection != null ?QualityOfProtection.valueOf(saslQualityOfProtection) : null
+             saslQualityOfProtection != null ? QualityOfProtection.valueOf(saslQualityOfProtection) : null
             );
 
     }
