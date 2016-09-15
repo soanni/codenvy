@@ -108,8 +108,7 @@ public class LdapDirectBindTest {
     public void testWrongPassword() throws LdapInvalidAttributeValueException, AuthenticationException {
             handler.authenticate("name1", "nwrongpass");
     }
-    //Disable due https://issues.apache.org/jira/browse/DIRSERVER-1548
-    @Test(enabled = false, expectedExceptions = AuthenticationException.class, expectedExceptionsMessageRegExp = "Authentication failed. Please check username and password.")
+    @Test(expectedExceptions = AuthenticationException.class, expectedExceptionsMessageRegExp = "Authentication failed. Please check username and password.")
     public void testWrongUser() throws LdapInvalidAttributeValueException, AuthenticationException {
         handler.authenticate("name23431", "nwrongpass");
     }

@@ -242,10 +242,13 @@ public final class LdapConfigurationBuilder {
 
     public LdapConfiguration build() {
         LdapConfiguration ldapConfiguration =
-                new LdapConfiguration(ldapUrl, baseDn, userFilter, allowMultipleDns, subtreeSearch, bindDn, bindCredential, minPoolSize,
+                new LdapConfiguration(ldapUrl, baseDn, type,
+                                      providerClass, dnFormat,
+                                      userPasswordAttribute, userFilter, allowMultipleDns, subtreeSearch, bindDn, bindCredential,
+                                      minPoolSize,
                                       maxPoolSize, validateOnCheckout, validateOnCheckin, validatePeriodically, validatePeriod, failFast,
-                                      idleTime, prunePeriod, blockWaitTime, connectTimeout, responseTimeout, dnFormat,
-                                      userPasswordAttribute, useSsl, useStartTls, type, providerClass, trustCertificates, keystore,
+                                      idleTime, prunePeriod, blockWaitTime, connectTimeout, responseTimeout, useSsl, useStartTls,
+                                      trustCertificates, keystore,
                                       keystorePassword, keystoreType, saslMechanism, saslRealm, saslAuthorizationId, saslSecurityStrength,
                                       saslMutualAuth, saslQualityOfProtection);
         return ldapConfiguration;
