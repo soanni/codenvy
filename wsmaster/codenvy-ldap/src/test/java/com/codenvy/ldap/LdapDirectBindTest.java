@@ -93,7 +93,7 @@ public class LdapDirectBindTest {
 
     @AfterClass
     public void stopServer() throws Exception {
-        server.stop();
+        server.shutdown();
     }
 
     @Test

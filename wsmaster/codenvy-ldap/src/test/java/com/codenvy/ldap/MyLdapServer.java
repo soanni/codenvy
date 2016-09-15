@@ -24,6 +24,7 @@ import org.apache.directory.server.core.partition.ldif.LdifPartition;
 import org.apache.directory.server.core.schema.SchemaPartition;
 import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
+import org.apache.directory.shared.ldap.entry.Modification;
 import org.apache.directory.shared.ldap.entry.ServerEntry;
 import org.apache.directory.shared.ldap.name.DN;
 import org.apache.directory.shared.ldap.schema.SchemaManager;
@@ -33,11 +34,12 @@ import org.apache.directory.shared.ldap.schema.loader.ldif.LdifSchemaLoader;
 import org.apache.directory.shared.ldap.schema.manager.impl.DefaultSchemaManager;
 import org.apache.directory.shared.ldap.schema.registries.SchemaLoader;
 import org.eclipse.che.api.core.util.CustomPortService;
-import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.commons.lang.Pair;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 
 import static java.nio.file.Files.createTempDirectory;
@@ -112,31 +114,6 @@ public class MyLdapServer {
         ldapServer.setDirectoryService(service);
     }
 
-    public static void main(String[] arg) throws Exception {
-        String BASE_DN = "dc=codenvy,dc=com";
-        MyLdapServer server = MyLdapServer.builder()
-                                          .setPort(8235)
-                                          .setPartitionId("codenvy")
-                                          .allowAnonymousAccess()
-                                          .setPartitionDn(BASE_DN)
-                                          .useTmpWorkingDir()
-                                          .setMaxSizeLimit(1000)
-                                          .build();
-        server.start();
-        for (int i = 0; i < 2; i++) {
-            String password = NameGenerator.generate("pwd", 20);
-
-            server.addDefaultLdapUser(i,
-                                      Pair.of("givenName", "test-user-first-name" + i),
-                                      Pair.of("sn", "test-user-last-name"),
-                                      //Pair.of("userPassword", passwordEncryptor.encrypt(password).getBytes()),
-                                      Pair.of("userPassword", password.getBytes()),
-                                      Pair.of("telephoneNumber", "00000000" + i));
-
-        }
-        Thread.sleep(1000000);
-    }
-
     /**
      * Starts ldap server, please not that all the schema modifications
      * should be performed before server is started.
@@ -148,7 +125,7 @@ public class MyLdapServer {
     /**
      * Stops ldap server, releasing all the acquired resources.
      */
-    public void stop() {
+    public void shutdown() {
         ldapServer.stop();
         PORT_SERVICE.release(port);
         deleteRecursive(workingDir);
@@ -157,6 +134,11 @@ public class MyLdapServer {
     /** Returns this server url. */
     public String getUrl() {
         return url;
+    }
+
+    /** Returns default partition dn. */
+    public String getBaseDn() {
+        return baseDn.toString();
     }
 
     /**
@@ -189,6 +171,16 @@ public class MyLdapServer {
         service.getAdminSession().add(entry);
     }
 
+    /** Removes an entity with rdn {name}={value} in base dn. */
+    public void removeEntry(String name, String value) throws Exception {
+        service.getAdminSession().delete(new DN(name + '=' + value + ',' + baseDn));
+    }
+
+    /** Applies given modifications on the entity with rdn {rdnKey}={rdnValue} in base dn. */
+    public void modify(String rdnKey, String rdnValue, Modification... mods) throws Exception {
+        service.getAdminSession().modify(new DN(rdnKey + '=' + rdnValue + ',' + baseDn), Arrays.asList(mods));
+    }
+
     /**
      * Adds a new user which matches the default schema pattern, which is:
      *
@@ -213,9 +205,7 @@ public class MyLdapServer {
         entry.put("mail", mail);
         entry.put("sn", "<none>");
         for (Pair pair : other) {
-            if (pair.second instanceof String) {
-                entry.put(pair.first.toString(), (String)pair.second);
-            } else if (pair.second instanceof byte[]) {
+            if (pair.second instanceof byte[]) {
                 entry.put(pair.first.toString(), (byte[])pair.second);
             } else {
                 entry.put(pair.first.toString(), pair.second.toString());
@@ -233,6 +223,18 @@ public class MyLdapServer {
      */
     public ServerEntry addDefaultLdapUser(int idx, Pair... other) throws Exception {
         return addDefaultLdapUser("id" + idx, "name" + idx, "mail" + idx, other);
+    }
+
+    /**
+     * Removes user with rdn uid={id} in base dn.
+     *
+     * @param id
+     *         the id of the user to remove
+     * @throws Exception
+     *         when any error occurs
+     */
+    public void removeDefaultUser(String id) throws Exception {
+        removeEntry("uid", id);
     }
 
     /**
@@ -325,7 +327,7 @@ public class MyLdapServer {
             final ServerEntry newEntry = service.newEntry(new DN("cn=admin," + dn.toString()));
             newEntry.add("objectClass", "organizationalRole", "simpleSecurityObject");
             newEntry.add("cn", ADMIN_CN);
-            newEntry.add("userPassword", ADMIN_PWD.getBytes());
+            newEntry.add("userPassword", ADMIN_PWD.getBytes(StandardCharsets.UTF_8));
             newEntry.add("description", "Test server admin");
             session.add(newEntry);
         }

@@ -389,6 +389,17 @@
             </dependency>
             <dependency>
                 <groupId>com.codenvy.onpremises.wsmaster</groupId>
+                <artifactId>codenvy-hosted-api-permission</artifactId>
+                <version>${project.version}</version>
+                <classifier>tests</classifier>
+            </dependency>
+            <dependency>
+                <groupId>com.codenvy.onpremises.wsmaster</groupId>
+                <artifactId>codenvy-hosted-api-permission-shared</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.codenvy.onpremises.wsmaster</groupId>
                 <artifactId>codenvy-hosted-api-subscription</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -543,11 +554,6 @@
                 <groupId>com.codenvy.plugin</groupId>
                 <artifactId>codenvy-hosted-ext-profile</artifactId>
                 <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.ldaptive</groupId>
-                <artifactId>ldaptive</artifactId>
-                <version>1.2.0</version>
             </dependency>
             <dependency>
                 <groupId>com.codenvy.plugin</groupId>
@@ -858,6 +864,11 @@
                 <groupId>org.flywaydb</groupId>
                 <artifactId>flyway-core</artifactId>
                 <version>${org.flyway.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.ldaptive</groupId>
+                <artifactId>ldaptive</artifactId>
+                <version>1.2.0</version>
             </dependency>
             <dependency>
                 <groupId>org.mongodb</groupId>
