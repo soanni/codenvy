@@ -29,8 +29,10 @@ else
 fi
 
 NO_PROXY=${HOST_URL}
+WORKSPACE_NAME="workspace-1"
+PROJECT_NAME="project-1"
 
-# install Codenvy 4.x behind the proxy
+# install Codenvy on-prem behind the proxy
 executeSshCommand "echo '$PROXY_IP $PROXY_SERVER' | sudo tee --append /etc/hosts > /dev/null"
 
 installCodenvy ${LATEST_CODENVY_VERSION} --http-proxy-for-installation=$HTTP_PROXY --https-proxy-for-installation=$HTTPS_PROXY --no-proxy-for-installation="'$NO_PROXY'" --http-proxy-for-codenvy=$HTTP_PROXY --https-proxy-for-codenvy=$HTTPS_PROXY --no-proxy-for-codenvy="'$NO_PROXY'" --http-proxy-for-codenvy-workspaces=$HTTP_PROXY --https-proxy-for-codenvy-workspaces=$HTTPS_PROXY --no-proxy-for-codenvy-workspaces="'$NO_PROXY'" --http-proxy-for-docker-daemon=$HTTP_PASSWORDLESS_PROXY --https-proxy-for-docker-daemon=$HTTPS_PASSWORDLESS_PROXY --no-proxy-for-docker-daemon="'$NO_PROXY'" --docker-registry-mirror=$HTTPS_PASSWORDLESS_PROXY
@@ -86,16 +88,16 @@ USER_ID=${OUTPUT}
 
 authWithoutRealmAndServerDns "cdec" "pwd123ABC"
 
-# create workspace "workspace-1"
-doPost "application/json" "{\"environments\":[{\"name\":\"workspace-1\",\"machineConfigs\":[{\"links\":[],\"limits\":{\"ram\":1000},\"name\":\"ws-machine\",\"type\":\"docker\",\"source\":{\"location\":\"http://${HOST_URL}/api/recipe/recipe_ubuntu/script\",\"type\":\"recipe\"},\"dev\":true}]}],\"defaultEnv\":\"workspace-1\",\"projects\":[],\"name\":\"workspace-1\",\"attributes\":{},\"temporary\":false}" "http://${HOST_URL}/api/workspace/?token=${TOKEN}"
+# create workspace
+doPost "application/json" "{\"defaultEnv\":\"default\",\"commands\":[{\"commandLine\":\"mvn clean install -f $\{current.project.path}\",\"name\":\"build\",\"type\":\"mvn\",\"attributes\":{}}],\"projects\":[],\"name\":\"${WORKSPACE_NAME}\",\"environments\":{\"default\":{\"machines\":{\"dev-machine\":{\"servers\":{},\"agents\":[\"org.eclipse.che.terminal\",\"org.eclipse.che.ws-agent\",\"org.eclipse.che.ssh\"],\"attributes\":{\"memoryLimitBytes\":1684354560},\"source\":{\"type\":\"dockerfile\",\"content\":\"FROM codenvy/ubuntu_jdk8\"}}},\"recipe\":{\"location\":\"codenvy/ubuntu_jdk8\",\"type\":\"dockerimage\"}}},\"links\":[],\"description\":null}" "http://${HOST_URL}/api/workspace/?token=${TOKEN}"
 fetchJsonParameter "id"
 WORKSPACE_ID=${OUTPUT}
 
-# run workspace "workspace-1"
+# run workspace
 doPost "application/json" "{}" "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}/runtime?token=${TOKEN}"
 
 # verify is workspace running
-doSleep "10m"  "Wait until workspace starts to avoid 'java.lang.NullPointerException' error on verifying workspace state"
+doSleep "6m"  "Wait until workspace starts to avoid 'java.lang.NullPointerException' error on verifying workspace state"
 doGet "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"
 validateExpectedString ".*\"status\":\"RUNNING\".*"
 
@@ -129,7 +131,7 @@ validateExpectedString ".*proxy_password=$PROXY_PASSWORD.*"
 
 authWithoutRealmAndServerDns "cdec" "pwd123ABC"
 
-# run workspace "workspace-1"
+# run workspace
 doPost "application/json" "{}" "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}/runtime?token=${TOKEN}"
 
 # obtain network ports
@@ -148,12 +150,12 @@ doGet "http://${HOST_URL}/api/machine/token/${WORKSPACE_ID}?token=${TOKEN}"
 fetchJsonParameter "machineToken"
 MACHINE_TOKEN=${OUTPUT}
 
-# create project "project-1" of type "console-java" in workspace "workspace-1"
-doPost "application/json" "{\"location\":\"https://github.com/che-samples/console-java-simple.git\",\"parameters\":{},\"type\":\"git\"}" "${URL_OF_PROJECT_API}/import/project-1?token=${MACHINE_TOKEN}"
+# create project of type "console-java"
+doPost "application/json" "{\"location\":\"https://github.com/che-samples/console-java-simple.git\",\"parameters\":{},\"type\":\"git\"}" "${URL_OF_PROJECT_API}/import/${PROJECT_NAME}?token=${MACHINE_TOKEN}"
 
 doGet "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"
 validateExpectedString ".*\"status\":\"RUNNING\".*"
-validateExpectedString ".*\"path\":\"/project-1.*"
+validateExpectedString ".*\"path\":\"/${PROJECT_NAME}.*"
 
 # remove node1.${HOST_URL}
 executeIMCommand "remove-node" "node1.${HOST_URL}"
