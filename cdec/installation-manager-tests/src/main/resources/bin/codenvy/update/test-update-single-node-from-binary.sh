@@ -19,13 +19,13 @@
 # load lib.sh from path stored in parameter 1
 . $1
 
-printAndLog "TEST CASE: Update single-node Codenvy with non-default admin name and password from binary"
+printAndLog "TEST CASE: Update single-node Codenvy from binary"
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
-installCodenvy ${PREV_CODENVY_VERSION} --systemAdminName="newadmin" --systemAdminPassword="new-password" --disable-monitoring-tools
+installCodenvy ${PREV_CODENVY_VERSION}
 validateInstalledCodenvyVersion ${PREV_CODENVY_VERSION}
 executeSshCommand "cat codenvy/codenvy.properties | grep 'install_monitoring_tools=false'"
-authWithoutRealmAndServerDns "newadmin" "new-password"
+authWithoutRealmAndServerDns "admin" "password"
 
 executeIMCommand "download" "codenvy" "${LATEST_CODENVY_VERSION}"
 

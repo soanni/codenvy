@@ -28,7 +28,7 @@ else
     vagrantUp ${SINGLE_WITH_ADDITIONAL_NODES_VAGRANT_FILE}
 fi
 
-# install Codenvy 4.x
+# install Codenvy on-prem
 installCodenvy ${LATEST_CODENVY_VERSION}
 validateInstalledCodenvyVersion ${LATEST_CODENVY_VERSION}
 

@@ -15,14 +15,11 @@
 package com.codenvy.api.deploy;
 
 import com.codenvy.api.AdminApiModule;
-import com.codenvy.api.machine.server.jpa.OnPremisesJpaRecipeDao;
 import com.codenvy.api.machine.server.jpa.OnPremisesJpaMachineModule;
 import com.codenvy.api.permission.server.PermissionChecker;
 import com.codenvy.api.permission.server.jpa.SystemPermissionsJpaModule;
 import com.codenvy.api.user.server.AdminUserService;
 import com.codenvy.api.workspace.server.jpa.OnPremisesJpaWorkspaceModule;
-import com.codenvy.api.workspace.server.spi.jpa.OnPremisesJpaStackDao;
-import com.codenvy.api.workspace.server.spi.jpa.OnPremisesJpaWorkspaceDao;
 import com.codenvy.auth.aws.ecr.AwsEcrAuthResolver;
 import com.codenvy.auth.sso.client.ServerClient;
 import com.codenvy.auth.sso.client.TokenHandler;
@@ -94,7 +91,6 @@ import org.eclipse.che.api.workspace.server.WorkspaceServiceLinksInjector;
 import org.eclipse.che.api.workspace.server.WorkspaceValidator;
 import org.eclipse.che.api.workspace.server.event.WorkspaceMessenger;
 import org.eclipse.che.api.workspace.server.jpa.JpaStackDao;
-import org.eclipse.che.api.workspace.server.jpa.JpaWorkspaceDao;
 import org.eclipse.che.api.workspace.server.jpa.WorkspaceJpaModule;
 import org.eclipse.che.api.workspace.server.spi.StackDao;
 import org.eclipse.che.api.workspace.server.stack.StackMessageBodyAdapter;
@@ -297,6 +293,12 @@ public class OnPremisesIdeApiModule extends AbstractModule {
         bind(org.eclipse.che.plugin.docker.client.DockerConnector.class).to(com.codenvy.swarm.client.SwarmDockerConnector.class);
         bind(org.eclipse.che.plugin.docker.client.DockerRegistryDynamicAuthResolver.class)
                 .to(AwsEcrAuthResolver.class);
+
+        Multibinder<String> allMachineVolumes = Multibinder.newSetBinder(binder(),
+                                                                         String.class,
+                                                                         Names.named("machine.docker.machine_volumes"));
+        allMachineVolumes.addBinding().toProvider(org.eclipse.che.plugin.docker.machine.ext.provider.ExtraVolumeProvider.class);
+
 
         bind(String.class).annotatedWith(Names.named("machine.docker.machine_env"))
                           .toProvider(com.codenvy.machine.MaintenanceConstraintProvider.class);
