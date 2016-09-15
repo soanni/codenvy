@@ -114,7 +114,7 @@ public class LdapConnectionFactoryProvider implements Provider<PooledConnectionF
             cc.setConnectionInitializer(bc);
         } else if ("*".equals(configuration.getBindCredential()) && "*".equals(configuration.getBindDn())) {
             cc.setConnectionInitializer(new FastBindOperation.FastBindConnectionInitializer());
-        } else if (!Strings.isNullOrEmpty(configuration.getBindDn()) && Strings.isNullOrEmpty(configuration.getBindCredential())) {
+        } else if (!Strings.isNullOrEmpty(configuration.getBindDn()) && !Strings.isNullOrEmpty(configuration.getBindCredential())) {
             cc.setConnectionInitializer(new BindConnectionInitializer(configuration.getBindDn(),
                                                                       new Credential(configuration.getBindCredential())));
         }

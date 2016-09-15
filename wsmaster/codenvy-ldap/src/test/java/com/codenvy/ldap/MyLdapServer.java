@@ -186,7 +186,7 @@ public class MyLdapServer {
      *         when the {@code entry} can't be added
      */
     public void addEntry(ServerEntry entry) throws Exception {
-        service.getSession().add(entry);
+        service.getAdminSession().add(entry);
     }
 
     /**
