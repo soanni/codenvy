@@ -47,7 +47,6 @@ public class LdapAuthenticatedSearchTest {
     public void startServer() throws Exception {
         server = MyLdapServer.builder()
                              .setPartitionId("codenvy")
-                             .allowAnonymousAccess()
                              .setPartitionDn(BASE_DN)
                              .useTmpWorkingDir()
                              .setMaxSizeLimit(1000)
