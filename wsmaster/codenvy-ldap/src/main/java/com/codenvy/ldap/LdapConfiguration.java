@@ -390,12 +390,12 @@ public class LdapConfiguration {
              keystore,
              keystorePassword,
              keystoreType,
-             Mechanism.valueOf(saslMechanism),
+             saslMechanism != null ? Mechanism.valueOf(saslMechanism) : null,
              saslRealm,
              saslAuthorizationId,
-             SecurityStrength.valueOf(saslSecurityStrength),
+             saslSecurityStrength !=null ? SecurityStrength.valueOf(saslSecurityStrength) : null,
              saslMutualAuth,
-             QualityOfProtection.valueOf(saslQualityOfProtection)
+             saslQualityOfProtection != null ?QualityOfProtection.valueOf(saslQualityOfProtection) : null
             );
 
     }

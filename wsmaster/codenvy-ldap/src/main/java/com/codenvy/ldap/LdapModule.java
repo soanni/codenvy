@@ -41,7 +41,7 @@ public class LdapModule extends AbstractModule {
 
         bind(Authenticator.class).toProvider(AuthenticatorProvider.class);
         bind(LdapConfiguration.class);
-        bind(PooledConnectionFactory.class);
+        bind(PooledConnectionFactory.class).toProvider(LdapConnectionFactoryProvider.class);
 
         bind(EntryResolver.class).toProvider(EntryResolverProvider.class);
 
