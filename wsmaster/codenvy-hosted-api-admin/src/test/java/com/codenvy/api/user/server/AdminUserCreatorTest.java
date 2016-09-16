@@ -74,7 +74,7 @@ public class AdminUserCreatorTest {
         doNothing().when(permissionsManager).storePermission(any(SystemPermissionsImpl.class));
         when(permissionsManager.getDomain(anyString())).thenReturn(cast(mock));
         when(mock.getAllowedActions()).thenReturn(emptyList());
-        when(userManager.getById(anyString())).thenReturn(user);
+        when(userManager.getByName(anyString())).thenReturn(user);
         when(userManager.create(any(UserImpl.class), anyBoolean())).thenReturn(user);
     }
 
@@ -85,11 +85,11 @@ public class AdminUserCreatorTest {
 
     @Test
     public void shouldCreateAdminUser() throws Exception {
-        when(userManager.getById(NAME)).thenThrow(new NotFoundException("nfex"));
+        when(userManager.getByName(NAME)).thenThrow(new NotFoundException("nfex"));
         Injector injector = Guice.createInjector(new OrgModule());
         injector.getInstance(AdminUserCreator.class);
 
-        verify(userManager).getById(NAME);
+        verify(userManager).getByName(NAME);
         verify(userManager).create(new UserImpl(NAME, EMAIL, NAME, PASSWORD, emptyList()), false);
         verify(permissionsManager).storePermission(argThat(new ArgumentMatcher<SystemPermissionsImpl>() {
             @Override
@@ -106,7 +106,7 @@ public class AdminUserCreatorTest {
         Injector injector = Guice.createInjector(new OrgModule());
         injector.getInstance(AdminUserCreator.class);
 
-        verify(userManager).getById(NAME);
+        verify(userManager).getByName(NAME);
         verify(userManager, times(0)).create(user, false);
     }
 
