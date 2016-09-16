@@ -29,7 +29,6 @@
     <name>Codenvy Master Parent</name>
     <modules>
         <module>codenvy-hosted-api-jdbc-vendor-postgresql</module>
-        <module>codenvy-hosted-api-admin</module>
         <module>codenvy-hosted-mail-client</module>
         <module>codenvy-hosted-mail-server</module>
         <module>codenvy-hosted-platform-api-impl</module>
@@ -58,5 +57,6 @@
         <module>codenvy-hosted-license-shared</module>
         <module>codenvy-hosted-report-shared</module>
         <module>codenvy-hosted-report</module>
+        <module>codenvy-hosted-api-admin</module>
     </modules>
 </project>

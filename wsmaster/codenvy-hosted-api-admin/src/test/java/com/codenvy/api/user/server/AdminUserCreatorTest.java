@@ -26,8 +26,10 @@ import com.google.inject.name.Names;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.jdbc.jpa.guice.JpaInitializer;
 import org.eclipse.che.api.user.server.UserManager;
+import org.eclipse.che.api.user.server.event.AfterUserPersistedEvent;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.inject.lifecycle.InitModule;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
@@ -40,6 +42,7 @@ import static java.util.Collections.emptyList;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -64,8 +67,6 @@ public class AdminUserCreatorTest {
     @Mock
     private PermissionsManager permissionsManager;
 
-    private Injector injector;
-
     @BeforeMethod
     public void setUp() throws Exception {
         final AbstractPermissionsDomain mock = mock(AbstractPermissionsDomain.class);
@@ -75,18 +76,6 @@ public class AdminUserCreatorTest {
         when(mock.getAllowedActions()).thenReturn(emptyList());
         when(userManager.getById(anyString())).thenReturn(user);
         when(userManager.create(any(UserImpl.class), anyBoolean())).thenReturn(user);
-        injector = Guice.createInjector(Stage.PRODUCTION, new AbstractModule() {
-            @Override
-            protected void configure() {
-                install(new InitModule(PostConstruct.class));
-                bind(JpaInitializer.class).toInstance(mock(JpaInitializer.class));
-                bind(UserManager.class).toInstance(userManager);
-                bindConstant().annotatedWith(Names.named("codenvy.admin.name")).to(NAME);
-                bindConstant().annotatedWith(Names.named("codenvy.admin.initial_password")).to(PASSWORD);
-                bindConstant().annotatedWith(Names.named("codenvy.admin.email")).to(EMAIL);
-                bind(PermissionsManager.class).toInstance(permissionsManager);
-            }
-        });
     }
 
     @SuppressWarnings("unchecked")
@@ -97,19 +86,69 @@ public class AdminUserCreatorTest {
     @Test
     public void shouldCreateAdminUser() throws Exception {
         when(userManager.getById(NAME)).thenThrow(new NotFoundException("nfex"));
+        Injector injector = Guice.createInjector(new OrgModule());
         injector.getInstance(AdminUserCreator.class);
 
         verify(userManager).getById(NAME);
         verify(userManager).create(new UserImpl(NAME, EMAIL, NAME, PASSWORD, emptyList()), false);
+        verify(permissionsManager).storePermission(argThat(new ArgumentMatcher<SystemPermissionsImpl>() {
+            @Override
+            public boolean matches(Object argument) {
+                return ((SystemPermissionsImpl)argument).getUserId().equals("qwe");
+            }
+        }));
     }
 
     @Test
     public void shouldNotCreateAdminWhenItAlreadyExists() throws Exception {
         final UserImpl user = new UserImpl(NAME, EMAIL, NAME, PASSWORD, emptyList());
         when(userManager.getById(NAME)).thenReturn(user);
+        Injector injector = Guice.createInjector(new OrgModule());
         injector.getInstance(AdminUserCreator.class);
 
         verify(userManager).getById(NAME);
         verify(userManager, times(0)).create(user, false);
+    }
+
+    @Test
+    public void shouldAddSystemPermissionsInLdapMode() throws Exception {
+        Injector injector = Guice.createInjector(new LdapModule());
+        AdminUserCreator creator = injector.getInstance(AdminUserCreator.class);
+        creator.onEvent(new AfterUserPersistedEvent(new UserImpl(NAME, EMAIL, NAME, PASSWORD, emptyList())));
+        verify(permissionsManager).storePermission(argThat(new ArgumentMatcher<SystemPermissionsImpl>() {
+            @Override
+            public boolean matches(Object argument) {
+                return ((SystemPermissionsImpl)argument).getUserId().equals(NAME);
+            }
+        }));
+    }
+
+
+    public class OrgModule extends AbstractModule {
+        @Override
+        protected void configure() {
+            install(new InitModule(PostConstruct.class));
+            bind(JpaInitializer.class).toInstance(mock(JpaInitializer.class));
+            bind(UserManager.class).toInstance(userManager);
+            bindConstant().annotatedWith(Names.named("codenvy.admin.name")).to(NAME);
+            bindConstant().annotatedWith(Names.named("codenvy.admin.initial_password")).to(PASSWORD);
+            bindConstant().annotatedWith(Names.named("codenvy.admin.email")).to(EMAIL);
+            bindConstant().annotatedWith(Names.named("auth.handler.default")).to("org");
+            bind(PermissionsManager.class).toInstance(permissionsManager);
+        }
+    }
+
+    public class LdapModule extends AbstractModule {
+        @Override
+        protected void configure() {
+            install(new InitModule(PostConstruct.class));
+            bind(JpaInitializer.class).toInstance(mock(JpaInitializer.class));
+            bind(UserManager.class).toInstance(userManager);
+            bindConstant().annotatedWith(Names.named("codenvy.admin.name")).to(NAME);
+            bindConstant().annotatedWith(Names.named("codenvy.admin.initial_password")).to(PASSWORD);
+            bindConstant().annotatedWith(Names.named("codenvy.admin.email")).to(EMAIL);
+            bindConstant().annotatedWith(Names.named("auth.handler.default")).to("ldap");
+            bind(PermissionsManager.class).toInstance(permissionsManager);
+        }
     }
 }

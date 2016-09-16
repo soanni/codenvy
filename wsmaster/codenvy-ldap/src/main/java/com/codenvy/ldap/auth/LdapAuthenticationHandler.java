@@ -40,6 +40,8 @@ public class LdapAuthenticationHandler implements AuthenticationHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(LdapAuthenticationHandler.class);
 
+    public static final String TYPE = "ldap";
+
     private final Authenticator ldapAuthenticator;
 
     @Inject
@@ -73,6 +75,6 @@ public class LdapAuthenticationHandler implements AuthenticationHandler {
 
     @Override
     public String getType() {
-        return "ldap";
+        return TYPE;
     }
 }
