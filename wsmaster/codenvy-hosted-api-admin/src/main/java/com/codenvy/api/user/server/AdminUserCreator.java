@@ -90,7 +90,7 @@ public class AdminUserCreator implements EventSubscriber<AfterUserPersistedEvent
         }
         User adminUser;
         try {
-            adminUser = userManager.getById(name);
+            adminUser = userManager.getByName(name);
             grantSystemPermissions(adminUser.getId());
         } catch (NotFoundException ex) {
             if (shouldCreateAdmin) {
