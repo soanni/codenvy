@@ -25,6 +25,9 @@
     <artifactId>codenvy-ldap</artifactId>
     <packaging>jar</packaging>
     <name>Codenvy :: Hosted :: LDAP</name>
+    <properties>
+        <findbugs.failonerrror>true</findbugs.failonerrror>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>com.codenvy.onpremises.wsmaster</groupId>
@@ -43,12 +46,24 @@
             <artifactId>guice-multibindings</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.annotation</groupId>
+            <artifactId>javax.annotation-api</artifactId>
+        </dependency>
+        <dependency>
             <groupId>javax.inject</groupId>
             <artifactId>javax.inject</artifactId>
         </dependency>
         <dependency>
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>javax.ws.rs-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
@@ -60,7 +75,15 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
+            <artifactId>che-core-api-user</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.che.core</groupId>
             <artifactId>che-core-commons-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.che.core</groupId>
+            <artifactId>che-core-commons-inject</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
@@ -71,8 +94,29 @@
             <artifactId>ldaptive</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.google.inject.extensions</groupId>
+            <artifactId>guice-persist</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.che.core</groupId>
+            <artifactId>che-core-api-jdbc</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.persistence</groupId>
+            <artifactId>eclipselink</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.persistence</groupId>
+            <artifactId>javax.persistence</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
@@ -80,8 +124,18 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.apache.directory.server</groupId>
             <artifactId>apacheds-all</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.che.core</groupId>
+            <artifactId>che-core-api-jdbc-vendor-h2</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

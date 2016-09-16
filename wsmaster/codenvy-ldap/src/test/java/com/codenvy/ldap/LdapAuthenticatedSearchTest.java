@@ -94,7 +94,7 @@ public class LdapAuthenticatedSearchTest {
 
     @AfterMethod
     public void stopServer() throws Exception {
-        server.stop();
+        server.shutdown();
     }
 
     @Test
