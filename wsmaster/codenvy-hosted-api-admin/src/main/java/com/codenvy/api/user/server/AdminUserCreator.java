@@ -17,6 +17,7 @@ package com.codenvy.api.user.server;
 import com.codenvy.api.permission.server.PermissionsManager;
 import com.codenvy.api.permission.server.SystemDomain;
 import com.codenvy.api.permission.server.model.impl.SystemPermissionsImpl;
+import com.codenvy.ldap.auth.LdapAuthenticationHandler;
 import com.google.inject.Singleton;
 
 import org.eclipse.che.api.core.ConflictException;
@@ -33,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -81,7 +83,7 @@ public class AdminUserCreator implements EventSubscriber<AfterUserPersistedEvent
 
     @PostConstruct
     public void create() throws ServerException {
-        if ("ldap".equals(authHandler)) {
+        if (LdapAuthenticationHandler.TYPE.equals(authHandler)) {
             eventService.subscribe(this);
             return;
         }
@@ -98,6 +100,11 @@ public class AdminUserCreator implements EventSubscriber<AfterUserPersistedEvent
             }
         }
         grantSystemPermissions(adminUser.getId());
+    }
+
+    @PreDestroy
+    public void unsubscribe() {
+        eventService.unsubscribe(this);
     }
 
     @Override
