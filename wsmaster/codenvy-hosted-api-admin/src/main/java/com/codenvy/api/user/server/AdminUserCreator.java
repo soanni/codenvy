@@ -83,23 +83,26 @@ public class AdminUserCreator implements EventSubscriber<AfterUserPersistedEvent
 
     @PostConstruct
     public void create() throws ServerException {
+        boolean shouldCreateAdmin = true;
         if (LdapAuthenticationHandler.TYPE.equals(authHandler)) {
             eventService.subscribe(this);
-            return;
+            shouldCreateAdmin = false;
         }
         User adminUser;
         try {
             adminUser = userManager.getById(name);
+            grantSystemPermissions(adminUser.getId());
         } catch (NotFoundException ex) {
-            try {
-                adminUser =  userManager.create(new UserImpl(name, email, name, password, emptyList()), false);
-                LOG.info("Admin user '" + name + "' successfully created");
-            } catch (ConflictException cfEx) {
-                LOG.warn("Admin user creation failed", cfEx.getLocalizedMessage());
-                return;
+            if (shouldCreateAdmin) {
+                try {
+                    adminUser = userManager.create(new UserImpl(name, email, name, password, emptyList()), false);
+                    grantSystemPermissions(adminUser.getId());
+                    LOG.info("Admin user '" + name + "' successfully created");
+                } catch (ConflictException cfEx) {
+                    LOG.warn("Admin user creation failed", cfEx.getLocalizedMessage());
+                }
             }
         }
-        grantSystemPermissions(adminUser.getId());
     }
 
     @PreDestroy
