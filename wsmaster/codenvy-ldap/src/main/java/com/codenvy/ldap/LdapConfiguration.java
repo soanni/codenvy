@@ -276,9 +276,9 @@ public class LdapConfiguration {
     private final QualityOfProtection saslQualityOfProtection;
 
 
-    public LdapConfiguration(String ldapUrl, String baseDn, AuthenticationType type, String providerClass, String dnFormat, String userPasswordAttribute, String userFilter,
+    public LdapConfiguration(String ldapUrl, String baseDn, AuthenticationType type, String dnFormat, String userPasswordAttribute, String userFilter,
                              boolean allowMultipleDns, boolean subtreeSearch,
-                             String bindDn, String bindCredential, int minPoolSize, int maxPoolSize, boolean validateOnCheckout,
+                             String bindDn, String bindCredential, String providerClass, int minPoolSize, int maxPoolSize, boolean validateOnCheckout,
                              boolean validateOnCheckin, boolean validatePeriodically, long validatePeriod, boolean failFast, long idleTime,
                              long prunePeriod, long blockWaitTime, long connectTimeout, long responseTimeout, boolean useSsl,
                              boolean useStartTls,
@@ -327,7 +327,6 @@ public class LdapConfiguration {
     public LdapConfiguration(@NotNull @Named("ldap.url") String ldapUrl,
                              @NotNull @Named("ldap.base_dn") String baseDn,
                              @Nullable @Named("ldap.auth.authentication_type") String type,
-                             @Nullable @Named("ldap.auth.provider") String providerClass,
                              @Nullable @Named("ldap.auth.dn_format") String dnFormat,
                              @Nullable @Named("ldap.auth.user_password_attribute") String userPasswordAttribute,
                              @Nullable @Named("ldap.auth.user.filter") String userFilter,
@@ -335,6 +334,7 @@ public class LdapConfiguration {
                              @Nullable @Named("ldap.auth.subtree_search") boolean subtreeSearch,
                              @Nullable @Named("ldap.connection.bind.dn") String bindDn,
                              @Nullable @Named("ldap.connection.bind.password") String bindCredential,
+                             @Nullable @Named("ldap.connection.provider") String providerClass,
                              @Nullable @Named("ldap.connection.use_ssl") boolean useSsl,
                              @Nullable @Named("ldap.connection.use_start_tls") boolean useStartTls,
                              @Nullable @Named("ldap.connection.pool.min_size") int minPoolSize,
@@ -364,7 +364,6 @@ public class LdapConfiguration {
         this(ldapUrl,
              baseDn,
              AuthenticationType.valueOf(type),
-             providerClass,
              dnFormat,
              userPasswordAttribute,
              userFilter,
@@ -372,6 +371,7 @@ public class LdapConfiguration {
              subtreeSearch,
              bindDn,
              bindCredential,
+             providerClass,
              minPoolSize,
              maxPoolSize,
              validateOnCheckout,
