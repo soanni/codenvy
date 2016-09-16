@@ -77,7 +77,6 @@ public abstract class AbstractJpaPermissionsDao<T extends AbstractPermissions> i
 
     @Override
     public void remove(String userId, String instanceId) throws ServerException, NotFoundException {
-        requireNonNull(instanceId, "Instance identifier required");
         requireNonNull(userId, "User identifier required");
         doRemove(userId, instanceId);
     }

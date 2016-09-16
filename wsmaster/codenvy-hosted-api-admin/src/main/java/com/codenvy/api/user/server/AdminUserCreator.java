@@ -24,7 +24,10 @@ import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.jdbc.jpa.guice.JpaInitializer;
 import org.eclipse.che.api.core.model.user.User;
+import org.eclipse.che.api.core.notification.EventService;
+import org.eclipse.che.api.core.notification.EventSubscriber;
 import org.eclipse.che.api.user.server.UserManager;
+import org.eclipse.che.api.user.server.event.AfterUserPersistedEvent;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +36,7 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 
 /**
@@ -41,7 +45,7 @@ import static java.util.Collections.emptyList;
  * @author Anton Korneta
  */
 @Singleton
-public class AdminUserCreator {
+public class AdminUserCreator implements EventSubscriber<AfterUserPersistedEvent> {
     private static final Logger LOG = LoggerFactory.getLogger(AdminUserCreator.class);
 
     @Inject
@@ -49,6 +53,9 @@ public class AdminUserCreator {
 
     @Inject
     PermissionsManager permissionsManager;
+
+    @Inject
+    EventService  eventService;
 
     @Inject
     @SuppressWarnings("unused")
@@ -68,8 +75,17 @@ public class AdminUserCreator {
     @Named("codenvy.admin.email")
     private String email;
 
+    @Inject
+    @Named("auth.handler.default")
+    private String authHandler;
+
     @PostConstruct
     public void create() throws ServerException {
+        if ("ldap".equals(authHandler)) {
+            return;
+        } else {
+            eventService.unsubscribe(this);
+        }
         User adminUser;
         try {
             adminUser = userManager.getById(name);
@@ -82,12 +98,24 @@ public class AdminUserCreator {
                 return;
             }
         }
+        grantSystemPermissions(adminUser.getId());
+    }
+
+    @Override
+    public void onEvent(AfterUserPersistedEvent event) {
+        if (event.getUser().getName().equals(name)) {
+            grantSystemPermissions(event.getUser().getId());
+        }
+    }
+
+    private void grantSystemPermissions(String userId) {
         // Add all possible system permissions
         try {
             permissionsManager.storePermission(
-                    new SystemPermissionsImpl(adminUser.getId(), permissionsManager.getDomain(SystemDomain.DOMAIN_ID).getAllowedActions()));
-        } catch (NotFoundException | ConflictException e) {
-            LOG.warn("Admin user permissions creation failed", e.getLocalizedMessage());
+                    new SystemPermissionsImpl(userId, permissionsManager.getDomain(SystemDomain.DOMAIN_ID).getAllowedActions()));
+        } catch (ServerException | NotFoundException | ConflictException e) {
+            LOG.warn(format("System permissions creation failed for user %s", userId), e.getLocalizedMessage());
         }
+
     }
 }
