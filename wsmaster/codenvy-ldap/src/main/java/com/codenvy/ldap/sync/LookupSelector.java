@@ -22,6 +22,7 @@ import org.ldaptive.SearchFilter;
 import org.ldaptive.SearchRequest;
 import org.ldaptive.SearchResult;
 import org.ldaptive.SearchScope;
+import org.ldaptive.ad.handler.ObjectGuidHandler;
 import org.ldaptive.control.util.CookieManager;
 import org.ldaptive.control.util.DefaultCookieManager;
 import org.ldaptive.control.util.PagedResultsClient;
@@ -66,6 +67,7 @@ public class LookupSelector implements LdapEntrySelector {
         req.setReturnAttributes(attributes);
         req.setSearchScope(SearchScope.SUBTREE);
         req.setTimeLimit(Duration.ofMillis(readPageTimeoutMs));
+        req.setSearchEntryHandlers(new ObjectGuidHandler());
         return new PagedIterable(new PagedResultsClient(connection, pageSize), req);
     }
 
