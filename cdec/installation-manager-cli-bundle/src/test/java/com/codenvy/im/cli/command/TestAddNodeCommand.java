@@ -39,27 +39,19 @@ import static org.testng.Assert.assertTrue;
 public class TestAddNodeCommand extends AbstractTestCommand {
     private static final String TEST_DNS_NAME = "test";
 
-    private AddNodeCommand          spyCommand;
-    @Mock
-    private IMArtifactLabeledFacade mockInstallationManagerProxy;
-    @Mock
-    private CommandSession          commandSession;
+    private AddNodeCommand spyCommand;
 
     @BeforeMethod
     public void initMocks() throws IOException {
-        MockitoAnnotations.initMocks(this);
-
         spyCommand = spy(new AddNodeCommand());
-        spyCommand.facade = mockInstallationManagerProxy;
-
         performBaseMocks(spyCommand, true);
     }
 
     @Test
     public void testAddNode() throws Exception {
-        doReturn(new NodeInfo()).when(mockInstallationManagerProxy).addNode(TEST_DNS_NAME);
+        doReturn(new NodeInfo()).when(mockFacade).addNode(TEST_DNS_NAME);
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("dns", TEST_DNS_NAME);
 
         CommandInvoker.Result result = commandInvoker.invoke();
@@ -82,9 +74,8 @@ public class TestAddNodeCommand extends AbstractTestCommand {
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
         doThrow(new RuntimeException("Server Error Exception"))
-                .when(mockInstallationManagerProxy).addNode(TEST_DNS_NAME);
+                .when(mockFacade).addNode(TEST_DNS_NAME);
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("dns", TEST_DNS_NAME);
 
         CommandInvoker.Result result = commandInvoker.invoke();
@@ -96,9 +87,9 @@ public class TestAddNodeCommand extends AbstractTestCommand {
     @Test
     public void testCodenvy4AddNodeThrowsErrorIfConfigWrong() throws Exception {
         doReturn(Boolean.TRUE).when(spyCommand).isCodenvy4CompatibleInstalled();
-        doReturn(new NodeInfo()).when(mockInstallationManagerProxy).addNode(TEST_DNS_NAME);
+        doReturn(new NodeInfo()).when(mockFacade).addNode(TEST_DNS_NAME);
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("dns", TEST_DNS_NAME);
 
         CommandInvoker.Result result = commandInvoker.invoke();
@@ -109,9 +100,9 @@ public class TestAddNodeCommand extends AbstractTestCommand {
     @Test
     public void testCodenvy4AddNode() throws Exception {
         doReturn(Boolean.TRUE).when(spyCommand).isCodenvy4CompatibleInstalled();
-        doReturn(new NodeInfo()).when(mockInstallationManagerProxy).addNode(TEST_DNS_NAME);
+        doReturn(new NodeInfo()).when(mockFacade).addNode(TEST_DNS_NAME);
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("dns", TEST_DNS_NAME);
         commandInvoker.option("--codenvy-ip", "someIp");
 
@@ -123,6 +114,6 @@ public class TestAddNodeCommand extends AbstractTestCommand {
                              "}\n");
 
         verify(spyCommand).updateCodenvyConfig();
-        verify(mockInstallationManagerProxy).updateArtifactConfig(any(Artifact.class), anyMap());
+        verify(mockFacade).updateArtifactConfig(any(Artifact.class), anyMap());
     }
 }

@@ -91,7 +91,7 @@ public class ConfigCommand extends AbstractIMCommand {
     }
 
     private void doGetCdecConfigProperty(String property) throws IOException, JsonParseException {
-        Map<String, String> properties = facade.getArtifactConfig(cdecArtifact);
+        Map<String, String> properties = getFacade().getArtifactConfig(cdecArtifact);
         if (properties.containsKey(property)) {
             printProperties(ImmutableMap.of(property, properties.get(property)));
         } else {
@@ -101,42 +101,42 @@ public class ConfigCommand extends AbstractIMCommand {
 
     private void doUpdateCdecConfigProperty(String property, String value) throws IOException, JsonParseException {
         String messageToConfirm = format("Do you want to update Codenvy property '%s' with new value '%s'?", property, value);
-        if (! console.askUser(messageToConfirm)) {
+        if (! getConsole().askUser(messageToConfirm)) {
             return;
         }
 
-        Map<String, String> properties = facade.getArtifactConfig(cdecArtifact);
+        Map<String, String> properties = getFacade().getArtifactConfig(cdecArtifact);
         if (!properties.containsKey(property)) {
             throw PropertyNotFoundException.from(property);
         }
 
-        console.showProgressor();
+        getConsole().showProgressor();
 
         try {
-            facade.updateArtifactConfig(cdecArtifact, ImmutableMap.of(property, value));
+            getFacade().updateArtifactConfig(cdecArtifact, ImmutableMap.of(property, value));
             printProperties(ImmutableMap.of(property, value));
         } finally {
-            console.hideProgressor();
+            getConsole().hideProgressor();
         }
     }
 
     private void doUpdateCodenvyHostUrl() throws IOException, JsonParseException {
-        console.showProgressor();
+        getConsole().showProgressor();
         try {
-            facade.updateArtifactConfig(cdecArtifact, ImmutableMap.of(Config.HOST_URL, hostname));
-            console.printResponseExitInError(BasicResponse.ok());
+            getFacade().updateArtifactConfig(cdecArtifact, ImmutableMap.of(Config.HOST_URL, hostname));
+            getConsole().printResponseExitInError(BasicResponse.ok());
         } finally {
-            console.hideProgressor();
+            getConsole().hideProgressor();
         }
     }
 
     private void doGetConfig(Artifact artifact) throws JsonParseException, IOException {
-        Map<String, String> sortedProps = new TreeMap<>(facade.getArtifactConfig(artifact));
+        Map<String, String> sortedProps = new TreeMap<>(getFacade().getArtifactConfig(artifact));
         printProperties(sortedProps);
     }
 
     private void printProperties(Map<String, String> propertiesToDisplay) throws JsonParseException, JsonProcessingException {
-        propertiesToDisplay.forEach((key, value) -> console.printlnWithoutPrompt(ansi().fg(GREEN).a(key)
+        propertiesToDisplay.forEach((key, value) -> getConsole().printlnWithoutPrompt(ansi().fg(GREEN).a(key)
                                                                                        .fg(WHITE).a("=")
                                                                                        .fg(DEFAULT).a(value)
                                                                                        .reset())

@@ -14,12 +14,6 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
-import com.codenvy.im.facade.IMArtifactLabeledFacade;
-
-import org.apache.felix.service.command.CommandSession;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -33,28 +27,17 @@ import static org.testng.Assert.assertTrue;
 public class TestHelpCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
 
-    @Mock
-    private IMArtifactLabeledFacade service;
-    @Mock
-    private CommandSession          commandSession;
-    @Mock
-    private MultiRemoteCodenvy      multiRemoteCodenvy;
-
     @BeforeMethod
     public void initMocks() throws IOException {
-        MockitoAnnotations.initMocks(this);
-
         spyCommand = spy(new HelpCommand());
-        spyCommand.facade = service;
-        doReturn(multiRemoteCodenvy).when(spyCommand).getMultiRemoteCodenvy();
-        doReturn("").when(multiRemoteCodenvy).listRemotes();
-
         performBaseMocks(spyCommand, true);
+
+        doReturn("").when(mockMultiRemoteCodenvy).listRemotes();
     }
 
     @Test
     public void testHelp() throws Exception {
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = removeAnsi(result.getOutputStream());
 
@@ -64,6 +47,7 @@ public class TestHelpCommand extends AbstractTestCommand {
                                    + "config      Get installation manager configuration\n"
                                    + "download    Download artifacts or print the list of installed ones\n"
                                    + "install     Install, update artifact or print the list of already installed ones\n"
+                                   + "login       Login to Codenvy\n"
                                    + "remove-node Remove Codenvy node\n"
                                    + "restore     Restore Codenvy data\n"
                                    + "version     Print the list of available latest versions and installed ones\n"

@@ -16,12 +16,10 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.cli.command.builtin.AbsCommand;
 import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
-import com.codenvy.cli.command.builtin.Remote;
 import com.codenvy.cli.preferences.Preferences;
-import com.codenvy.client.Codenvy;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.cli.preferences.PreferencesStorage;
+import com.codenvy.im.cli.preferences.CodenvyOnpremPreferences;
 import com.codenvy.im.console.Console;
 import com.codenvy.im.event.Event;
 import com.codenvy.im.facade.IMArtifactLabeledFacade;
@@ -34,16 +32,10 @@ import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.response.UpdateArtifactInfo;
 import com.codenvy.im.utils.Version;
-import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.dto.server.DtoFactory;
 
-import javax.validation.constraints.NotNull;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -53,14 +45,13 @@ import static java.lang.String.format;
 
 /**
  * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
  */
 public abstract class AbstractIMCommand extends AbsCommand {
-    protected IMArtifactLabeledFacade facade;
-    protected ConfigManager           configManager;
-    protected PreferencesStorage      preferencesStorage;
-    protected Console                 console;
-
-    private static final String DEFAULT_SAAS_SERVER_REMOTE_NAME = "saas-server";
+    private IMArtifactLabeledFacade  facade;
+    private ConfigManager            configManager;
+    private CodenvyOnpremPreferences codenvyOnpremPreferences;
+    private Console                  console;
 
     private static final Logger LOG = Logger.getLogger(AbstractIMCommand.class.getSimpleName());  // use java.util.logging instead of slf4j
 
@@ -72,6 +63,15 @@ public abstract class AbstractIMCommand extends AbsCommand {
     }
 
     @Override
+    public void init() {
+        super.init();
+
+        initConsole();
+        initDtoFactory();
+        initCodenvyOnpremPreferences();
+    }
+
+    @Override
     protected Void execute() throws Exception {
         try {
             init();
@@ -79,24 +79,69 @@ public abstract class AbstractIMCommand extends AbsCommand {
                 updateImCliClientIfNeeded();
                 updateImClientDone = true;
             }
-            doExecuteCommand();
 
+            doExecuteCommand();
         } catch (Exception e) {
-            console.printErrorAndExit(e);
+            getConsole().printErrorAndExit(e);
         } finally {
-            console.reset();
+            getConsole().reset();
         }
 
         return null;
     }
 
-    protected void updateImCliClientIfNeeded() {
+    protected abstract void doExecuteCommand() throws Exception;
+
+    protected IMArtifactLabeledFacade getFacade() {
+        return facade;
+    }
+
+    protected ConfigManager getConfigManager() {
+        return configManager;
+    }
+
+    protected CodenvyOnpremPreferences getCodenvyOnpremPreferences() {
+        return codenvyOnpremPreferences;
+    }
+
+    protected Console getConsole() {
+        return console;
+    }
+
+    protected void logEventToSaasCodenvy(Event event) {
+        try {
+            getFacade().logSaasAnalyticsEvent(event);
+        } catch(Exception e) {
+            LOG.log(Level.WARNING, "Error of logging event to SaaS Codenvy: " + e.getMessage(), e);   // do not interrupt main process
+        }
+    }
+
+    protected boolean isInteractive() {
+        return super.isInteractive();
+    }
+
+    /** is protected for testing propose **/
+    protected MultiRemoteCodenvy getMultiRemoteCodenvy() {
+        return super.getMultiRemoteCodenvy();
+    }
+
+    /** is package private for testing propose **/
+    void initConsole() {
+        try {
+            console = Console.create(isInteractive());
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /** is package private for testing propose **/
+    void updateImCliClientIfNeeded() {
         final String updateFailMessage = "WARNING: automatic update of IM CLI client failed. See logs for details.\n";
 
         try {
             // get latest update of IM CLI client
             Artifact imArtifact = createArtifact(InstallManagerArtifact.NAME);
-            List<UpdateArtifactInfo> updates = facade.getAllUpdatesAfterInstalledVersion(imArtifact);
+            List<UpdateArtifactInfo> updates = getFacade().getAllUpdatesAfterInstalledVersion(imArtifact);
             if (updates.isEmpty()) {
                 return;
             }
@@ -105,15 +150,15 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
             // download update of IM CLI client
             if (update.getStatus().equals(UpdateArtifactInfo.Status.AVAILABLE_TO_DOWNLOAD)) {
-                facade.startDownload(imArtifact, versionToUpdate);
+                getFacade().startDownload(imArtifact, versionToUpdate);
 
                 while (true) {
-                    DownloadProgressResponse downloadProgressResponse = facade.getDownloadProgress();
+                    DownloadProgressResponse downloadProgressResponse = getFacade().getDownloadProgress();
 
                     if (downloadProgressResponse.getStatus().equals(DownloadArtifactInfo.Status.FAILED)) {
                         // log error and continue working
                         LOG.log(Level.SEVERE, format("Fail of automatic download of update of IM CLI client. Error: %s", downloadProgressResponse.getMessage()));
-                        console.printError(updateFailMessage, isInteractive());
+                        getConsole().printError(updateFailMessage, isInteractive());
                         return;
                     }
 
@@ -129,46 +174,23 @@ public abstract class AbstractIMCommand extends AbsCommand {
             installOptions.setInstallType(InstallType.SINGLE_SERVER);
             installOptions.setStep(0);
 
-            String stepId = facade.update(imArtifact, versionToUpdate, installOptions);
-            facade.waitForInstallStepCompleted(stepId);
-            InstallArtifactStepInfo updateStepInfo = facade.getUpdateStepInfo(stepId);
+            String stepId = getFacade().update(imArtifact, versionToUpdate, installOptions);
+            getFacade().waitForInstallStepCompleted(stepId);
+            InstallArtifactStepInfo updateStepInfo = getFacade().getUpdateStepInfo(stepId);
             if (updateStepInfo.getStatus() == InstallArtifactInfo.Status.FAILURE) {
                 // log error and continue working
                 LOG.log(Level.SEVERE, format("Fail of automatic install of update of IM CLI client. Error: %s", updateStepInfo.getMessage()));
-                console.printError(updateFailMessage, isInteractive());
+                getConsole().printError(updateFailMessage, isInteractive());
                 return;
             }
 
-            console.println("The Codenvy CLI is out of date. We are doing an automatic update. Relaunch.\n");
-            console.exit(0);
+            getConsole().println("The Codenvy CLI is out of date. We are doing an automatic update. Relaunch.\n");
+            getConsole().exit(0);
 
         } catch (Exception e) {
             // log error and continue working
             LOG.log(Level.SEVERE, format("Fail of automatic update of IM CLI client. Error: %s", e.getMessage()));
-            console.printError(updateFailMessage, isInteractive());
-        }
-    }
-
-    protected abstract void doExecuteCommand() throws Exception;
-
-    @Override
-    public void init() {
-        super.init();
-
-        initConsole();
-        initDtoFactory();
-        initPreferencesStorage();
-    }
-
-    protected void initPreferencesStorage() {
-        preferencesStorage = new PreferencesStorage(getGlobalPreferences(), getOrCreateRemoteNameForSaasServer());
-    }
-
-    protected void initConsole() {
-        try {
-            console = Console.create(isInteractive());
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
+            getConsole().printError(updateFailMessage, isInteractive());
         }
     }
 
@@ -182,117 +204,9 @@ public abstract class AbstractIMCommand extends AbsCommand {
         }
     }
 
-    /**
-     * @throws IllegalStateException
-     *         if user isn't logged in
-     */
-    protected void validateIfUserLoggedIn() throws IllegalStateException {
-        String remoteName = getOrCreateRemoteNameForSaasServer();
-
-        Map<String, Codenvy> readyRemotes = getMultiRemoteCodenvy().getReadyRemotes();
-        if (!readyRemotes.containsKey(remoteName)) {
-            throw new IllegalStateException("Please log in into '" + remoteName + "' remote.");
-        }
-
-        if (preferencesStorage == null
-            || preferencesStorage.getAuthToken() == null
-            || preferencesStorage.getAuthToken().isEmpty()) {
-            throw new IllegalStateException("Please log in into '" + remoteName + "' remote.");
-        }
+    private void initCodenvyOnpremPreferences() {
+        final Preferences globalPreferences = (Preferences)session.get(Preferences.class.getName());
+        codenvyOnpremPreferences = new CodenvyOnpremPreferences(globalPreferences,
+                                                                getMultiRemoteCodenvy());
     }
-
-    /**
-     * Find out remote for saas server.
-     * Creates new one with default name if there is no such remote stored in preferences.
-     */
-    @NotNull
-    protected String getOrCreateRemoteNameForSaasServer() {
-        URL url;
-        try {
-            url = new URL(getSaasServerEndpoint());
-        } catch (MalformedURLException e) {
-            throw new IllegalArgumentException(e);
-        }
-        String saasServerUrl = url.getProtocol() + "://" + url.getHost();
-
-        String remoteName = getRemoteNameByUrl(saasServerUrl);
-
-        if (remoteName == null) {
-            createRemote(DEFAULT_SAAS_SERVER_REMOTE_NAME, saasServerUrl);
-            return DEFAULT_SAAS_SERVER_REMOTE_NAME;
-        }
-
-        return remoteName;
-    }
-
-    protected String getSaasServerEndpoint() {
-        return facade.getSaasServerEndpoint();
-    }
-
-    protected void logEventToSaasCodenvy(Event event) {
-        try {
-            facade.logSaasAnalyticsEvent(event, preferencesStorage.getAuthToken());
-        } catch(Exception e) {
-            LOG.log(Level.WARNING, "Error of logging event to SaaS Codenvy: " + e.getMessage(), e);   // do not interrupt main process
-        }
-    }
-
-    @NotNull
-    private Preferences getGlobalPreferences() {
-        return (Preferences)session.get(Preferences.class.getName());
-    }
-
-    /** Searches and returns name of remote with certain url. */
-    @Nullable
-    protected String getRemoteNameByUrl(String url) throws IllegalStateException {
-        Map<String, Remote> availableRemotes = getMultiRemoteCodenvy().getAvailableRemotes();
-
-        for (Entry<String, Remote> remoteEntry : availableRemotes.entrySet()) {
-            Remote remote = remoteEntry.getValue();
-            if (remote.url.equalsIgnoreCase(url)) {
-                return remoteEntry.getKey();
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Create remote with certain name and url.
-     * Existed one will be rewritten with new url. Token and username linked to remote will be removed.
-     */
-    protected void createRemote(String name, String url) {
-        Remote remote = getMultiRemoteCodenvy().getRemote(name);
-        if (remote != null) {
-            remote.setUrl(url);
-            getGlobalPreferences().path("remotes").put(name, remote);
-            return;
-        }
-
-        getMultiRemoteCodenvy().addRemote(name, url);
-    }
-
-    /** Returns true if only remoteName = name of remote which has url = {saas server url} */
-    protected boolean isRemoteForSaasServer(@NotNull String remoteName) {
-        return remoteName.equals(getOrCreateRemoteNameForSaasServer());
-    }
-
-    @Nullable
-    protected String getRemoteUrlByName(String remoteName) {
-        Remote remote = getMultiRemoteCodenvy().getRemote(remoteName);
-        if (remote == null) {
-            return null;
-        }
-
-        return remote.getUrl();
-    }
-
-    protected MultiRemoteCodenvy getMultiRemoteCodenvy() {
-        return super.getMultiRemoteCodenvy();
-    }
-
-    protected boolean isInteractive() {
-        return super.isInteractive();
-    }
-
 }

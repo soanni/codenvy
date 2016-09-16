@@ -53,7 +53,7 @@ public class VersionCommand extends AbstractIMCommand {
             info.setLabel(installedCDEC.getLabel());
         }
 
-        List<UpdateArtifactInfo> updatesCodenvy = facade.getAllUpdatesAfterInstalledVersion(ArtifactFactory.createArtifact(CDECArtifact.NAME));
+        List<UpdateArtifactInfo> updatesCodenvy = getFacade().getAllUpdatesAfterInstalledVersion(ArtifactFactory.createArtifact(CDECArtifact.NAME));
         UpdateArtifactInfo latestStableVersionInfo = getLatestStableVersionInfo(updatesCodenvy);
 
         AvailableVersionInfo availableVersion = new AvailableVersionInfo();
@@ -68,12 +68,12 @@ public class VersionCommand extends AbstractIMCommand {
             info.setStatus(getStatus(info, latestStableVersionInfo));
         }
 
-        console.println(toJson(info));
+        getConsole().println(toJson(info));
     }
 
     @Nullable
     private InstallArtifactInfo getInstalledCDECArtifactInfo() throws IOException {
-        for (InstallArtifactInfo info : facade.getInstalledVersions()) {
+        for (InstallArtifactInfo info : getFacade().getInstalledVersions()) {
             if (info.getArtifact().equals(CDECArtifact.NAME)) {
                 return info;
             }

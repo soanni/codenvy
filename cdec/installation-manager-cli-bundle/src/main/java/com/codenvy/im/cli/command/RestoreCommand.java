@@ -42,17 +42,17 @@ public class RestoreCommand extends AbstractIMCommand {
             config.setArtifactName(CDECArtifact.NAME);
             config.setBackupFile(backup);
 
-            console.showProgressor();
+            getConsole().showProgressor();
 
-            BackupInfo backupInfo = facade.restore(config);
+            BackupInfo backupInfo = getFacade().restore(config);
 
             BackupResponse backupResponse = new BackupResponse();
             backupResponse.setBackup(backupInfo);
             backupResponse.setStatus(ResponseCode.OK);
 
-            console.printResponseExitInError(backupResponse);
+            getConsole().printResponseExitInError(backupResponse);
         } finally {
-            console.hideProgressor();
+            getConsole().hideProgressor();
         }
     }
 }

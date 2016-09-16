@@ -15,12 +15,8 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.response.BackupInfo;
-
-import org.apache.felix.service.command.CommandSession;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -36,11 +32,6 @@ import static org.testng.Assert.assertEquals;
 public class TestBackupCommand  extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
 
-    @Mock
-    private IMArtifactLabeledFacade mockInstallationManagerProxy;
-    @Mock
-    private CommandSession          commandSession;
-
     private BackupConfig testBackupConfig;
 
     private String testBackupDirectory = "test/backup/directory";
@@ -51,8 +42,6 @@ public class TestBackupCommand  extends AbstractTestCommand {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new BackupCommand());
-        spyCommand.facade = mockInstallationManagerProxy;
-
         performBaseMocks(spyCommand, true);
     }
 
@@ -61,9 +50,9 @@ public class TestBackupCommand  extends AbstractTestCommand {
     public void testBackup() throws Exception {
         testBackupConfig = new BackupConfig().setArtifactName(testArtifact);
 
-        doReturn(new BackupInfo()).when(mockInstallationManagerProxy).backup(testBackupConfig);
+        doReturn(new BackupInfo()).when(mockFacade).backup(testBackupConfig);
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, "{\n" +
@@ -76,9 +65,9 @@ public class TestBackupCommand  extends AbstractTestCommand {
     public void testBackupToDirWithEmptyName() throws Exception {
         testBackupConfig = new BackupConfig().setArtifactName(testArtifact);
 
-        doReturn(new BackupInfo()).when(mockInstallationManagerProxy).backup(testBackupConfig);
+        doReturn(new BackupInfo()).when(mockFacade).backup(testBackupConfig);
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("directory", "");
 
         CommandInvoker.Result result = commandInvoker.invoke();
@@ -94,9 +83,9 @@ public class TestBackupCommand  extends AbstractTestCommand {
         testBackupConfig = new BackupConfig().setArtifactName(testArtifact)
                                              .setBackupDirectory(testBackupDirectory);
 
-        doReturn(new BackupInfo()).when(mockInstallationManagerProxy).backup(testBackupConfig);
+        doReturn(new BackupInfo()).when(mockFacade).backup(testBackupConfig);
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("directory", testBackupDirectory);
 
         CommandInvoker.Result result = commandInvoker.invoke();
@@ -117,9 +106,9 @@ public class TestBackupCommand  extends AbstractTestCommand {
                                 + "}";
 
         doThrow(new RuntimeException("Server Error Exception"))
-            .when(mockInstallationManagerProxy).backup(testBackupConfig);
+            .when(mockFacade).backup(testBackupConfig);
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, expectedOutput + "\n");

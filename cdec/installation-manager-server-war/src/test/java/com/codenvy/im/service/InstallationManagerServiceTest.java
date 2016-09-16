@@ -379,9 +379,9 @@ public class InstallationManagerServiceTest {
         doReturn("local").when(config).getHostUrl();
         doReturn("3.0.0").when(config).getValue(Config.VERSION);
         doReturn(null).when(config).getAllValuesWithoutSubstitution(Config.ADDITIONAL_BUILDERS,
-                                                 String.valueOf(NodeConfigHelperCodenvy3Impl.NODE_DELIMITER));
+                                                                    String.valueOf(NodeConfigHelperCodenvy3Impl.NODE_DELIMITER));
         doReturn(null).when(config).getAllValuesWithoutSubstitution(Config.ADDITIONAL_RUNNERS,
-                                                 String.valueOf(NodeConfigHelperCodenvy3Impl.NODE_DELIMITER));
+                                                                    String.valueOf(NodeConfigHelperCodenvy3Impl.NODE_DELIMITER));
 
         doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
         doReturn(config).when(configManager).loadInstalledCodenvyConfig(InstallType.SINGLE_SERVER);

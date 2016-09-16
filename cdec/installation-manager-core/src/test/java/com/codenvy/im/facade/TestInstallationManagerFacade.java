@@ -106,8 +106,7 @@ public class TestInstallationManagerFacade extends BaseTest {
     public void setUp() throws Exception {
         initMocks(this);
         cdecArtifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
-        installationManagerFacade = spy(new InstallationManagerFacade(BaseTest.SAAS_API_ENDPOINT,
-                                                                      transport,
+        installationManagerFacade = spy(new InstallationManagerFacade(transport,
                                                                       saasAuthServiceProxy,
                                                                       saasRepositoryServiceProxy,
                                                                       ldapManager,
@@ -509,6 +508,15 @@ public class TestInstallationManagerFacade extends BaseTest {
 
         installationManagerFacade.logSaasAnalyticsEvent(event, token);
         verify(saasRepositoryServiceProxy).logAnalyticsEvent(event, token);
+    }
+
+    @Test
+    public void testLogSaasAnalyticsEventWithoutToken() throws Exception {
+        Map<String, String> params = ImmutableMap.of("a", "b");
+        Event event = new Event(Event.Type.CDEC_FIRST_LOGIN, params);
+
+        installationManagerFacade.logSaasAnalyticsEvent(event);
+        verify(saasRepositoryServiceProxy).logAnalyticsEvent(event, null);
     }
 
     @Test

@@ -6,11 +6,9 @@
             "defaultRemote" : true,
             "url" : "http://codenvy-next.com"
         },
-        "saas-server" : {
-            "token" : "authToken",
+        "codenvy-onprem" : {
             "defaultRemote" : false,
-            "username" : "test@test.com",
-            "url" : "https://test.com"
+            "url" : "https://codenvy.onprem"
         }
     }
 }

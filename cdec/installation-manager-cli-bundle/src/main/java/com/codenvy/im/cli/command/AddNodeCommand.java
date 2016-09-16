@@ -55,7 +55,7 @@ public class AddNodeCommand extends AbstractIMCommand {
     protected void doExecuteCommand() throws Exception {
         if (!isNullOrEmpty(dns)) {
             try {
-                console.showProgressor();
+                getConsole().showProgressor();
 
                 if (isNullOrEmpty(codenvyIp)) {
                     validateCodenvyConfig();
@@ -63,22 +63,22 @@ public class AddNodeCommand extends AbstractIMCommand {
                     updateCodenvyConfig();
                 }
 
-                NodeInfo nodeInfo = facade.addNode(dns);
+                NodeInfo nodeInfo = getFacade().addNode(dns);
 
                 NodeManagerResponse nodeManagerResponse = new NodeManagerResponse();
                 nodeManagerResponse.setStatus(ResponseCode.OK);
                 nodeManagerResponse.setNode(nodeInfo);
 
-                console.printResponseExitInError(nodeManagerResponse);
+                getConsole().printResponseExitInError(nodeManagerResponse);
             } finally {
-                console.hideProgressor();
+                getConsole().hideProgressor();
             }
         }
     }
 
     protected void validateCodenvyConfig() throws IOException {
         if (isCodenvy4CompatibleInstalled()) {
-            Config config = configManager.loadInstalledCodenvyConfig();
+            Config config = getConfigManager().loadInstalledCodenvyConfig();
 
             // check on adding default node
             if (NodeConfigHelper.isDefaultNode(config, dns)) {
@@ -102,6 +102,6 @@ public class AddNodeCommand extends AbstractIMCommand {
 
     protected void updateCodenvyConfig() throws IOException {
         Map<String, String> props = ImmutableMap.of(Config.MACHINE_EXTRA_HOSTS, "$host_url:" + codenvyIp);
-        facade.updateArtifactConfig(createArtifact(CDECArtifact.NAME), props);
+        getFacade().updateArtifactConfig(createArtifact(CDECArtifact.NAME), props);
     }
 }

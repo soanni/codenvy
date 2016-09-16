@@ -18,7 +18,6 @@ import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
 import com.codenvy.cli.command.builtin.Remote;
 import com.codenvy.cli.preferences.Preferences;
 import com.codenvy.cli.preferences.PreferencesAPI;
-import com.codenvy.cli.security.RemoteCredentials;
 import com.codenvy.client.CodenvyClient;
 import com.codenvy.client.dummy.DummyCodenvyClient;
 import com.codenvy.im.facade.IMArtifactLabeledFacade;
@@ -57,16 +56,15 @@ public class TestAbstractIMCommand {
     @Mock
     private Remote mockAnotherRemote;
 
-    private final static String SAAS_SERVER_REMOTE_NAME = "saas-server";
-    private final static String SAAS_SERVER_URL         = "https://test.com";
-    private final static String TEST_TOKEN              = "authToken";
+    private final static String CODENVY_ONPREM_SERVER_URL  = "https://codenvy.onprem";
+    private final static String TEST_TOKEN                 = "authToken";
 
     private static final String ANOTHER_REMOTE_NAME = "another remote";
     private static final String ANOTHER_REMOTE_URL  = "another remote url";
 
     private String DEFAULT_PREFERENCES_FILE                        = "default-preferences.json";
-    private String PREFERENCES_WITH_SAAS_SERVER_FILE               = "preferences-with-saas-server-remote.json";
-    private String PREFERENCES_WITH_SAAS_SERVER_WITHOUT_LOGIN_FILE = "preferences-with-saas-server-remote-without-login.json";
+    private String PREFERENCES_WITH_SAAS_SERVER_FILE               = "preferences-with-codenvy-onprem.json";
+    private String PREFERENCES_WITH_SAAS_SERVER_WITHOUT_LOGIN_FILE = "preferences-with-codenvy-onprem-without-login.json";
 
     private Remote saasServerRemote;
 
@@ -75,47 +73,11 @@ public class TestAbstractIMCommand {
         MockitoAnnotations.initMocks(this);
 
         spyCommand = spy(new TestedAbstractIMCommand());
-        spyCommand.facade = service;
         doReturn(true).when(spyCommand).isInteractive();
         doNothing().when(spyCommand).initConsole();
 
         saasServerRemote = new Remote();
-        saasServerRemote.setUrl(SAAS_SERVER_URL);
-
-        doReturn(SAAS_SERVER_URL).when(service).getSaasServerEndpoint();
-    }
-
-    @Test
-    public void testGetSaasServerUrl() {
-        assertEquals(spyCommand.getSaasServerEndpoint(), SAAS_SERVER_URL);
-    }
-
-    @Test
-    public void testGetRemoteNameForSaasServer() {
-        globalPreferences = loadPreferences(PREFERENCES_WITH_SAAS_SERVER_FILE);
-        prepareTestAbstractIMCommand(spyCommand);
-        spyCommand.init();
-
-        assertEquals(spyCommand.getOrCreateRemoteNameForSaasServer(), SAAS_SERVER_REMOTE_NAME);
-    }
-
-    @Test
-    public void testValidateIfUserLoggedIn() {
-        globalPreferences = loadPreferences(PREFERENCES_WITH_SAAS_SERVER_FILE);
-        prepareTestAbstractIMCommand(spyCommand);
-        spyCommand.init();
-
-        spyCommand.validateIfUserLoggedIn();
-    }
-
-    @Test
-    public void testCreateSaasServerRemote() {
-        globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
-        prepareTestAbstractIMCommand(spyCommand);
-        doNothing().when(spyCommand).validateIfUserLoggedIn();
-        spyCommand.init();
-
-        assertNotNull(spyCommand.getOrCreateRemoteNameForSaasServer());
+        saasServerRemote.setUrl(CODENVY_ONPREM_SERVER_URL);
     }
 
     @Test
@@ -124,79 +86,7 @@ public class TestAbstractIMCommand {
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
 
-        assertNotNull(spyCommand.preferencesStorage);
-        assertEquals(spyCommand.preferencesStorage.getAuthToken(), TEST_TOKEN);
-    }
-
-    @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "Please log in into 'saas-server' remote.")
-    public void testInitWhenUpdateServerRemoteAbsent() {
-        globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
-        prepareTestAbstractIMCommand(spyCommand);
-        spyCommand.init();
-        spyCommand.validateIfUserLoggedIn();
-    }
-
-    @Test(expectedExceptions = IllegalStateException.class,
-          expectedExceptionsMessageRegExp = "Please log in into 'saas-server' remote.")
-    public void testInitWhenUserDidNotLogin() {
-        globalPreferences = loadPreferences(PREFERENCES_WITH_SAAS_SERVER_WITHOUT_LOGIN_FILE);
-        prepareTestAbstractIMCommand(spyCommand);
-        spyCommand.init();
-        spyCommand.validateIfUserLoggedIn();
-    }
-
-    @Test
-    public void testIsRemoteForUpdateServer() {
-        globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
-        prepareTestAbstractIMCommand(spyCommand);
-        doNothing().when(spyCommand).validateIfUserLoggedIn();
-        spyCommand.init();
-
-        String remoteNameForUpdateServer = spyCommand.getOrCreateRemoteNameForSaasServer();
-        assertTrue(spyCommand.isRemoteForSaasServer(remoteNameForUpdateServer));
-        assertFalse(spyCommand.isRemoteForSaasServer("another remote"));
-    }
-
-    @Test
-    public void testGetRemoteUrlByName() {
-        doReturn(mockMultiRemoteCodenvy).when(spyCommand).getMultiRemoteCodenvy();
-
-        doReturn(SAAS_SERVER_URL).when(mockSaasServerRemote).getUrl();
-        doReturn(mockSaasServerRemote).when(mockMultiRemoteCodenvy).getRemote(SAAS_SERVER_REMOTE_NAME);
-        assertEquals(spyCommand.getRemoteUrlByName(SAAS_SERVER_REMOTE_NAME), SAAS_SERVER_URL);
-
-        doReturn(ANOTHER_REMOTE_URL).when(mockAnotherRemote).getUrl();
-        doReturn(mockAnotherRemote).when(mockMultiRemoteCodenvy).getRemote(ANOTHER_REMOTE_NAME);
-        assertEquals(spyCommand.getRemoteUrlByName(ANOTHER_REMOTE_NAME), ANOTHER_REMOTE_URL);
-    }
-
-    @Test
-    public void testCreateRemote() {
-        doReturn(mockMultiRemoteCodenvy).when(spyCommand).getMultiRemoteCodenvy();
-        doReturn(null).when(mockMultiRemoteCodenvy).getRemote(SAAS_SERVER_REMOTE_NAME);
-        spyCommand.createRemote(SAAS_SERVER_REMOTE_NAME, SAAS_SERVER_URL);
-        verify(mockMultiRemoteCodenvy).addRemote(SAAS_SERVER_REMOTE_NAME, SAAS_SERVER_URL);
-    }
-
-    @Test
-    public void testCreateRemoteOverExistedOne() {
-        globalPreferences = loadPreferences(PREFERENCES_WITH_SAAS_SERVER_FILE);
-        prepareTestAbstractIMCommand(spyCommand);
-        spyCommand.init();
-
-        RemoteCredentials credentials = globalPreferences.path("remotes").get(SAAS_SERVER_REMOTE_NAME, RemoteCredentials.class);
-        assertEquals(credentials.getToken(), TEST_TOKEN);
-
-        String newUrl = "new_url";
-        spyCommand.createRemote(SAAS_SERVER_REMOTE_NAME, newUrl);
-
-        Remote remote = globalPreferences.path("remotes").get(SAAS_SERVER_REMOTE_NAME, Remote.class);
-        assertEquals(remote.getUrl(), newUrl);
-
-        credentials = globalPreferences.path("remotes").get(SAAS_SERVER_REMOTE_NAME, RemoteCredentials.class);
-        assertEquals(credentials.getToken(), "");
-        assertEquals(credentials.getUsername(), "");
+        assertNotNull(spyCommand.getCodenvyOnpremPreferences());
     }
 
     private void prepareTestAbstractIMCommand(TestedAbstractIMCommand command) {

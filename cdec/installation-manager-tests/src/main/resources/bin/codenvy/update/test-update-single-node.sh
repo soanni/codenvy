@@ -40,7 +40,7 @@ USER_ID=${OUTPUT}
 authWithoutRealmAndServerDns "cdec" "pwd123ABC"
 
 # create workspace
-doPost "application/json" "{\"defaultEnv\":\"default\",\"commands\":[{\"commandLine\":\"mvn clean install -f $\{current.project.path}\",\"name\":\"build\",\"type\":\"mvn\",\"attributes\":{}}],\"projects\":[],\"name\":\"${WORKSPACE_NAME}\",\"environments\":{\"default\":{\"machines\":{\"dev-machine\":{\"servers\":{},\"agents\":[\"org.eclipse.che.terminal\",\"org.eclipse.che.ws-agent\",\"org.eclipse.che.ssh\"],\"attributes\":{\"memoryLimitBytes\":1684354560},\"source\":{\"type\":\"dockerfile\",\"content\":\"FROM codenvy/ubuntu_jdk8\"}}},\"recipe\":{\"location\":\"codenvy/ubuntu_jdk8\",\"type\":\"dockerimage\"}}},\"links\":[],\"description\":null}" "http://${HOST_URL}/api/workspace/?token=${TOKEN}"
+doPost "application/json" "{\"defaultEnv\":\"default\",\"commands\":[{\"commandLine\":\"mvn clean install -f $\{current.project.path}\",\"name\":\"build\",\"type\":\"mvn\",\"attributes\":{}}],\"projects\":[],\"environments\":[{\"machineConfigs\":[{\"dev\":true,\"servers\":[],\"envVariables\":{},\"source\":{\"type\":\"dockerfile\",\"content\":\"FROM codenvy/ubuntu_jdk8\"},\"limits\":{\"ram\":1536},\"name\":\"default\",\"type\":\"docker\",\"links\":[]}],\"name\":\"default\"}],\"name\":\"${WORKSPACE_NAME}\",\"links\":[],\"description\":null}" "http://${HOST_URL}/api/workspace/?token=${TOKEN}"
 fetchJsonParameter "id"
 WORKSPACE_ID=${OUTPUT}
 
@@ -48,7 +48,7 @@ WORKSPACE_ID=${OUTPUT}
 doPost "application/json" "{}" "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}/runtime?token=${TOKEN}"
 
 # verify is workspace running
-doSleep "6m"  "Wait until workspace starts to avoid 'java.lang.NullPointerException' error on verifying workspace state"
+doSleep "4m"  "Wait until workspace starts to avoid 'java.lang.NullPointerException' error on verifying workspace state"
 
 # obtain network ports
 doGet "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"

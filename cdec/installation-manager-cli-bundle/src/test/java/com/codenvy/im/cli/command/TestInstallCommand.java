@@ -18,11 +18,8 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.cli.preferences.PreferencesStorage;
 import com.codenvy.im.event.Event;
-import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.Config;
-import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.response.InstallArtifactInfo;
@@ -30,11 +27,7 @@ import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-
-import org.apache.felix.service.command.CommandSession;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -78,38 +71,23 @@ public class TestInstallCommand extends AbstractTestCommand {
     public static final List<String> INSTALL_INFO = ImmutableList.of("step 1", "step 2", "step 3");
     private InstallCommand spyCommand;
 
-    private IMArtifactLabeledFacade facade;
-    private CommandSession          commandSession;
-
     private ByteArrayOutputStream outputStream;
     private ByteArrayOutputStream errorStream;
 
     PrintStream originOut = System.out;
     PrintStream originErr = System.err;
 
-    @Mock
-    private PreferencesStorage mockPreferencesStorage;
-    @Mock
-    private ConfigManager      mockConfigManager;
-
     @BeforeMethod
     public void initMocks() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        spyCommand = spy(new InstallCommand(mockConfigManager));
+        performBaseMocks(spyCommand, true);
 
         doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(mockConfigManager).loadCodenvyDefaultProperties(Version.valueOf("1.0.1"),
                                                                                                                         InstallType.SINGLE_SERVER);
         doReturn(new Config(new HashMap<>(ImmutableMap.of("a", "MANDATORY")))).when(mockConfigManager)
                                                                               .loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
 
-        facade = mock(IMArtifactLabeledFacade.class);
-        doReturn(INSTALL_INFO).when(facade).getInstallInfo(any(Artifact.class), any(InstallType.class));
-        commandSession = mock(CommandSession.class);
-
-        spyCommand = spy(new InstallCommand(mockConfigManager));
-        spyCommand.facade = facade;
-        spyCommand.preferencesStorage = mockPreferencesStorage;
-
-        performBaseMocks(spyCommand, true);
+        doReturn(INSTALL_INFO).when(mockFacade).getInstallInfo(any(Artifact.class), any(InstallType.class));
     }
 
     @BeforeMethod
@@ -134,10 +112,10 @@ public class TestInstallCommand extends AbstractTestCommand {
         InstallArtifactStepInfo info = mock(InstallArtifactStepInfo.class);
         doReturn(InstallArtifactInfo.Status.SUCCESS).when(info).getStatus();
 
-        doReturn(info).when(facade).getUpdateStepInfo(anyString());
-        doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+        doReturn(info).when(mockFacade).getUpdateStepInfo(anyString());
+        doReturn("id").when(mockFacade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("artifact", TEST_ARTIFACT);
         commandInvoker.argument("version", TEST_VERSION);
 
@@ -155,7 +133,7 @@ public class TestInstallCommand extends AbstractTestCommand {
                                     "  \"status\" : \"OK\"\n" +
                                     "}\n", TEST_ARTIFACT, TEST_VERSION));
 
-        verify(facade, times(2)).logSaasAnalyticsEvent(eventArgument.capture(), isNull(String.class));
+        verify(mockFacade, times(2)).logSaasAnalyticsEvent(eventArgument.capture());
 
         List<Event> values = eventArgument.getAllValues();
         assertEquals(values.get(0).getType(), Event.Type.IM_ARTIFACT_INSTALL_STARTED);
@@ -174,10 +152,10 @@ public class TestInstallCommand extends AbstractTestCommand {
         InstallArtifactStepInfo info = mock(InstallArtifactStepInfo.class);
         doReturn(InstallArtifactInfo.Status.SUCCESS).when(info).getStatus();
 
-        doReturn(info).when(facade).getUpdateStepInfo(anyString());
-        doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+        doReturn(info).when(mockFacade).getUpdateStepInfo(anyString());
+        doReturn("id").when(mockFacade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("artifact", TEST_ARTIFACT);
         commandInvoker.argument("version", TEST_VERSION);
         commandInvoker.option("--multi", Boolean.TRUE);
@@ -196,7 +174,7 @@ public class TestInstallCommand extends AbstractTestCommand {
                                     "  \"status\" : \"OK\"\n" +
                                     "}\n", TEST_ARTIFACT, TEST_VERSION));
 
-        verify(facade, times(2)).logSaasAnalyticsEvent(eventArgument.capture(), isNull(String.class));
+        verify(mockFacade, times(2)).logSaasAnalyticsEvent(eventArgument.capture());
 
         List<Event> values = eventArgument.getAllValues();
         assertEquals(values.get(0).getType(), Event.Type.IM_ARTIFACT_INSTALL_STARTED);
@@ -219,23 +197,23 @@ public class TestInstallCommand extends AbstractTestCommand {
                                                                                                                               anyBoolean());
         // user always enter "some value" as property value
         doAnswer(invocationOnMock -> {
-                spyCommand.console.print("some value\n");
+               spyConsole.print("some value\n");
                 return "some value";
-        }).when(spyCommand.console).readLine();
+        }).when(spyConsole).readLine();
 
         // no installation info provided
-        doReturn(Collections.emptyList()).when(facade).getInstallInfo(any(Artifact.class), any(InstallType.class));
+        doReturn(Collections.emptyList()).when(mockFacade).getInstallInfo(any(Artifact.class), any(InstallType.class));
 
         // firstly don't confirm install options, then confirm
         doAnswer(invocationOnMock -> {
-            spyCommand.console.print(invocationOnMock.getArguments()[0].toString() + " [y/N]\n");
+           spyConsole.print(invocationOnMock.getArguments()[0].toString() + " [y/N]\n");
             return false;
         }).doAnswer(invocationOnMock -> {
-            spyCommand.console.print(invocationOnMock.getArguments()[0].toString() + " [y/N]\n");
+           spyConsole.print(invocationOnMock.getArguments()[0].toString() + " [y/N]\n");
             return true;
-        }).when(spyCommand.console).askUser(anyString());
+        }).when(spyConsole).askUser(anyString());
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("artifact", TEST_ARTIFACT);
         commandInvoker.argument("version", "1.0.2");
 
@@ -251,14 +229,14 @@ public class TestInstallCommand extends AbstractTestCommand {
                              "  \"status\" : \"OK\"\n" +
                              "}\n");
 
-        verify(facade, never()).logSaasAnalyticsEvent(any(Event.class), anyString());
+        verify(mockFacade, never()).logSaasAnalyticsEvent(any(Event.class));
     }
 
     @Test
     public void shouldFailsOnUnknownArtifact() throws Exception {
-        doThrow(new IOException("Artifact 'any' not found")).when(facade).getInstallInfo(any(Artifact.class), any(InstallType.class));
+        doThrow(new IOException("Artifact 'any' not found")).when(mockFacade).getInstallInfo(any(Artifact.class), any(InstallType.class));
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("artifact", "any");
 
         CommandInvoker.Result result = commandInvoker.invoke();
@@ -268,16 +246,16 @@ public class TestInstallCommand extends AbstractTestCommand {
                              + "  \"status\" : \"ERROR\"\n"
                              + "}\n");
 
-        verify(facade, never()).logSaasAnalyticsEvent(any(Event.class), anyString());
+        verify(mockFacade, never()).logSaasAnalyticsEvent(any(Event.class));
     }
 
     @Test
     public void shouldFailOnInstallationStepException() throws Exception {
         ArgumentCaptor<Event> eventArgument = ArgumentCaptor.forClass(Event.class);
 
-        doThrow(new IOException(ERROR_MESSAGE)).when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+        doThrow(new IOException(ERROR_MESSAGE)).when(mockFacade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("artifact", TEST_ARTIFACT);
         commandInvoker.argument("version", TEST_VERSION);
 
@@ -294,7 +272,7 @@ public class TestInstallCommand extends AbstractTestCommand {
                              "  \"status\" : \"ERROR\"\n" +
                              "}\n", TEST_ARTIFACT, TEST_VERSION, ERROR_MESSAGE));
 
-        verify(facade, times(2)).logSaasAnalyticsEvent(eventArgument.capture(), isNull(String.class));
+        verify(mockFacade, times(2)).logSaasAnalyticsEvent(eventArgument.capture());
 
         List<Event> values = eventArgument.getAllValues();
         assertEquals(values.get(0).getType(), Event.Type.IM_ARTIFACT_INSTALL_STARTED);
@@ -315,9 +293,9 @@ public class TestInstallCommand extends AbstractTestCommand {
         testInstallArtifactStepInfo.setStatus(InstallArtifactInfo.Status.FAILURE);
         testInstallArtifactStepInfo.setMessage(ERROR_MESSAGE);
 
-        doReturn(testInstallArtifactStepInfo).when(facade).getUpdateStepInfo(anyString());
+        doReturn(testInstallArtifactStepInfo).when(mockFacade).getUpdateStepInfo(anyString());
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("artifact", TEST_ARTIFACT);
         commandInvoker.argument("version", TEST_VERSION);
 
@@ -334,7 +312,7 @@ public class TestInstallCommand extends AbstractTestCommand {
                                     "  \"status\" : \"ERROR\"\n" +
                                     "}\n", TEST_ARTIFACT, TEST_VERSION, ERROR_MESSAGE));
 
-        verify(facade, times(2)).logSaasAnalyticsEvent(eventArgument.capture(), isNull(String.class));
+        verify(mockFacade, times(2)).logSaasAnalyticsEvent(eventArgument.capture());
 
         List<Event> values = eventArgument.getAllValues();
         assertEquals(values.get(0).getType(), Event.Type.IM_ARTIFACT_INSTALL_STARTED);
@@ -353,9 +331,9 @@ public class TestInstallCommand extends AbstractTestCommand {
         ArgumentCaptor<Event> eventArgument = ArgumentCaptor.forClass(Event.class);
 
         String errorMessage = "Property is missed";
-        doThrow(new IOException(errorMessage)).when(facade).getInstallInfo(any(Artifact.class), any(InstallType.class));
+        doThrow(new IOException(errorMessage)).when(mockFacade).getInstallInfo(any(Artifact.class), any(InstallType.class));
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("artifact", TEST_ARTIFACT);
         commandInvoker.argument("version", TEST_VERSION);
 
@@ -367,7 +345,7 @@ public class TestInstallCommand extends AbstractTestCommand {
                              + "  \"status\" : \"ERROR\"\n"
                              + "}\n", errorMessage));
 
-        verify(facade, times(2)).logSaasAnalyticsEvent(eventArgument.capture(), isNull(String.class));
+        verify(mockFacade, times(2)).logSaasAnalyticsEvent(eventArgument.capture());
 
         List<Event> values = eventArgument.getAllValues();
         assertEquals(values.get(0).getType(), Event.Type.IM_ARTIFACT_INSTALL_STARTED);
@@ -385,9 +363,9 @@ public class TestInstallCommand extends AbstractTestCommand {
          doReturn(ImmutableList.of(InstallArtifactInfo.createInstance("codenvy",
                                                                       "1.0.1",
                                                                       InstallArtifactInfo.Status.SUCCESS)))
-             .when(facade).getInstalledVersions();
+             .when(mockFacade).getInstalledVersions();
 
-         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.option("--list", Boolean.TRUE);		
 		
         CommandInvoker.Result result = commandInvoker.invoke();		
@@ -408,10 +386,10 @@ public class TestInstallCommand extends AbstractTestCommand {
                                                                             .merge(anyMap(), anyMap());
 		
         doThrow(new RuntimeException("Server Error Exception"))		
-                .when(facade)		
+                .when(mockFacade)		
                 .getInstalledVersions();		
 		
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);		
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.option("--list", Boolean.TRUE);		
 		
         CommandInvoker.Result result = commandInvoker.invoke();		
@@ -436,23 +414,23 @@ public class TestInstallCommand extends AbstractTestCommand {
         doReturn(true).when(spyCommand).isInstall(any(Artifact.class));
         // user always enter "some value" as property value
         doAnswer(invocationOnMock -> {
-            spyCommand.console.print("some value\n");
+           spyConsole.print("some value\n");
             return "some value";
-        }).when(spyCommand.console).readLine();
+        }).when(spyConsole).readLine();
 
         // no installation info provided
-        doReturn(Collections.emptyList()).when(facade).getInstallInfo(any(Artifact.class), any(InstallType.class));
+        doReturn(Collections.emptyList()).when(mockFacade).getInstallInfo(any(Artifact.class), any(InstallType.class));
 
         // firstly don't confirm install options, then confirm
         doAnswer(invocationOnMock -> {
-            spyCommand.console.print(invocationOnMock.getArguments()[0].toString() + " [y/N]\n");
+           spyConsole.print(invocationOnMock.getArguments()[0].toString() + " [y/N]\n");
             return false;
         }).doAnswer(invocationOnMock -> {
-            spyCommand.console.print(invocationOnMock.getArguments()[0].toString() + " [y/N]\n");
+           spyConsole.print(invocationOnMock.getArguments()[0].toString() + " [y/N]\n");
             return true;
-        }).when(spyCommand.console).askUser(anyString());
+        }).when(spyConsole).askUser(anyString());
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("artifact", TEST_ARTIFACT);
         commandInvoker.argument("version", TEST_VERSION);
 
@@ -468,7 +446,7 @@ public class TestInstallCommand extends AbstractTestCommand {
                              "  \"status\" : \"OK\"\n" +
                              "}\n", TEST_ARTIFACT, TEST_VERSION));
 
-        verify(facade, times(2)).logSaasAnalyticsEvent(eventArgument.capture(), isNull(String.class));
+        verify(mockFacade, times(2)).logSaasAnalyticsEvent(eventArgument.capture());
 
         List<Event> values = eventArgument.getAllValues();
         assertEquals(values.get(0).getType(), Event.Type.IM_ARTIFACT_INSTALL_STARTED);
@@ -482,7 +460,7 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testInstallArtifactFromLocalBinariesFailedIfVersionMissed() throws Exception {
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.option("--binaries", "/path/to/file");
 
         CommandInvoker.Result result = commandInvoker.invoke();
@@ -492,12 +470,12 @@ public class TestInstallCommand extends AbstractTestCommand {
                              + "  \"status\" : \"ERROR\"\n"
                              + "}\n");
 
-        verify(facade, never()).logSaasAnalyticsEvent(any(Event.class), anyString());
+        verify(mockFacade, never()).logSaasAnalyticsEvent(any(Event.class));
     }
 
     @Test
     public void testInstallArtifactFromLocalBinariesFailedIfArtifactMissed() throws Exception {
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.option("--binaries", "/path/to/file");
         commandInvoker.argument("version", "3.10.1");
 
@@ -508,7 +486,7 @@ public class TestInstallCommand extends AbstractTestCommand {
                              + "  \"status\" : \"ERROR\"\n"
                              + "}\n");
 
-        verify(facade, never()).logSaasAnalyticsEvent(any(Event.class), anyString());
+        verify(mockFacade, never()).logSaasAnalyticsEvent(any(Event.class));
     }
 
     @Test
@@ -518,7 +496,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         String versionNumber = "3.10.1";
         String binaries = "/path/to/file";
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.option("--binaries", binaries);
         commandInvoker.argument("artifact", TEST_ARTIFACT);
         commandInvoker.argument("version", versionNumber);
@@ -537,12 +515,12 @@ public class TestInstallCommand extends AbstractTestCommand {
                                                        eq(Version.valueOf(versionNumber)),
                                                        eq(Boolean.TRUE));
 
-        verify(facade).install(eq(ArtifactFactory.createArtifact(TEST_ARTIFACT)),
+        verify(mockFacade).install(eq(ArtifactFactory.createArtifact(TEST_ARTIFACT)),
                                           eq(Version.valueOf(versionNumber)),
                                           eq(Paths.get(binaries)),
                                           any(InstallOptions.class));
 
-        verify(facade, times(1)).logSaasAnalyticsEvent(eventArgument.capture(), isNull(String.class));
+        verify(mockFacade, times(1)).logSaasAnalyticsEvent(eventArgument.capture());
 
         List<Event> values = eventArgument.getAllValues();
         assertEquals(values.get(0).getType(), Event.Type.IM_ARTIFACT_INSTALL_STARTED);
@@ -552,7 +530,7 @@ public class TestInstallCommand extends AbstractTestCommand {
 
     @Test
     public void testReinstallCodenvy() throws Exception {
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("artifact", TEST_ARTIFACT);
         commandInvoker.option("--reinstall", Boolean.TRUE);
 
@@ -566,15 +544,15 @@ public class TestInstallCommand extends AbstractTestCommand {
                              + "  \"status\" : \"OK\"\n"
                              + "}\n");
 
-        verify(facade).reinstall(createArtifact(TEST_ARTIFACT));
-        verify(facade, never()).logSaasAnalyticsEvent(any(Event.class), anyString());
+        verify(mockFacade).reinstall(createArtifact(TEST_ARTIFACT));
+        verify(mockFacade, never()).logSaasAnalyticsEvent(any(Event.class));
     }
 
     @Test
     public void testReinstallImCli() throws Exception {
-        doThrow(new UnsupportedOperationException("error message")).when(facade).reinstall(createArtifact(InstallManagerArtifact.NAME));
+        doThrow(new UnsupportedOperationException("error message")).when(mockFacade).reinstall(createArtifact(InstallManagerArtifact.NAME));
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("artifact", InstallManagerArtifact.NAME);
         commandInvoker.option("--reinstall", Boolean.TRUE);
 
@@ -589,7 +567,7 @@ public class TestInstallCommand extends AbstractTestCommand {
                              + "  \"status\" : \"ERROR\"\n"
                              + "}\n");
 
-        verify(facade, never()).logSaasAnalyticsEvent(any(Event.class), anyString());
+        verify(mockFacade, never()).logSaasAnalyticsEvent(any(Event.class));
     }
 
     @Test
@@ -597,12 +575,12 @@ public class TestInstallCommand extends AbstractTestCommand {
         InstallArtifactStepInfo info = mock(InstallArtifactStepInfo.class);
         doReturn(InstallArtifactInfo.Status.SUCCESS).when(info).getStatus();
 
-        doReturn(info).when(facade).getUpdateStepInfo(anyString());
-        doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+        doReturn(info).when(mockFacade).getUpdateStepInfo(anyString());
+        doReturn("id").when(mockFacade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
 
-        doThrow(new IOException("error")).when(facade).logSaasAnalyticsEvent(any(Event.class), any(String.class));
+        doThrow(new IOException("error")).when(mockFacade).logSaasAnalyticsEvent(any(Event.class));
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("artifact", TEST_ARTIFACT);
         commandInvoker.argument("version", TEST_VERSION);
 
@@ -629,10 +607,10 @@ public class TestInstallCommand extends AbstractTestCommand {
         InstallArtifactStepInfo info = mock(InstallArtifactStepInfo.class);
         doReturn(InstallArtifactInfo.Status.SUCCESS).when(info).getStatus();
 
-        doReturn(info).when(facade).getUpdateStepInfo(anyString());
-        doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+        doReturn(info).when(mockFacade).getUpdateStepInfo(anyString());
+        doReturn("id").when(mockFacade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("artifact", TEST_ARTIFACT);
         commandInvoker.argument("version", TEST_VERSION);
         commandInvoker.option("--step", 1);
@@ -642,7 +620,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, "step 1 [OK]\n");
 
-        verify(facade, times(1)).logSaasAnalyticsEvent(eventArgument.capture(), isNull(String.class));
+        verify(mockFacade, times(1)).logSaasAnalyticsEvent(eventArgument.capture());
 
         List<Event> values = eventArgument.getAllValues();
         assertEquals(values.get(0).getType(), Event.Type.IM_ARTIFACT_INSTALL_STARTED);
@@ -657,12 +635,12 @@ public class TestInstallCommand extends AbstractTestCommand {
         InstallArtifactStepInfo info = mock(InstallArtifactStepInfo.class);
         doReturn(InstallArtifactInfo.Status.SUCCESS).when(info).getStatus();
 
-        doReturn(info).when(facade).getUpdateStepInfo(anyString());
-        doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+        doReturn(info).when(mockFacade).getUpdateStepInfo(anyString());
+        doReturn("id").when(mockFacade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
 
-        doThrow(new IOException(ERROR_MESSAGE)).when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+        doThrow(new IOException(ERROR_MESSAGE)).when(mockFacade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("artifact", TEST_ARTIFACT);
         commandInvoker.argument("version", TEST_VERSION);
         commandInvoker.option("--step", 2);
@@ -682,7 +660,7 @@ public class TestInstallCommand extends AbstractTestCommand {
                                     + "}\n",
                                     TEST_ARTIFACT, TEST_VERSION, ERROR_MESSAGE));
 
-        verify(facade, times(1)).logSaasAnalyticsEvent(eventArgument.capture(), isNull(String.class));
+        verify(mockFacade, times(1)).logSaasAnalyticsEvent(eventArgument.capture());
 
         List<Event> values = eventArgument.getAllValues();
         assertEquals(values.get(0).getType(), Event.Type.IM_ARTIFACT_INSTALL_FINISHED_UNSUCCESSFULLY);
@@ -699,10 +677,10 @@ public class TestInstallCommand extends AbstractTestCommand {
         InstallArtifactStepInfo info = mock(InstallArtifactStepInfo.class);
         doReturn(InstallArtifactInfo.Status.SUCCESS).when(info).getStatus();
 
-        doReturn(info).when(facade).getUpdateStepInfo(anyString());
-        doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
+        doReturn(info).when(mockFacade).getUpdateStepInfo(anyString());
+        doReturn("id").when(mockFacade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("artifact", TEST_ARTIFACT);
         commandInvoker.argument("version", TEST_VERSION);
         commandInvoker.option("--step", INSTALL_INFO.size());
@@ -720,7 +698,7 @@ public class TestInstallCommand extends AbstractTestCommand {
                                     "  \"status\" : \"OK\"\n" +
                                     "}\n", TEST_ARTIFACT, TEST_VERSION));
 
-        verify(facade, times(1)).logSaasAnalyticsEvent(eventArgument.capture(), isNull(String.class));
+        verify(mockFacade, times(1)).logSaasAnalyticsEvent(eventArgument.capture());
 
         List<Event> values = eventArgument.getAllValues();
         assertEquals(values.get(0).getType(), Event.Type.IM_ARTIFACT_INSTALL_FINISHED_SUCCESSFULLY);

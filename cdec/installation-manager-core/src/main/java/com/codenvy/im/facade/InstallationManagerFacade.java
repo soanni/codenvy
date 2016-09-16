@@ -51,7 +51,6 @@ import org.eclipse.che.api.auth.shared.dto.Token;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.json.JsonParseException;
 
-import javax.inject.Named;
 import javax.validation.constraints.NotNull;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -84,11 +83,8 @@ public class InstallationManagerFacade {
     protected final InstallManager             installManager;
     protected final DownloadManager            downloadManager;
 
-    private final String saasServerEndpoint;
-
     @Inject
-    public InstallationManagerFacade(@Named("saas.api.endpoint") String saasServerEndpoint,
-                                     HttpTransport transport,
+    public InstallationManagerFacade(HttpTransport transport,
                                      SaasAuthServiceProxy saasAuthServiceProxy,
                                      SaasRepositoryServiceProxy saasRepositoryServiceProxy,
                                      LdapManager ldapManager,
@@ -106,11 +102,6 @@ public class InstallationManagerFacade {
         this.nodeManager = nodeManager;
         this.backupManager = backupManager;
         this.storageManager = storageManager;
-        this.saasServerEndpoint = saasServerEndpoint;
-    }
-
-    public String getSaasServerEndpoint() {
-        return saasServerEndpoint;
     }
 
     /**
@@ -565,6 +556,13 @@ public class InstallationManagerFacade {
      */
     public void reinstall(Artifact artifact) throws IOException {
         installManager.performReinstall(artifact);
+    }
+
+    /**
+     * @see com.codenvy.im.saas.SaasRepositoryServiceProxy#logAnalyticsEvent(com.codenvy.im.event.Event, null)
+     */
+    public void logSaasAnalyticsEvent(Event event) throws IOException {
+        logSaasAnalyticsEvent(event, null);
     }
 
     /**

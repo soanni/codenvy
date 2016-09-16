@@ -18,19 +18,13 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.artifacts.VersionLabel;
-import com.codenvy.im.cli.preferences.PreferencesStorage;
-import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.Config;
-import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.UpdateArtifactInfo;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.apache.felix.service.command.CommandSession;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -39,10 +33,8 @@ import java.util.HashMap;
 import java.util.List;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
 
@@ -96,31 +88,15 @@ public class TestVersionCommand extends AbstractTestCommand {
 
     private VersionCommand spyCommand;
 
-    private IMArtifactLabeledFacade facade;
-    private CommandSession          commandSession;
-
-    @Mock
-    private PreferencesStorage mockPreferencesStorage;
-    @Mock
-    private ConfigManager      mockConfigManager;
-
     @BeforeMethod
     public void initMocks() throws Exception {
-        MockitoAnnotations.initMocks(this);
+        spyCommand = spy(new VersionCommand());
+        performBaseMocks(spyCommand, true);
 
         doReturn(new HashMap<>(ImmutableMap.of("a", "MANDATORY"))).when(mockConfigManager).loadCodenvyDefaultProperties(Version.valueOf("1.0.1"),
                                                                                                                         InstallType.SINGLE_SERVER);
         doReturn(new Config(new HashMap<>(ImmutableMap.of("a", "MANDATORY")))).when(mockConfigManager)
                                                                               .loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
-
-        facade = mock(IMArtifactLabeledFacade.class);
-        commandSession = mock(CommandSession.class);
-
-        spyCommand = spy(new VersionCommand());
-        spyCommand.facade = facade;
-        spyCommand.preferencesStorage = mockPreferencesStorage;
-
-        performBaseMocks(spyCommand, true);
 
         doNothing().when(spyCommand).updateImCliClientIfNeeded();
     }
@@ -128,10 +104,8 @@ public class TestVersionCommand extends AbstractTestCommand {
 
     @Test(dataProvider = "getTestVersionData")
     public void testCodenvyVersion(List<InstallArtifactInfo> installed, List<UpdateArtifactInfo> updates, String expectedOutput) throws Exception {
-        doReturn(installed).when(facade).getInstalledVersions();
-        doReturn(updates).when(facade).getAllUpdatesAfterInstalledVersion(any(Artifact.class));
-
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        doReturn(installed).when(mockFacade).getInstalledVersions();
+        doReturn(updates).when(mockFacade).getAllUpdatesAfterInstalledVersion(any(Artifact.class));
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();

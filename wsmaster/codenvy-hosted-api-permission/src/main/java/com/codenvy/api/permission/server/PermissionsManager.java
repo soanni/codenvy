@@ -41,6 +41,7 @@ import static com.codenvy.api.permission.server.AbstractPermissionsDomain.SET_PE
  *
  * @author gazarenkov
  * @author Sergii Leschenko
+ * @author Anton Korneta
  */
 @Singleton
 public class PermissionsManager {
