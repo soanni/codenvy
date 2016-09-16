@@ -33,18 +33,17 @@ import org.apache.directory.shared.ldap.entry.client.DefaultClientAttribute;
 import org.eclipse.che.api.core.jdbc.jpa.eclipselink.EntityListenerInjectionManagerInitializer;
 import org.eclipse.che.api.core.jdbc.jpa.guice.JpaInitializer;
 import org.eclipse.che.api.core.notification.EventService;
+import org.eclipse.che.api.user.server.jpa.JpaProfileDao;
 import org.eclipse.che.api.user.server.jpa.UserJpaModule;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.user.server.spi.UserDao;
 import org.eclipse.che.commons.lang.Pair;
-import org.eclipse.che.inject.lifecycle.InitModule;
 import org.ldaptive.ConnectionFactory;
 import org.testng.ITestContext;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import javax.annotation.PostConstruct;
 import java.util.HashSet;
 
 import static java.util.Arrays.asList;
@@ -68,6 +67,7 @@ public class LdapSynchronizationFlowTest {
         final Injector injector = Guice.createInjector(new Module(server));
         synchronizer = injector.getInstance(LdapSynchronizer.class);
         userDao = injector.getInstance(UserDao.class);
+        injector.getInstance(JpaProfileDao.RemoveProfileBeforeUserRemovedEventSubscriber.class).subscribe();
     }
 
     @AfterClass
@@ -185,7 +185,6 @@ public class LdapSynchronizationFlowTest {
             bind(EventService.class).in(Singleton.class);
             bind(JpaInitializer.class).asEagerSingleton();
             bind(EntityListenerInjectionManagerInitializer.class).asEagerSingleton();
-            install(new InitModule(PostConstruct.class));
             install(new JpaPersistModule("test"));
             install(new UserJpaModule());
 
