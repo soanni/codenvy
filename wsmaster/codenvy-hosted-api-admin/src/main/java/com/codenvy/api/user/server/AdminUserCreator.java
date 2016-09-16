@@ -82,9 +82,8 @@ public class AdminUserCreator implements EventSubscriber<AfterUserPersistedEvent
     @PostConstruct
     public void create() throws ServerException {
         if ("ldap".equals(authHandler)) {
+            eventService.subscribe(this);
             return;
-        } else {
-            eventService.unsubscribe(this);
         }
         User adminUser;
         try {
