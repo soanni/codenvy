@@ -20,7 +20,7 @@
     <parent>
         <artifactId>onpremises-ide-parent</artifactId>
         <groupId>com.codenvy.onpremises</groupId>
-        <version>5.0.0-M1-SNAPSHOT</version>
+        <version>5.0.0-M2-SNAPSHOT</version>
     </parent>
     <artifactId>onpremises-ide-packaging-war-platform-api</artifactId>
     <packaging>war</packaging>
@@ -44,7 +44,15 @@
         </dependency>
         <dependency>
             <groupId>com.codenvy.onpremises.wsmaster</groupId>
+            <artifactId>codenvy-hosted-api-jdbc-vendor-postgresql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.codenvy.onpremises.wsmaster</groupId>
             <artifactId>codenvy-hosted-api-license</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.codenvy.onpremises.wsmaster</groupId>
+            <artifactId>codenvy-hosted-api-machine</artifactId>
         </dependency>
         <dependency>
             <groupId>com.codenvy.onpremises.wsmaster</groupId>
@@ -81,6 +89,14 @@
         <dependency>
             <groupId>com.codenvy.onpremises.wsmaster</groupId>
             <artifactId>codenvy-hosted-recoverpassword</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.codenvy.onpremises.wsmaster</groupId>
+            <artifactId>codenvy-hosted-report</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.codenvy.onpremises.wsmaster</groupId>
+            <artifactId>codenvy-hosted-report-shared</artifactId>
         </dependency>
         <dependency>
             <groupId>com.codenvy.onpremises.wsmaster</groupId>
@@ -180,6 +196,10 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
+            <artifactId>che-core-api-account</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.che.core</groupId>
             <artifactId>che-core-api-agent</artifactId>
         </dependency>
         <dependency>
@@ -269,10 +289,6 @@
         <dependency>
             <groupId>org.everrest</groupId>
             <artifactId>everrest-websockets</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.mongodb</groupId>
-            <artifactId>mongo-java-driver</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -414,7 +430,6 @@
                         </resource>
                     </webResources>
                     <packagingExcludes>WEB-INF/lib/*gwt*.jar,WEB-INF/lib/gin-*.jar,WEB-INF/lib/*codemirror-resources*.jar</packagingExcludes>
-                    <archiveClasses>true</archiveClasses>
                 </configuration>
             </plugin>
         </plugins>

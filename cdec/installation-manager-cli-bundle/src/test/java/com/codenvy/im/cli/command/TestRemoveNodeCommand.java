@@ -14,12 +14,7 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.response.NodeInfo;
-
-import org.apache.felix.service.command.CommandSession;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -36,28 +31,19 @@ import static org.testng.Assert.assertEquals;
 public class TestRemoveNodeCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
 
-    @Mock
-    private IMArtifactLabeledFacade mockInstallationManagerProxy;
-    @Mock
-    private CommandSession          commandSession;
-
     private final static String TEST_DNS = "builder.node.com";
 
     @BeforeMethod
     public void initMocks() throws IOException {
-        MockitoAnnotations.initMocks(this);
-
         spyCommand = spy(new RemoveNodeCommand());
-        spyCommand.facade = mockInstallationManagerProxy;
-
         performBaseMocks(spyCommand, true);
     }
 
     @Test
     public void testRemoveNodeCommand() throws Exception {
-        doReturn(new NodeInfo()).when(mockInstallationManagerProxy).removeNode(TEST_DNS);
+        doReturn(new NodeInfo()).when(mockFacade).removeNode(TEST_DNS);
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("dns", TEST_DNS);
 
         CommandInvoker.Result result = commandInvoker.invoke();
@@ -70,13 +56,13 @@ public class TestRemoveNodeCommand extends AbstractTestCommand {
 
     @Test
     public void testRemoveNodeCommandWhenDnsIsEmpty() throws Exception {
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("dns", "");
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, "");
 
-        verify(mockInstallationManagerProxy, never()).removeNode(anyString());
+        verify(mockFacade, never()).removeNode(anyString());
     }
 }

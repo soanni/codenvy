@@ -14,11 +14,14 @@
  */
 package com.codenvy.api.workspace.server.filters;
 
+import com.google.api.client.repackaged.com.google.common.annotations.VisibleForTesting;
+
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.api.workspace.server.WorkspaceService;
+import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.subject.Subject;
 import org.eclipse.che.everrest.CheMethodInvokerFilter;
@@ -34,7 +37,6 @@ import static com.codenvy.api.workspace.server.WorkspaceDomain.DOMAIN_ID;
 import static com.codenvy.api.workspace.server.WorkspaceDomain.READ;
 import static com.codenvy.api.workspace.server.WorkspaceDomain.RUN;
 import static com.codenvy.api.workspace.server.WorkspaceDomain.USE;
-import static com.google.api.client.repackaged.com.google.common.base.Strings.isNullOrEmpty;
 
 /**
  * Restricts access to methods of {@link WorkspaceService} by users' permissions
@@ -62,46 +64,48 @@ public class WorkspacePermissionsFilter extends CheMethodInvokerFilter {
 
         final Subject currentSubject = EnvironmentContext.getCurrent().getSubject();
         String action;
-        String workspaceId;
+        String key;
 
         switch (methodName) {
+            case "getWorkspaces": //method accessible to every user
+                return;
+
+            case "getByNamespace": {
+                checkNamespaceAccess(currentSubject, ((String)arguments[1]));
+                return;
+            }
+
             case "create": {
-                final String accountId = ((String)arguments[3]);
-                checkPermissionsToCreateWorkspaces(currentSubject, accountId);
+                checkNamespaceAccess(currentSubject, ((String)arguments[3]));
                 return;
             }
 
             case "startFromConfig": {
-                String accountId = ((String)arguments[2]);
-                checkPermissionsToCreateWorkspaces(currentSubject, accountId);
+                checkNamespaceAccess(currentSubject, ((String)arguments[2]));
                 return;
             }
 
-            case "delete": {
-                workspaceId = ((String)arguments[0]);
+            case "delete":
+                key = ((String)arguments[0]);
                 action = DELETE;
                 break;
-            }
 
             case "stop":
             case "startById":
-            case "createSnapshot": {
-                workspaceId = ((String)arguments[0]);
+            case "createSnapshot":
+                key = ((String)arguments[0]);
                 action = RUN;
                 break;
-            }
 
-            case "getSnapshot": {
-                workspaceId = ((String)arguments[0]);
+            case "getSnapshot":
+                key = ((String)arguments[0]);
                 action = READ;
                 break;
-            }
 
-            case "getByKey": {
-                workspaceId = getWorkspaceIdFromKey(((String)arguments[0]));
+            case "getByKey":
+                key = ((String)arguments[0]);
                 action = READ;
                 break;
-            }
 
             case "update":
             case "addProject":
@@ -112,63 +116,55 @@ public class WorkspacePermissionsFilter extends CheMethodInvokerFilter {
             case "updateEnvironment":
             case "addCommand":
             case "deleteCommand":
-            case "updateCommand": {
-                workspaceId = ((String)arguments[0]);
+            case "updateCommand":
+                key = ((String)arguments[0]);
                 action = CONFIGURE;
                 break;
-            }
-
-            case "getWorkspaces": {//method accessible to every user
-                return;
-            }
 
             // MachineService methods
-            case "startMachine" :
-            case "stopMachine" : {
-                workspaceId = ((String)arguments[0]);
+            case "startMachine":
+            case "stopMachine":
+                key = ((String)arguments[0]);
                 action = RUN;
                 break;
-            }
 
             case "getMachineById":
-            case "getMachines" :
-            case "executeCommandInMachine" :
-            case "getProcesses" :
-            case "stopProcess" :
-            case "getProcessLogs" : {
-                workspaceId = ((String)arguments[0]);
+            case "getMachines":
+            case "executeCommandInMachine":
+            case "getProcesses":
+            case "stopProcess":
+            case "getProcessLogs":
+                key = ((String)arguments[0]);
                 action = USE;
                 break;
-            }
 
             default:
                 throw new ForbiddenException("The user does not have permission to perform this operation");
         }
 
-        if (!currentSubject.hasPermission(DOMAIN_ID, workspaceId, action)) {
-            throw new ForbiddenException("The user does not have permission to " + action + " workspace with id '" + workspaceId + "'");
+        final WorkspaceImpl workspace = workspaceManager.getWorkspace(key);
+        final String namespace = workspace.getNamespace();
+
+        if (currentSubject.getUserName().equals(namespace)) {
+            // user is authorized to perform any operation if workspace belongs to his personal account
+            return;
+        }
+
+        if (!currentSubject.hasPermission(DOMAIN_ID, workspace.getId(), action)) {
+            throw new ForbiddenException(
+                    "The user does not have permission to " + action + " workspace with id '" + workspace.getId() + "'");
         }
     }
 
-    private void checkPermissionsToCreateWorkspaces(Subject subject, String accountId) throws ForbiddenException {
-        if (!isNullOrEmpty(accountId)) {
-            if (!subject.hasPermission("account", accountId, "createWorkspaces")) {
-                throw new ForbiddenException("The user does not have permission to create workspace in given account");
-            }
+    @VisibleForTesting
+    void checkNamespaceAccess(Subject currentSubject, String namespace) throws ForbiddenException {
+        if (namespace == null) {
+            //namespace will be defined as username by default
+            return;
         }
-    }
 
-    /**
-     * Get workspace id from composite key.
-     */
-    private String getWorkspaceIdFromKey(String key) throws NotFoundException, ServerException {
-        String[] parts = key.split(":", -1); // -1 is to prevent skipping trailing part
-        if (parts.length == 1) {
-            return key;
+        if (!currentSubject.getUserName().equals(namespace)) {
+            throw new ForbiddenException("User is not authorized to use given namespace");
         }
-        final String userName = parts[0];
-        final String wsName = parts[1];
-        final String namespace = userName.isEmpty() ? EnvironmentContext.getCurrent().getSubject().getUserName() : userName;
-        return workspaceManager.getWorkspace(wsName, namespace).getId();
     }
 }

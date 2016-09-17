@@ -28,7 +28,10 @@ else
     vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 fi
 
-# install Codenvy 4.x
+WORKSPACE_NAME="workspace-1"
+PROJECT_NAME="project-1"
+
+# install Codenvy on-prem
 installCodenvy ${LATEST_CODENVY_VERSION}
 validateInstalledCodenvyVersion ${LATEST_CODENVY_VERSION}
 authWithoutRealmAndServerDns "admin" "password"
@@ -48,16 +51,16 @@ USER_ID=${OUTPUT}
 
 authWithoutRealmAndServerDns "cdec" "pwd123ABC"
 
-# create workspace "workspace-1"
-doPost "application/json" "{\"environments\":[{\"name\":\"workspace-1\",\"machineConfigs\":[{\"links\":[],\"limits\":{\"ram\":1000},\"name\":\"ws-machine\",\"type\":\"docker\",\"source\":{\"location\":\"http://${HOST_URL}/api/recipe/recipe_ubuntu/script\",\"type\":\"recipe\"},\"dev\":true}]}],\"defaultEnv\":\"workspace-1\",\"projects\":[],\"name\":\"workspace-1\",\"attributes\":{},\"temporary\":false}" "http://${HOST_URL}/api/workspace/?token=${TOKEN}"
+# create workspace
+doPost "application/json" "{\"defaultEnv\":\"default\",\"commands\":[{\"commandLine\":\"mvn clean install -f $\{current.project.path}\",\"name\":\"build\",\"type\":\"mvn\",\"attributes\":{}}],\"projects\":[],\"environments\":[{\"machineConfigs\":[{\"dev\":true,\"servers\":[],\"envVariables\":{},\"source\":{\"type\":\"dockerfile\",\"content\":\"FROM codenvy/ubuntu_jdk8\"},\"limits\":{\"ram\":1024},\"name\":\"default\",\"type\":\"docker\",\"links\":[]}],\"name\":\"default\"}],\"name\":\"${WORKSPACE_NAME}\",\"links\":[],\"description\":null}" "http://${HOST_URL}/api/workspace/?token=${TOKEN}"
 fetchJsonParameter "id"
 WORKSPACE_ID=${OUTPUT}
 
-# run workspace "workspace-1"
+# run workspace
 doPost "application/json" "{}" "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}/runtime?token=${TOKEN}"
 
 # verify is workspace running
-doSleep "10m"  "Wait until workspace starts to avoid 'java.lang.NullPointerException' error on verifying workspace state"
+doSleep "4m"  "Wait until workspace starts to avoid 'java.lang.NullPointerException' error on verifying workspace state"
 
 # obtain network ports
 doGet "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"
@@ -74,12 +77,12 @@ doGet "http://${HOST_URL}/api/machine/token/${WORKSPACE_ID}?token=${TOKEN}"
 fetchJsonParameter "machineToken"
 MACHINE_TOKEN=${OUTPUT}
 
-# create project "project-1" of type "console-java" in workspace "workspace-1"
-doPost "application/json" "{\"location\":\"https://github.com/che-samples/console-java-simple.git\",\"parameters\":{},\"type\":\"git\"}" "${URL_OF_PROJECT_API}/import/project-1?token=${MACHINE_TOKEN}"
+# create project of type "console-java"
+doPost "application/json" "{\"location\":\"https://github.com/che-samples/console-java-simple.git\",\"parameters\":{},\"type\":\"git\"}" "${URL_OF_PROJECT_API}/import/${PROJECT_NAME}?token=${MACHINE_TOKEN}"
 
 doGet "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"
 validateExpectedString ".*\"status\":\"RUNNING\".*"
-validateExpectedString ".*\"path\":\"/project-1.*"
+validateExpectedString ".*\"path\":\"/${PROJECT_NAME}.*"
 
 # create factory from template "minimal"
 doPost "application/json" "{\"v\": \"4.0\",\"workspace\": {\"projects\": [{\"links\": [],\"name\": \"Spring\",\"attributes\": {\"languageVersion\": [\"1.6\"],\"language\": [\"java\"]},\"type\": \"maven\", \"source\": {\"location\": \"https://github.com/codenvy-templates/web-spring-java-simple.git\",\"type\": \"git\",\"parameters\": {\"keepVcs\": \"false\", \"branch\": \"3.1.0\"}},\"modules\": [],\"path\": \"/Spring\",\"mixins\": [\"git\"],\"problems\": []}], \"defaultEnv\": \"wss\",\"name\": \"wss\",\"environments\": [{\"machineConfigs\": [{\"dev\": true,\"limits\": {\"ram\":2048},\"source\": {\"location\": \"http://${HOST_URL}/api/recipe/recipe_ubuntu/script\",\"type\": \"recipe\"}, \"name\": \"dev-machine\",\"type\": \"docker\"}],\"name\": \"wss\"}],\"links\": []}}" "http://${HOST_URL}/api/factory?token=${TOKEN}"
@@ -91,9 +94,9 @@ executeIMCommand "backup"
 fetchJsonParameter "file"
 BACKUP_WITH_MODIFICATIONS=${OUTPUT}
 
-# verify that there is project-1 on file system
+# verify that there is project on file system
 executeSshCommand "sudo ls -R /home/codenvy/codenvy-data/fs"
-validateExpectedString ".*/home/codenvy/codenvy-data/fs/[0-9a-z/]*/${WORKSPACE_ID}/project-1/src/main/java/org/eclipse/che/examples\:.*HelloWorld.java.*"
+validateExpectedString ".*/home/codenvy/codenvy-data/fs/[0-9a-z/]*/${WORKSPACE_ID}/${PROJECT_NAME}/src/main/java/org/eclipse/che/examples\:.*HelloWorld.java.*"
 
 # restore initial state
 executeIMCommand "restore" ${BACKUP_AT_START}
@@ -107,7 +110,7 @@ validateExpectedString ".*User.*not.found.*"
 doGet "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"
 validateExpectedString ".*The.user.does.not.have.permission.to.read.workspace.with.id.'${WORKSPACE_ID}'.*"
 
-# verify that there is no project-1 on file system
+# verify that there is no project on file system
 executeSshCommand "sudo ls /home/codenvy/codenvy-data/fs"
 validateExpectedString ""
 
@@ -126,11 +129,11 @@ validateExpectedString ".*cdec.im.test@gmail.com.*"
 authWithoutRealmAndServerDns "cdec.im.test@gmail.com" "pwd123ABC"
 
 doGet "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"
-validateExpectedString ".*project-1.*workspace-1.*"
+validateExpectedString ".*${PROJECT_NAME}.*${WORKSPACE_NAME}.*"
 
-# verify that there is project-1 on file system
+# verify that there is project on file system
 executeSshCommand "sudo ls -R /home/codenvy/codenvy-data/fs"
-validateExpectedString ".*/home/codenvy/codenvy-data/fs/[0-9a-z/]*/${WORKSPACE_ID}/project-1/src/main/java/org/eclipse/che/examples\:.*HelloWorld.java.*"
+validateExpectedString ".*/home/codenvy/codenvy-data/fs/[0-9a-z/]*/${WORKSPACE_ID}/${PROJECT_NAME}/src/main/java/org/eclipse/che/examples\:.*HelloWorld.java.*"
 
 doGet "http://${HOST_URL}/api/factory/${FACTORY_ID}?token=${TOKEN}"
 validateExpectedString ".*\"name\"\:\"wss\".*"

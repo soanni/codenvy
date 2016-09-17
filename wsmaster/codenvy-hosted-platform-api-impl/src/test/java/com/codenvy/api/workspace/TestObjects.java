@@ -14,6 +14,7 @@
  */
 package com.codenvy.api.workspace;
 
+import org.eclipse.che.account.spi.AccountImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
@@ -90,7 +91,7 @@ public final class TestObjects {
                                                                                                             machines)))
                                                           .setDefaultEnv("dev-env")
                                                           .build())
-                            .setNamespace(owner)
+                            .setAccount(new AccountImpl("accountId", owner, "test"))
                             .setTemporary(false)
                             .setStatus(WorkspaceStatus.STOPPED)
                             .build();

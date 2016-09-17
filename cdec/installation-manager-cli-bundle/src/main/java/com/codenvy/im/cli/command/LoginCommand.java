@@ -14,6 +14,7 @@
  */
 package com.codenvy.im.cli.command;
 
+import com.codenvy.im.cli.preferences.CodenvyOnpremPreferences;
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
@@ -23,7 +24,7 @@ import static java.lang.String.format;
 /**
  * Installation manager Login command.
  */
-@Command(scope = "codenvy", name = "login", description = "Login to remote Codenvy cloud")
+@Command(scope = "codenvy", name = "login", description = "Login to Codenvy")
 public class LoginCommand extends AbstractIMCommand {
 
     @Argument(name = "username", description = "The username", required = false, multiValued = false, index = 0)
@@ -32,46 +33,38 @@ public class LoginCommand extends AbstractIMCommand {
     @Argument(name = "password", description = "The user's password", required = false, multiValued = false, index = 1)
     private String password;
 
-    @Option(name = "--remote", description = "Name of the remote codenvy", required = false)
-    private String remoteName;
+    @Option(name = "--url", description = "Codenvy on-prem URL", required = false)
+    private String remoteUrl;
 
     @Override
     protected void doExecuteCommand() throws Exception {
         try {
-            if (remoteName == null) {
-                remoteName = getOrCreateRemoteNameForSaasServer();
+            if (remoteUrl == null) {
+                remoteUrl = getConfigManager().getHostUrl();
             }
 
+            getCodenvyOnpremPreferences().setUrl(remoteUrl);
+
             if (username == null) {
-                console.print(format("Codenvy user name for remote '%s': ", remoteName));
-                username = console.readLine();
+                getConsole().print(format("Codenvy user name for '%s': ", remoteUrl));
+                username = getConsole().readLine();
             }
 
             if (password == null) {
-                console.print(format("Password for %s: ", username));
-                password = console.readPassword();
+                getConsole().print(format("Password for %s: ", username));
+                password = getConsole().readPassword();
             }
 
-            if (!getMultiRemoteCodenvy().login(remoteName, username, password)) {
-                console.printErrorAndExit(format("Login failed on remote '%s'.", remoteName));
+            if (!getMultiRemoteCodenvy().login(CodenvyOnpremPreferences.CODENVY_ONPREM_REMOTE_NAME, username, password)) {
+                getConsole().printErrorAndExit(format("Login failed on '%s'.",
+                                                      getCodenvyOnpremPreferences().getUrl()));
                 return;
             }
 
-            if (!isRemoteForSaasServer(remoteName)) {
-                console.printSuccess(format("Login success on remote '%s' [%s].",
-                                            remoteName,
-                                            getRemoteUrlByName(remoteName)));
-                return;
-            }
-
-            console.printSuccess("Login success.");
+            getConsole().printSuccess(format("Login success on '%s'.",
+                                             getCodenvyOnpremPreferences().getUrl()));
         } catch (Exception e) {
             throw e;
         }
-    }
-
-    @Override
-    protected void validateIfUserLoggedIn() {
-        // do nothing
     }
 }

@@ -42,17 +42,17 @@ public class BackupCommand extends AbstractIMCommand {
         }
 
         try {
-            console.showProgressor();
+            getConsole().showProgressor();
 
-            BackupInfo backupInfo = facade.backup(config);
+            BackupInfo backupInfo = getFacade().backup(config);
 
             BackupResponse backupResponse = new BackupResponse();
             backupResponse.setBackup(backupInfo);
             backupResponse.setStatus(ResponseCode.OK);
 
-            console.printResponseExitInError(backupResponse);
+            getConsole().printResponseExitInError(backupResponse);
         } finally {
-            console.hideProgressor();
+            getConsole().hideProgressor();
         }
     }
 }

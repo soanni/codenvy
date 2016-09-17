@@ -14,24 +14,12 @@
  */
 package com.codenvy.api.workspace.server;
 
-import com.codenvy.api.permission.server.dao.PermissionsStorage;
-import com.codenvy.api.workspace.server.filters.AclSetPermissionsFilter;
-import com.codenvy.api.workspace.server.filters.RecipePermissionsFilter;
+import com.codenvy.api.machine.server.filters.RecipePermissionsFilter;
 import com.codenvy.api.workspace.server.filters.RecipeScriptDownloadPermissionFilter;
+import com.codenvy.api.workspace.server.filters.SetPublicPermissionsFilter;
 import com.codenvy.api.workspace.server.filters.StackPermissionsFilter;
 import com.codenvy.api.workspace.server.filters.WorkspacePermissionsFilter;
-import com.codenvy.api.workspace.server.recipe.RecipeCreatorPermissionsProvider;
-import com.codenvy.api.workspace.server.recipe.RecipePermissionStorage;
-import com.codenvy.api.workspace.server.stack.StackCreatorPermissionsProvider;
-import com.codenvy.api.workspace.server.stack.StackPermissionStorage;
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-
-import org.eclipse.che.api.machine.server.dao.RecipeDao;
-import org.eclipse.che.api.workspace.server.spi.StackDao;
-import org.eclipse.che.inject.Matchers;
-
-import static com.google.inject.matcher.Matchers.subclassesOf;
 
 /**
  * @author Sergii Leschenko
@@ -42,24 +30,9 @@ public class WorkspaceApiModule extends AbstractModule {
         bind(WorkspacePermissionsFilter.class);
         bind(RecipePermissionsFilter.class);
         bind(StackPermissionsFilter.class);
-        bind(AclSetPermissionsFilter.class);
+        bind(SetPublicPermissionsFilter.class);
         bind(RecipeScriptDownloadPermissionFilter.class);
 
         bind(WorkspaceCreatorPermissionsProvider.class).asEagerSingleton();
-        bind(WorkspacePermissionsRemover.class).asEagerSingleton();
-
-        Multibinder<PermissionsStorage> storages = Multibinder.newSetBinder(binder(),
-                                                                            PermissionsStorage.class);
-        storages.addBinding().to(WorkspacePermissionStorage.class);
-        storages.addBinding().to(StackPermissionStorage.class);
-        storages.addBinding().to(RecipePermissionStorage.class);
-
-        StackCreatorPermissionsProvider stackCreatorPermissionsProvider = new StackCreatorPermissionsProvider();
-        requestInjection(stackCreatorPermissionsProvider);
-        bindInterceptor(subclassesOf(StackDao.class), Matchers.names("create"), stackCreatorPermissionsProvider);
-
-        RecipeCreatorPermissionsProvider recipeCreatorPermissionsProvider = new RecipeCreatorPermissionsProvider();
-        requestInjection(recipeCreatorPermissionsProvider);
-        bindInterceptor(subclassesOf(RecipeDao.class), Matchers.names("create"), recipeCreatorPermissionsProvider);
     }
 }

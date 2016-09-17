@@ -66,8 +66,8 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
                                    StorageManager storageManager,
                                    InstallManager installManager,
                                    DownloadManager downloadManager) {
-        super(saasServerEndpoint,
-              transport,
+        super(
+            transport,
               saasAuthServiceProxy,
               saasRepositoryServiceProxy,
               ldapManager,

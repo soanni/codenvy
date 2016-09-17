@@ -14,7 +14,6 @@
  */
 package com.codenvy.im.facade;
 
-import com.codenvy.im.BaseTest;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
@@ -83,8 +82,8 @@ public class TestDownloadInstallationManagerFacade {
     @BeforeMethod
     public void init() throws Exception {
         initMocks(this);
-        installationManagerService = new InstallationManagerFacade(BaseTest.SAAS_API_ENDPOINT,
-                                                                   transport,
+        installationManagerService = new InstallationManagerFacade(
+            transport,
                                                                    saasAuthServiceProxy,
                                                                    saasRepositoryServiceProxy,
                                                                    ldapManager,

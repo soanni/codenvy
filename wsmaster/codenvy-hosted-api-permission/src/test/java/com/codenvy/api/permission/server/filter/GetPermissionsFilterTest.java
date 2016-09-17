@@ -14,9 +14,9 @@
  */
 package com.codenvy.api.permission.server.filter;
 
-import com.codenvy.api.permission.server.PermissionManager;
-import com.codenvy.api.permission.server.PermissionsImpl;
+import com.codenvy.api.permission.server.PermissionsManager;
 import com.codenvy.api.permission.server.PermissionsService;
+import com.codenvy.api.permission.server.model.impl.AbstractPermissions;
 import com.jayway.restassured.response.Response;
 
 import org.eclipse.che.api.core.NotFoundException;
@@ -34,6 +34,8 @@ import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
+
+import java.util.List;
 
 import static com.jayway.restassured.RestAssured.given;
 import static java.util.Collections.singletonList;
@@ -60,7 +62,7 @@ public class GetPermissionsFilterTest {
     static Subject subject;
 
     @Mock
-    PermissionManager permissionManager;
+    PermissionsManager permissionsManager;
 
     @Mock
     PermissionsService permissionsService;
@@ -75,7 +77,7 @@ public class GetPermissionsFilterTest {
 
     @Test
     public void shouldRespond403IfUserDoesNotHaveAnyPermissionsForInstance() throws Exception {
-        when(permissionManager.get("user123", "test", "test123")).thenThrow(new NotFoundException(""));
+        when(permissionsManager.get("user123", "test", "test123")).thenThrow(new NotFoundException(""));
 
         final Response response = given().auth()
                                          .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
@@ -90,10 +92,10 @@ public class GetPermissionsFilterTest {
 
     @Test
     public void shouldDoChainIfUserHasAnyPermissionsForInstance() throws Exception {
-        when(permissionManager.get("user123", "test", "test123")).thenReturn(new PermissionsImpl("user123",
-                                                                                                 "test",
-                                                                                                 "test123",
-                                                                                                 singletonList("read")));
+        when(permissionsManager.get("user123", "test", "test123")).thenReturn(new TestPermissions("user123",
+                                                                                                  "test",
+                                                                                                  "test123",
+                                                                                                  singletonList("read")));
 
         final Response response = given().auth()
                                          .basic(ADMIN_USER_NAME, ADMIN_USER_PASSWORD)
@@ -117,6 +119,28 @@ public class GetPermissionsFilterTest {
     public static class EnvironmentFilter implements RequestFilter {
         public void doFilter(GenericContainerRequest request) {
             EnvironmentContext.getCurrent().setSubject(subject);
+        }
+    }
+
+    private class TestPermissions extends AbstractPermissions {
+
+        String domainId;
+        String instanceId;
+
+        public TestPermissions(String userId, String domainId, String instanceId, List<String> allowedActions) {
+            super(userId, allowedActions);
+            this.domainId = domainId;
+            this.instanceId = instanceId;
+        }
+
+        @Override
+        public String getInstanceId() {
+            return instanceId;
+        }
+
+        @Override
+        public String getDomainId() {
+            return domainId;
         }
     }
 }

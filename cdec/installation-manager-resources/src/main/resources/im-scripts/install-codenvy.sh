@@ -8,8 +8,6 @@
 # --suppress
 # --version=<VERSION TO INSTALL>
 # --hostname=<CODENVY HOSTNAME>
-# --systemAdminName=<SYSTEM ADMIN NAME>
-# --systemAdminPassword=<SYSTEM ADMIN PASSWORD>
 # --license=accept
 # --install-directory=<PATH TO SINGLE DIRECTORY FOR ALL RESOURCES>
 # --im-cli: to install IM CLI client only
@@ -39,8 +37,6 @@
 trap cleanUp EXIT
 
 unset HOST_NAME
-unset SYSTEM_ADMIN_NAME
-unset SYSTEM_ADMIN_PASSWORD
 unset HTTP_PROXY_FOR_INSTALLATION
 unset HTTPS_PROXY_FOR_INSTALLATION
 unset NO_PROXY_FOR_INSTALLATION
@@ -166,12 +162,6 @@ setRunOptions() {
         elif [[ "$var" =~ --hostname=.* ]]; then
             HOST_NAME=$(echo "$var" | sed -e "s/--hostname=//g")
 
-        elif [[ "$var" =~ --systemAdminName=.* ]]; then
-            SYSTEM_ADMIN_NAME=$(echo "$var" | sed -e "s/--systemAdminName=//g")
-
-        elif [[ "$var" =~ --systemAdminPassword=.* ]]; then
-            SYSTEM_ADMIN_PASSWORD=$(echo "$var" | sed -e "s/--systemAdminPassword=//g")
-
         elif [[ "$var" =~ --license=accept ]]; then
             LICENSE_ACCEPTED=true
 
@@ -247,7 +237,7 @@ setRunOptions() {
 
     EXTERNAL_DEPENDENCIES[0]="https://codenvy.com/update/repository/public/download/${ARTIFACT}/${VERSION}||0"
 
-    if [[ "${CODENVY_TYPE}" == "single" ]] && [[ ! -z "${HOST_NAME}" ]] && [[ ! -z "${SYSTEM_ADMIN_PASSWORD}" ]] && [[ ! -z "${SYSTEM_ADMIN_NAME}" ]]; then
+    if [[ "${CODENVY_TYPE}" == "single" ]] && [[ ! -z "${HOST_NAME}" ]]; then
         SUPPRESS=true
     fi
 
@@ -1071,18 +1061,6 @@ printPreInstallInfo_single() {
         insertProperty "install_monitoring_tools" "false"
     fi
 
-    if [ -n "${SYSTEM_ADMIN_NAME}" ]; then
-        insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
-    fi
-
-    if [ -n "${SYSTEM_ADMIN_PASSWORD}" ]; then
-        if [[ "${VERSION}" =~ ^(4).* ]]; then
-            insertProperty "admin_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
-        else
-            insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
-        fi
-    fi
-
     if [ -n "${HOST_NAME}" ]; then
         insertProperty "host_url" ${HOST_NAME}
     fi
@@ -1437,18 +1415,6 @@ printPreInstallInfo_multi() {
 
     if [[ ${DISABLE_MONITORING_TOOLS} == true ]]; then
         insertProperty "install_monitoring_tools" "false"
-    fi
-
-    if [ -n "${SYSTEM_ADMIN_NAME}" ]; then
-        insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
-    fi
-
-    if [ -n "${SYSTEM_ADMIN_PASSWORD}" ]; then
-        if [[ "${VERSION}" =~ ^(4).* ]]; then
-            insertProperty "admin_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
-        else
-            insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
-        fi
     fi
 
     if [[ ${SUPPRESS} == true ]]; then
@@ -1944,16 +1910,12 @@ updateLoader() {
 
 
 printPostInstallInfo_codenvy() {
-    if [ -z ${SYSTEM_ADMIN_NAME} ]; then
-        SYSTEM_ADMIN_NAME=$(readProperty "admin_ldap_user_name")
-    fi
+    local systemAdminName=$(readProperty "admin_ldap_user_name")
 
-    if [ -z ${SYSTEM_ADMIN_PASSWORD} ]; then
-        if [[ "${VERSION}" =~ ^([4-5]).* ]]; then
-            SYSTEM_ADMIN_PASSWORD=$(readProperty "admin_ldap_password")
-        else
-            SYSTEM_ADMIN_PASSWORD=$(readProperty "system_ldap_password")
-        fi
+    if [[ "${VERSION}" =~ ^([4-5]).* ]]; then
+        local systemAdminPassword=$(readProperty "admin_ldap_password")
+    else
+        local systemAdminPassword=$(readProperty "system_ldap_password")
     fi
 
     if [ -z ${HOST_NAME} ]; then
@@ -1962,8 +1924,8 @@ printPostInstallInfo_codenvy() {
 
     println
     println "Codenvy at:       $(printImportantLink "http://$HOST_NAME")"
-    println "Admin user name:  $(printImportantInfo $SYSTEM_ADMIN_NAME)"
-    println "Admin password:   $(printImportantInfo $SYSTEM_ADMIN_PASSWORD)"
+    println "Admin user name:  $(printImportantInfo $systemAdminName)"
+    println "Admin password:   $(printImportantInfo $systemAdminPassword)"
     println
     println "$(printWarning "!!! Set up DNS or add a hosts rule on your clients to reach this hostname.")"
 }

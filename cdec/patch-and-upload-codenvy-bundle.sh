@@ -95,7 +95,7 @@ uploadBundle() {
     echo "ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} \"mkdir -p /home/${SSH_AS_USER_NAME}/${DESTINATION}\""
 
     ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "mkdir -p /home/${SSH_AS_USER_NAME}/${DESTINATION}"
-    scp -o StrictHostKeyChecking=no -i ${SSH_KEY_NAME} ${BUNDLE} ${SSH_AS_USER_NAME}@${AS_IP}:${DESTINATION}/${FILENAME}
+    scp -o StrictHostKeyChecking=no -i ${SSH_KEY_NAME} ${BUNDLE} ${SSH_AS_USER_NAME}@${AS_IP}:${DESTINATION}/
     scp -o StrictHostKeyChecking=no -i ${SSH_KEY_NAME} $TMP_DIR/.properties ${SSH_AS_USER_NAME}@${AS_IP}:${DESTINATION}/.properties
 }
 

@@ -1,0 +1,14 @@
+{
+    "version" : "1.0",
+    "config" : { },
+    "remotes" : {
+        "default" : {
+            "defaultRemote" : true,
+            "url" : "http://codenvy-next.com"
+        },
+        "codenvy-onprem" : {
+            "defaultRemote" : false,
+            "url" : "https://codenvy.onprem"
+        }
+    }
+}

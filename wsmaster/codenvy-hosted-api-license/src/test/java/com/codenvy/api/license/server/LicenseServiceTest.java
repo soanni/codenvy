@@ -14,23 +14,17 @@
  */
 package com.codenvy.api.license.server;
 
-import com.codenvy.api.license.server.license.CodenvyLicense;
-import com.codenvy.api.license.server.license.CodenvyLicenseFactory;
-import com.codenvy.api.license.server.license.CodenvyLicenseManager;
-import com.codenvy.api.license.server.license.InvalidLicenseException;
-import com.codenvy.api.license.server.license.LicenseException;
-import com.codenvy.api.license.server.license.LicenseFeature;
-import com.codenvy.api.license.server.license.LicenseNotFoundException;
-import com.codenvy.api.user.server.dao.AdminUserDao;
-import com.codenvy.swarm.client.SwarmDockerConnector;
-import com.codenvy.swarm.client.model.DockerNode;
+import com.codenvy.api.license.CodenvyLicense;
+import com.codenvy.api.license.CodenvyLicenseFactory;
+import com.codenvy.api.license.InvalidLicenseException;
+import com.codenvy.api.license.LicenseException;
+import com.codenvy.api.license.LicenseFeature;
+import com.codenvy.api.license.LicenseNotFoundException;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.Response;
 
-import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.rest.ApiExceptionMapper;
-import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.everrest.assured.EverrestJetty;
 import org.everrest.assured.JettyHttpServer;
 import org.mockito.InjectMocks;
@@ -40,7 +34,6 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 import static com.jayway.restassured.RestAssured.given;
@@ -50,14 +43,10 @@ import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -76,14 +65,6 @@ public class LicenseServiceTest {
     private CodenvyLicense        mockCodenvyLicense;
     @Mock
     private CodenvyLicenseFactory mockLicenseFactory;
-    @Mock
-    private SwarmDockerConnector  swarmDockerConnector;
-    @Mock
-    private AdminUserDao          adminUserDao;
-    @Mock
-    private Page<UserImpl>        page;
-    @Mock
-    private List<DockerNode>      dockerNodes;
 
     @InjectMocks
     LicenseService licenseService;
@@ -164,12 +145,12 @@ public class LicenseServiceTest {
                 .post(JettyHttpServer.SECURE_PATH + "/license");
 
         assertEquals(response.statusCode(), CREATED.getStatusCode());
-        verify(licenseManager).store(any(CodenvyLicense.class));
+        verify(licenseManager).store(anyString());
     }
 
     @Test
     public void testPostLicenseShouldReturnServerErrorWhenFacadeThrowLicenseException() throws Exception {
-        doThrow(new LicenseException("error")).when(licenseManager).store(any(CodenvyLicense.class));
+        doThrow(new LicenseException("error")).when(licenseManager).store(anyString());
 
         Response response = given()
                 .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD).when().body("license")
@@ -225,13 +206,8 @@ public class LicenseServiceTest {
     }
 
     @Test
-    public void testIsCodenvyLicenseUsageLegal() throws IOException, ServerException {
-        doReturn(true).when(mockCodenvyLicense).isLicenseUsageLegal(3L, 2);
-        doReturn(mockCodenvyLicense).when(licenseManager).load();
-
-        setSizeOfAdditionalNodes(2);
-        setAmountOfUsers(3L);
-
+    public void testIsCodenvyUsageLegal() throws IOException, ServerException {
+        doReturn(true).when(licenseManager).isCodenvyUsageLegal();
         Response response = given().when().get("/license/legality");
 
         assertEquals(response.statusCode(), OK.getStatusCode());
@@ -239,37 +215,8 @@ public class LicenseServiceTest {
     }
 
     @Test
-    public void testIsCodenvyFreeUsageLegal() throws IOException, ServerException {
-        doThrow(LicenseNotFoundException.class).when(licenseManager).load();
-
-        setSizeOfAdditionalNodes(CodenvyLicense.MAX_NUMBER_OF_FREE_SERVERS);
-        setAmountOfUsers(CodenvyLicense.MAX_NUMBER_OF_FREE_USERS);
-
-        Response response = given().when().get("/license/legality");
-
-        assertEquals(response.statusCode(), OK.getStatusCode());
-        assertEquals(response.asString(), "{\"value\":\"true\"}");
-    }
-
-    @Test
-    public void testIsCodenvyLicenseUsageNotLegal() throws IOException, ServerException {
-        doReturn(false).when(mockCodenvyLicense).isLicenseUsageLegal(anyLong(), anyInt());
-        doReturn(mockCodenvyLicense).when(licenseManager).load();
-        setAmountOfUsers(5);
-        setSizeOfAdditionalNodes(5);
-
-        Response response = given().when().get("/license/legality");
-
-        assertEquals(response.statusCode(), OK.getStatusCode());
-        assertEquals(response.asString(), "{\"value\":\"false\"}");
-    }
-
-    @Test
-    public void testIsCodenvyFreeUsageNotLegal() throws IOException, ServerException {
-        doThrow(LicenseException.class).when(licenseManager).load();
-
-        setSizeOfAdditionalNodes(CodenvyLicense.MAX_NUMBER_OF_FREE_SERVERS + 1);
-        setAmountOfUsers(CodenvyLicense.MAX_NUMBER_OF_FREE_USERS + 1);
+    public void testIsCodenvyUsageNotLegal() throws IOException, ServerException {
+        doReturn(false).when(licenseManager).isCodenvyUsageLegal();
 
         Response response = given().when().get("/license/legality");
 
@@ -279,29 +226,45 @@ public class LicenseServiceTest {
 
     @Test
     public void testIsCodenvyUsageIOException() throws IOException, ServerException {
-        setAmountOfUsers(3);
-        doThrow(IOException.class).when(swarmDockerConnector).getAvailableNodes();
+        doThrow(IOException.class).when(licenseManager).isCodenvyUsageLegal();
 
         Response response = given().when().get("/license/legality");
         assertEquals(response.statusCode(), INTERNAL_SERVER_ERROR.getStatusCode());
     }
 
     @Test
-    public void shouldThrowExceptionWhenGetAmountOfUsersFailed() throws ServerException {
-        doThrow(ServerException.class).when(adminUserDao).getAll(anyInt(), anyInt());
+    public void testIsCodenvyActualNodesUsageLegal() throws IOException, ServerException {
+        doReturn(true).when(licenseManager).isCodenvyNodesUsageLegal(null);
+        Response response = given().when().get("/license/legality/node");
 
-        Response response = given().when().get("/license/legality");
+        assertEquals(response.statusCode(), OK.getStatusCode());
+        assertEquals(response.asString(), "{\"value\":\"true\"}");
+    }
+
+    @Test
+    public void testIsCodenvyGivenNodesUsageLegal() throws IOException, ServerException {
+        doReturn(true).when(licenseManager).isCodenvyNodesUsageLegal(2);
+        Response response = given().when().get("/license/legality/node?nodeNumber=2");
+
+        assertEquals(response.statusCode(), OK.getStatusCode());
+        assertEquals(response.asString(), "{\"value\":\"true\"}");
+    }
+
+    @Test
+    public void testIsCodenvyNodesUsageNotLegal() throws IOException, ServerException {
+        doReturn(false).when(licenseManager).isCodenvyNodesUsageLegal(2);
+        Response response = given().when().get("/license/legality/node?nodeNumber=2");
+
+        assertEquals(response.statusCode(), OK.getStatusCode());
+        assertEquals(response.asString(), "{\"value\":\"false\"}");
+    }
+
+    @Test
+    public void testIsCodenvyNodesUsageIOException() throws IOException, ServerException {
+        doThrow(IOException.class).when(licenseManager).isCodenvyNodesUsageLegal(null);
+
+        Response response = given().when().get("/license/legality/node");
         assertEquals(response.statusCode(), INTERNAL_SERVER_ERROR.getStatusCode());
-    }
-
-    private void setSizeOfAdditionalNodes(int size) throws IOException {
-        when(swarmDockerConnector.getAvailableNodes()).thenReturn(dockerNodes);
-        when(dockerNodes.size()).thenReturn(size);
-    }
-
-    private void setAmountOfUsers(long amountOfUsers) throws ServerException {
-        when(adminUserDao.getAll(1, 0)).thenReturn(page);
-        when(page.getTotalItemsCount()).thenReturn(amountOfUsers);
     }
 
 }

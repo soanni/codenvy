@@ -1,0 +1,16 @@
+{
+    "version" : "1.0",
+    "config" : { },
+    "remotes" : {
+        "default" : {
+            "defaultRemote" : true,
+            "url" : "http://codenvy-next.com"
+        },
+        "codenvy-onprem" : {
+            "token" : "authToken",
+            "defaultRemote" : false,
+            "username" : "test@codenvy.onprem",
+            "url" : "https://codenvy.onprem"
+        }
+    }
+}

@@ -364,13 +364,19 @@ public class ConfigManager {
         }
     }
 
-
     /**
      * @return apiEndpoint
      */
     public String getApiEndpoint() throws IOException {
+        return format("%s/api", getHostUrl());
+    }
+
+    /**
+     * @return host url with protocol
+     */
+    public String getHostUrl() throws IOException {
         Config config = loadInstalledCodenvyConfig();
-        return format("%s://%s/api", config.getValue("host_protocol"), config.getValue("host_url"));
+        return format("%s://%s", config.getValue("host_protocol"), config.getValue("host_url"));
     }
 
     /**

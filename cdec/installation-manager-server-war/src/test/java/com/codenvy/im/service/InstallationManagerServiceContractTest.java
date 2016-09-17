@@ -139,22 +139,22 @@ public class InstallationManagerServiceContractTest extends BaseContractTest {
     @Test
     public void testAddNode() {
         testContract(
-             "node",                          // path
-             ImmutableMap.of("dns", "test"),  // query parameters
-             null,                            // request body
-             null,                            // consume content type
-             ContentType.JSON,                // produce content type
-             HttpMethod.POST,                 // HTTP method
-             OK_RESPONSE_BODY,                // response body
-             Response.Status.CREATED,              // response status
-             () -> {                                        // before test
-                 try {
-                     doReturn(new NodeInfo()).when(mockFacade).addNode("test");
-                 } catch (IOException e) {
-                     fail(e.getMessage(), e);
-                 }
-             },
-             null // assertion
+            "node",                          // path
+            ImmutableMap.of("dns", "test"),  // query parameters
+            null,                            // request body
+            null,                            // consume content type
+            ContentType.JSON,                // produce content type
+            HttpMethod.POST,                 // HTTP method
+            OK_RESPONSE_BODY,                // response body
+            Response.Status.CREATED,              // response status
+            () -> {                                        // before test
+                try {
+                    doReturn(new NodeInfo()).when(mockFacade).addNode("test");
+                } catch (IOException e) {
+                    fail(e.getMessage(), e);
+                }
+            },
+            null // assertion
         );
     }
 
@@ -275,7 +275,7 @@ public class InstallationManagerServiceContractTest extends BaseContractTest {
     @Test
     public void testGetInstalledVersions() {
         testContract(
-                "installations",             // path
+            "installations",                 // path
             null,                            // query parameters
             null,                            // request body
             null,                            // consume content type
@@ -299,7 +299,7 @@ public class InstallationManagerServiceContractTest extends BaseContractTest {
     @Test
     public void testGetUpdates() {
         testContract(
-                "updates",                   // path
+            "updates",                       // path
             null,                            // query parameters
             null,                            // request body
             null,                            // consume content type
@@ -323,7 +323,7 @@ public class InstallationManagerServiceContractTest extends BaseContractTest {
     @Test
     public void testUpdateCodenvy() {
         testContract(
-                "update",   // path
+            "update",                        // path
             ImmutableMap.of("step", "1"),    // query parameters
             null,                            // request body
             null,                            // consume content type
@@ -365,8 +365,8 @@ public class InstallationManagerServiceContractTest extends BaseContractTest {
             () -> {                                            // before test
                 try {
                     doReturn(DtoFactory.newDto(Token.class).withValue("token"))
-                            .when(mockFacade)
-                            .loginToCodenvySaaS(Commons.createDtoFromJson("{\"username\": \"test\", \"password\": \"pwd\"}", Credentials.class));
+                        .when(mockFacade)
+                        .loginToCodenvySaaS(Commons.createDtoFromJson("{\"username\": \"test\", \"password\": \"pwd\"}", Credentials.class));
                 } catch (Exception e) {
                     fail(e.getMessage(), e);
                 }
@@ -539,7 +539,7 @@ public class InstallationManagerServiceContractTest extends BaseContractTest {
     @Test
     public void testUpdateCodenvyProperty() {
         testContract(
-                "codenvy/properties",                         // path
+            "codenvy/properties",                             // path
             null,                                             // query parameters
             "{\"a\":\"b\"}",                                  // request body
             ContentType.JSON,                                 // consume content type
@@ -580,30 +580,30 @@ public class InstallationManagerServiceContractTest extends BaseContractTest {
     public void testGetInstallationManagerServerConfig() {
         testContract(
             "properties",                                         // path
-             null,                                                // query parameters
-             null,                                                // request body
-             null,                                                // consume content type
-             ContentType.JSON,                                    // produce content type
-             HttpMethod.GET,                                      // HTTP method
-             "{\n"
-             + "    \"a\": \"b\"\n"
-             + "}",                                               // response body
-             Response.Status.OK,                                  // response status
-             () -> {                                               // before test
-                 try {
-                     doReturn(ImmutableMap.of("a", "b")).when(mockFacade).getArtifactConfig(mockImArtifact);
-                 } catch (IOException e) {
-                     fail(e.getMessage(), e);
-                 }
-             },
-             null                                                 // assertion
+            null,                                                // query parameters
+            null,                                                // request body
+            null,                                                // consume content type
+            ContentType.JSON,                                    // produce content type
+            HttpMethod.GET,                                      // HTTP method
+            "{\n"
+            + "    \"a\": \"b\"\n"
+            + "}",                                               // response body
+            Response.Status.OK,                                  // response status
+            () -> {                                               // before test
+                try {
+                    doReturn(ImmutableMap.of("a", "b")).when(mockFacade).getArtifactConfig(mockImArtifact);
+                } catch (IOException e) {
+                    fail(e.getMessage(), e);
+                }
+            },
+            null                                                 // assertion
         );
     }
 
     @Test
     public void testDeleteDownload() {
         testContract(
-                "downloads/codenvy/1.0.0",       // path
+            "downloads/codenvy/1.0.0",                        // path
             null,                                             // query parameters
             null,                                             // request body
             null,                                             // consume content type
@@ -675,14 +675,13 @@ public class InstallationManagerServiceContractTest extends BaseContractTest {
     @Test
     public void shouldReturn500ErrorOnWrongEventJson() {
         StringBuilder eventWithTooManyParameters = new StringBuilder("{" +
-                                            "\"type\":\"CDEC_FIRST_LOGIN\"," +
-                                            "\"parameters\":{");
+                                                                     "\"type\":\"CDEC_FIRST_LOGIN\"," +
+                                                                     "\"parameters\":{");
 
         IntStream.range(0, Event.MAX_EXTENDED_PARAMS_NUMBER + Event.RESERVED_PARAMS_NUMBER + 1)
                  .forEach(i -> eventWithTooManyParameters.append(format("\"%s\":\"a\",", String.valueOf(i))));
 
-        eventWithTooManyParameters.append("}" +
-                             "}");
+        eventWithTooManyParameters.append("}}");
         testContract(
             "event",                                          // path
             null,                                             // query parameters

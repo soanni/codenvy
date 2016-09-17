@@ -14,16 +14,16 @@
  */
 package com.codenvy.api.permission.server;
 
-import com.codenvy.api.permission.shared.PermissionsDomain;
+import com.codenvy.api.permission.server.model.impl.AbstractPermissions;
+import com.codenvy.api.permission.shared.model.PermissionsDomain;
 import com.google.common.collect.ImmutableList;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import org.eclipse.che.api.core.ConflictException;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Abstract implementation for {@link PermissionsDomain}
@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  *
  * @author Sergii Leschenko
  */
-public abstract class AbstractPermissionsDomain implements PermissionsDomain {
+public abstract class AbstractPermissionsDomain<T extends AbstractPermissions> implements PermissionsDomain {
     public static final String SET_PERMISSIONS  = "setPermissions";
 
     private final String       id;
@@ -65,6 +65,18 @@ public abstract class AbstractPermissionsDomain implements PermissionsDomain {
     public Boolean isInstanceRequired() {
         return requiresInstance;
     }
+
+    /**
+     * Creates new instance of the entity related to this domain.
+     */
+    public T newInstance(String userId, String instanceId, List<String> allowedActions) throws ConflictException {
+        if (isInstanceRequired() && instanceId == null) {
+            throw new ConflictException("Given domain requires non nullable value for instanceId");
+        }
+        return doCreateInstance(userId, instanceId, allowedActions);
+    }
+
+    protected abstract T doCreateInstance(String userId, String instanceId, List<String> allowedActions);
 
     @Override
     public boolean equals(Object obj) {

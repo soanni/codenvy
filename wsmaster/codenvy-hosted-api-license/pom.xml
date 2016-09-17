@@ -20,7 +20,7 @@
     <parent>
         <artifactId>codenvy-master-parent</artifactId>
         <groupId>com.codenvy.onpremises.wsmaster</groupId>
-        <version>5.0.0-M1-SNAPSHOT</version>
+        <version>5.0.0-M2-SNAPSHOT</version>
     </parent>
     <artifactId>codenvy-hosted-api-license</artifactId>
     <packaging>jar</packaging>
@@ -28,7 +28,7 @@
     <dependencies>
         <dependency>
             <groupId>com.codenvy.onpremises.wsmaster</groupId>
-            <artifactId>codenvy-hosted-api-admin</artifactId>
+            <artifactId>codenvy-hosted-license-shared</artifactId>
         </dependency>
         <dependency>
             <groupId>com.codenvy.plugin</groupId>
@@ -41,10 +41,6 @@
         <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.license4j</groupId>
-            <artifactId>license4j-runtime-library</artifactId>
         </dependency>
         <dependency>
             <groupId>io.swagger</groupId>

@@ -113,7 +113,7 @@ public class InstallCommand extends AbstractIMCommand {
             artifactName = CDECArtifact.NAME;
         }
 
-        console.showProgressor();
+        getConsole().showProgressor();
 
         InstallArtifactInfo installArtifactInfo = new InstallArtifactInfo();
         installArtifactInfo.setArtifact(artifactName);
@@ -122,18 +122,18 @@ public class InstallCommand extends AbstractIMCommand {
         installResponse.setArtifacts(ImmutableList.of(installArtifactInfo));
 
         try {
-            facade.reinstall(createArtifact(artifactName));
+            getFacade().reinstall(createArtifact(artifactName));
             installArtifactInfo.setStatus(InstallArtifactInfo.Status.SUCCESS);
             installResponse.setStatus(ResponseCode.OK);
-            console.println(toJson(installResponse));
+            getConsole().println(toJson(installResponse));
 
         } catch (Exception e) {
             installArtifactInfo.setStatus(InstallArtifactInfo.Status.FAILURE);
             installResponse.setStatus(ResponseCode.ERROR);
             installResponse.setMessage(e.getMessage());
-            console.printResponseExitInError(installResponse);
+            getConsole().printResponseExitInError(installResponse);
         } finally {
-            console.hideProgressor();
+            getConsole().hideProgressor();
         }
     }
 
@@ -151,7 +151,7 @@ public class InstallCommand extends AbstractIMCommand {
         }
 
         final Artifact artifact = createArtifact(artifactName);
-        final Version version = versionNumber != null ? Version.valueOf(versionNumber) : facade.getLatestInstallableVersion(artifact);
+        final Version version = versionNumber != null ? Version.valueOf(versionNumber) : getFacade().getLatestInstallableVersion(artifact);
         if (version == null) {
             throw new IllegalStateException("There is no new version to install");
         }
@@ -174,7 +174,7 @@ public class InstallCommand extends AbstractIMCommand {
                 installType = InstallType.SINGLE_SERVER;
             }
         } else {
-            installType = configManager.detectInstallationType();
+            installType = getConfigManager().detectInstallationType();
         }
 
         installOptions.setInstallType(installType);
@@ -183,13 +183,13 @@ public class InstallCommand extends AbstractIMCommand {
         List<String> infos;
         if (isInstall) {
             try {
-                infos = facade.getInstallInfo(artifact, installType);
+                infos = getFacade().getInstallInfo(artifact, installType);
             } catch(Exception e) {
                 logEventToSaasCodenvy(createImArtifactInstallUnsuccessWithTime(artifactName, versionNumber, e.getMessage()));
                 throw e;
             }
         } else {
-            infos = facade.getUpdateInfo(artifact, installType);
+            infos = getFacade().getUpdateInfo(artifact, installType);
         }
 
         final int finalStep = infos.size() - 1;
@@ -208,10 +208,10 @@ public class InstallCommand extends AbstractIMCommand {
 
         for (int step = firstStep; step <= lastStep; step++) {
             String info = infos.get(step);
-            console.print(info);
-            console.printWithoutCodenvyPrompt(new String(new char[maxInfoLen - info.length()]).replace("\0", " "));
+            getConsole().print(info);
+            getConsole().printWithoutCodenvyPrompt(new String(new char[maxInfoLen - info.length()]).replace("\0", " "));
 
-            console.showProgressor();
+            getConsole().showProgressor();
 
             try {
                 installOptions.setStep(step);
@@ -219,14 +219,14 @@ public class InstallCommand extends AbstractIMCommand {
                 try {
                     String stepId;
                     if (isInstall) {
-                        stepId = binaries != null ? facade.install(artifact, version, Paths.get(binaries), installOptions)
-                                                  : facade.install(artifact, version, installOptions);
+                        stepId = binaries != null ? getFacade().install(artifact, version, Paths.get(binaries), installOptions)
+                                                  : getFacade().install(artifact, version, installOptions);
                     } else {
-                        stepId = binaries != null ? facade.update(artifact, version, Paths.get(binaries), installOptions)
-                                                  : facade.update(artifact, version, installOptions);
+                        stepId = binaries != null ? getFacade().update(artifact, version, Paths.get(binaries), installOptions)
+                                                  : getFacade().update(artifact, version, installOptions);
                     }
-                    facade.waitForInstallStepCompleted(stepId);
-                    InstallArtifactStepInfo updateStepInfo = facade.getUpdateStepInfo(stepId);
+                    getFacade().waitForInstallStepCompleted(stepId);
+                    InstallArtifactStepInfo updateStepInfo = getFacade().getUpdateStepInfo(stepId);
                     if (updateStepInfo.getStatus() == InstallArtifactInfo.Status.FAILURE) {
                         installResponse.setStatus(ResponseCode.ERROR);
                         installResponse.setMessage(updateStepInfo.getMessage());
@@ -243,14 +243,14 @@ public class InstallCommand extends AbstractIMCommand {
                         logEventToSaasCodenvy(createImArtifactInstallUnsuccessWithTime(artifactName, versionNumber, installResponse.getMessage()));
                     }
 
-                    console.printError(" [FAIL]", true);
-                    console.printResponseExitInError(installResponse);
+                    getConsole().printError(" [FAIL]", true);
+                    getConsole().printResponseExitInError(installResponse);
                     return null;
                 } else {
-                    console.printSuccessWithoutCodenvyPrompt(" [OK]");
+                    getConsole().printSuccessWithoutCodenvyPrompt(" [OK]");
                 }
             } finally {
-                console.hideProgressor();
+                getConsole().hideProgressor();
             }
         }
 
@@ -260,11 +260,11 @@ public class InstallCommand extends AbstractIMCommand {
                 logEventToSaasCodenvy(createImArtifactInstallSuccessWithTime(artifactName, versionNumber));
             }
 
-            console.println(toJson(installResponse));
+            getConsole().println(toJson(installResponse));
 
             if (isInteractive() && artifactName.equals(InstallManagerArtifact.NAME)) {
-                console.pressAnyKey("'Installation Manager CLI' is being updated! Press any key to exit...\n");
-                console.exit(0);
+                getConsole().pressAnyKey("'Installation Manager CLI' is being updated! Press any key to exit...\n");
+                getConsole().exit(0);
             }
         }
 
@@ -272,16 +272,16 @@ public class InstallCommand extends AbstractIMCommand {
     }
     
     protected Void doExecuteListInstalledArtifacts() throws IOException, JsonParseException {		
-        Collection<InstallArtifactInfo> installedVersions = facade.getInstalledVersions();		
+        Collection<InstallArtifactInfo> installedVersions = getFacade().getInstalledVersions();
         InstallResponse installResponse = new InstallResponse();		
         installResponse.setArtifacts(installedVersions);		
         installResponse.setStatus(ResponseCode.OK);		
-        console.printResponseExitInError(installResponse);		
+        getConsole().printResponseExitInError(installResponse);
         return null;		
     }
 
     protected void setInstallProperties(InstallOptions options, boolean isInstall) throws IOException {
-        Map<String, String> properties = configManager.prepareInstallProperties(configFilePath,
+        Map<String, String> properties = getConfigManager().prepareInstallProperties(configFilePath,
                                                                                 binaries == null ? null : Paths.get(binaries),
                                                                                 installType,
                                                                                 createArtifact(artifactName),

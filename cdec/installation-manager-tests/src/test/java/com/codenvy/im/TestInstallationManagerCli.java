@@ -40,11 +40,6 @@ public class TestInstallationManagerCli extends BaseIntegrationTest {
     }
 
     @Test
-    public void testLoginWithUsernameAndPassword() throws Exception {
-        doTest("cli/login/test-login-to-saas-through-im-cli.sh");
-    }
-
-    @Test
     public void testDownloadAllUpdates() throws Exception {
         doTest("cli/download/test-download-all-updates.sh");
     }

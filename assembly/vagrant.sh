@@ -76,9 +76,10 @@ cloneDeploymentProject() {
 }
 
 pullDeploymentProject() {
+  CURRENT_DIR=$(pwd)
   cd ../../deployment
   git pull
-  cd ../codenvy/assembly
+  cd ${CURRENT_DIR}
 }
 
 parseParameters() {
@@ -227,7 +228,6 @@ if [ ${MULTI_SERVER} == true ]; then
   # Copy tomcats for multi-server environment
   cp -f onpremises-ide-packaging-tomcat-api/target/*.zip ../../deployment/puppet/modules/multi_server/files/onpremises-ide-packaging-tomcat-api.zip
   cp -f onpremises-ide-packaging-tomcat-site/target/*.zip ../../deployment/puppet/modules/multi_server/files/onpremises-ide-packaging-tomcat-site.zip
-  cp -f ../analytics/analytics-tomcat-pkg/target/*.zip ../../deployment/puppet/modules/multi_server/files/analytics-tomcat-pkg.zip
   cp -f onpremises-ide-packaging-tomcat-ext-server/target/*.tar.gz ../../deployment/puppet/modules/multi_server/files/onpremises-ide-packaging-tomcat-ext-server.tar.gz
   cp -f onpremises-ide-packaging-zip-terminal/target/*.tar.gz ../../deployment/puppet/modules/multi_server/files/onpremises-ide-packaging-zip-terminal.tar.gz
 

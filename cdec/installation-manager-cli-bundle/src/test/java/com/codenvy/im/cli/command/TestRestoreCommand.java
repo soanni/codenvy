@@ -15,13 +15,8 @@
 package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.response.BackupInfo;
-
-import org.apache.felix.service.command.CommandSession;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -36,11 +31,6 @@ import static org.testng.Assert.assertEquals;
 public class TestRestoreCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
 
-    @Mock
-    private IMArtifactLabeledFacade mockInstallationManagerProxy;
-    @Mock
-    private CommandSession          commandSession;
-
     private BackupConfig testBackupConfig;
 
     private String testBackupFile = "test/backup/directory/backup.tar.gz";
@@ -48,11 +38,7 @@ public class TestRestoreCommand extends AbstractTestCommand {
 
     @BeforeMethod
     public void initMocks() throws IOException {
-        MockitoAnnotations.initMocks(this);
-
         spyCommand = spy(new RestoreCommand());
-        spyCommand.facade = mockInstallationManagerProxy;
-
         performBaseMocks(spyCommand, true);
     }
 
@@ -62,9 +48,9 @@ public class TestRestoreCommand extends AbstractTestCommand {
         testBackupConfig = new BackupConfig().setArtifactName(testArtifact)
                                              .setBackupFile(testBackupFile);
 
-        doReturn(new BackupInfo()).when(mockInstallationManagerProxy).restore(testBackupConfig);
+        doReturn(new BackupInfo()).when(mockFacade).restore(testBackupConfig);
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("backup", testBackupFile);
 
         CommandInvoker.Result result = commandInvoker.invoke();
@@ -87,9 +73,9 @@ public class TestRestoreCommand extends AbstractTestCommand {
                                 + "}";
 
         doThrow(new RuntimeException("Server Error Exception"))
-            .when(mockInstallationManagerProxy).restore(testBackupConfig);
+            .when(mockFacade).restore(testBackupConfig);
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("backup", testBackupFile);
 
         CommandInvoker.Result result = commandInvoker.invoke();

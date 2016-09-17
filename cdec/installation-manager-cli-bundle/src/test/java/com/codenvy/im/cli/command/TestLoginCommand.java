@@ -14,89 +14,66 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.cli.command.builtin.MultiRemoteCodenvy;
-import com.codenvy.im.cli.preferences.PreferencesStorage;
-import com.codenvy.im.facade.IMArtifactLabeledFacade;
-import org.apache.felix.service.command.CommandSession;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import com.codenvy.im.cli.preferences.CodenvyOnpremPreferences;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
 
+import static java.lang.String.format;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
 
 /** @author Dmytro Nochevnov */
 public class TestLoginCommand extends AbstractTestCommand {
-    private static final String TEST_USER_PASSWORD          = "testUserPassword";
-    private static final String TEST_USER                   = "testUser";
-    private final static String SAAS_SERVER_URL             = "http://codenvy-stg.com";
-    private final static String SAAS_SERVER_REMOTE_NAME     = "saas-server";
+    private LoginCommand spyCommand;
 
-    private static final String ANOTHER_REMOTE_NAME = "another remote";
-    private static final String ANOTHER_REMOTE_URL  = "another remote url";
-
-
-    private TestedLoginCommand spyCommand;
-
-    @Mock
-    private IMArtifactLabeledFacade service;
-    @Mock
-    private PreferencesStorage      mockPreferencesStorage;
-    @Mock
-    private CommandSession          commandSession;
-    @Mock
-    private MultiRemoteCodenvy      mockMultiRemoteCodenvy;
+    public static final String ANOTHER_CODENVY_ONPREM_URL = "https://test.codenvy.onprem";
 
     @BeforeMethod
     public void initMocks() throws IOException {
-        MockitoAnnotations.initMocks(this);
-
-        doReturn(SAAS_SERVER_URL).when(service).getSaasServerEndpoint();
-
-        spyCommand = spy(new TestedLoginCommand());
-        spyCommand.facade = service;
-        spyCommand.preferencesStorage = mockPreferencesStorage;
-
+        spyCommand = spy(new LoginCommand());
         performBaseMocks(spyCommand, true);
 
-        doReturn(SAAS_SERVER_REMOTE_NAME).when(spyCommand).getRemoteNameByUrl(SAAS_SERVER_URL);
-        doReturn(true).when(spyCommand).isRemoteForSaasServer(SAAS_SERVER_REMOTE_NAME);
-        doReturn(false).when(spyCommand).isRemoteForSaasServer(ANOTHER_REMOTE_NAME);
-
-        doReturn(SAAS_SERVER_URL).when(spyCommand).getRemoteUrlByName(SAAS_SERVER_REMOTE_NAME);
-        doReturn(ANOTHER_REMOTE_URL).when(spyCommand).getRemoteUrlByName(ANOTHER_REMOTE_NAME);
+        doReturn(CODENVY_ONPREM_URL).when(mockConfigManager).getHostUrl();
     }
 
     @Test
     public void testLogin() throws Exception {
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("username", TEST_USER);
-        commandInvoker.argument("password", TEST_USER_PASSWORD);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
+        commandInvoker.argument("username", CODENVY_ONPREM_USER);
+        commandInvoker.argument("password", CODENVY_ONPREM_USER_PASSWORD);
 
-        doReturn(true).when(mockMultiRemoteCodenvy).login(SAAS_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
+        doReturn(true).when(mockMultiRemoteCodenvy).login(CodenvyOnpremPreferences.CODENVY_ONPREM_REMOTE_NAME, CODENVY_ONPREM_USER, CODENVY_ONPREM_USER_PASSWORD);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, "Login success.\n");
+        assertEquals(output, format("Login success on '%s'.\n", CODENVY_ONPREM_URL));
+
+        verify(mockConfigManager).getHostUrl();
+        verify(mockPreferences).setUrl(CODENVY_ONPREM_URL);
     }
 
     @Test
     public void testLoginFailed() throws Exception {
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("username", TEST_USER);
-        commandInvoker.argument("password", TEST_USER_PASSWORD);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
+        commandInvoker.argument("username", CODENVY_ONPREM_USER);
+        commandInvoker.argument("password", CODENVY_ONPREM_USER_PASSWORD);
 
         // simulate fail login
-        doReturn(false).when(mockMultiRemoteCodenvy).login(SAAS_SERVER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
+        doReturn(false).when(mockMultiRemoteCodenvy).login(CodenvyOnpremPreferences.CODENVY_ONPREM_REMOTE_NAME, CODENVY_ONPREM_USER, CODENVY_ONPREM_USER_PASSWORD);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, String.format("Login failed on remote '%s'.\n", SAAS_SERVER_REMOTE_NAME));
+        assertEquals(output, format("Login failed on '%s'.\n", CODENVY_ONPREM_URL));
+
+        verify(mockConfigManager).getHostUrl();
+        verify(mockPreferences).setUrl(CODENVY_ONPREM_URL);
     }
 
     @Test
@@ -105,50 +82,35 @@ public class TestLoginCommand extends AbstractTestCommand {
                                 + "  \"message\" : \"Server Error Exception\",\n"
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
-        doThrow(new RuntimeException("Server Error Exception"))
-            .when(service).getSaasServerEndpoint();
+        doThrow(new RuntimeException("Server Error Exception")).when(mockConfigManager).getHostUrl();
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, expectedOutput + "\n");
+
+        verify(mockPreferences, never()).setUrl(anyString());
+        verify(mockMultiRemoteCodenvy, never()).login(anyString(), anyString(), anyString());
     }
 
     @Test
-    public void testLoginToSpecificRemote() throws Exception {
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.option("--remote", ANOTHER_REMOTE_NAME);
-        commandInvoker.argument("username", TEST_USER);
-        commandInvoker.argument("password", TEST_USER_PASSWORD);
+    public void testLoginToSpecificUrl() throws Exception {
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
+        commandInvoker.option("--url", ANOTHER_CODENVY_ONPREM_URL);
+        commandInvoker.argument("username", CODENVY_ONPREM_USER);
+        commandInvoker.argument("password", CODENVY_ONPREM_USER_PASSWORD);
 
-        doReturn(true).when(mockMultiRemoteCodenvy).login(ANOTHER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
-
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, String.format("Login success on remote '%s' [%s].\n",
-                                           ANOTHER_REMOTE_NAME,
-                                           ANOTHER_REMOTE_URL));
-    }
-
-    @Test
-    public void testLoginFailedToSpecificRemote() throws Exception {
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.option("--remote", ANOTHER_REMOTE_NAME);
-        commandInvoker.argument("username", TEST_USER);
-        commandInvoker.argument("password", TEST_USER_PASSWORD);
-
-        // simulate fail login
-        doReturn(false).when(mockMultiRemoteCodenvy).login(ANOTHER_REMOTE_NAME, TEST_USER, TEST_USER_PASSWORD);
+        doReturn(true).when(mockMultiRemoteCodenvy).login(CodenvyOnpremPreferences.CODENVY_ONPREM_REMOTE_NAME, CODENVY_ONPREM_USER, CODENVY_ONPREM_USER_PASSWORD);
+        doReturn(ANOTHER_CODENVY_ONPREM_URL).when(mockPreferences).getUrl();
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, String.format("Login failed on remote '%s'.\n", ANOTHER_REMOTE_NAME));
+        assertEquals(output, String.format("Login success on '%s'.\n",
+                                           ANOTHER_CODENVY_ONPREM_URL));
+
+        verify(mockPreferences).setUrl(ANOTHER_CODENVY_ONPREM_URL);
+        verify(mockConfigManager, never()).getHostUrl();
     }
 
-    class TestedLoginCommand extends LoginCommand {
-        protected MultiRemoteCodenvy getMultiRemoteCodenvy() {
-            return mockMultiRemoteCodenvy;
-        }
-    }
 }

@@ -47,6 +47,7 @@ public class HelpCommand extends AbstractIMCommand {
                                        .withEntry(withCyan("config"), "Get installation manager configuration")
                                        .withEntry(withCyan("download"), "Download artifacts or print the list of installed ones")
                                        .withEntry(withCyan("install"), "Install, update artifact or print the list of already installed ones")
+                                       .withEntry(withCyan("login"), "Login to Codenvy")
                                        .withEntry(withCyan("remove-node"), "Remove Codenvy node")
                                        .withEntry(withCyan("restore"), "Restore Codenvy data")
                                        .withEntry(withCyan("version"), "Print the list of available latest versions and installed ones")
@@ -61,10 +62,5 @@ public class HelpCommand extends AbstractIMCommand {
 
     private String withCyan(String name) {
         return Ansi.ansi().fg(CYAN).a(name).reset().toString();
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    protected void validateIfUserLoggedIn() throws IllegalStateException {
     }
 }

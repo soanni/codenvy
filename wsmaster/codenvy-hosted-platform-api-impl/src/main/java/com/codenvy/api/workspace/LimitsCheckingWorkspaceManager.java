@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Striped;
 
+import org.eclipse.che.account.api.AccountManager;
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
@@ -29,7 +30,7 @@ import org.eclipse.che.api.core.model.workspace.WorkspaceConfig;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.environment.server.EnvironmentParser;
 import org.eclipse.che.api.environment.server.compose.model.ComposeEnvironmentImpl;
-import org.eclipse.che.api.machine.server.dao.SnapshotDao;
+import org.eclipse.che.api.machine.server.spi.SnapshotDao;
 import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.api.workspace.server.WorkspaceRuntimes;
@@ -89,11 +90,12 @@ public class LimitsCheckingWorkspaceManager extends WorkspaceManager {
                                           EventService eventService,
                                           UserManager userManager,
                                           SnapshotDao snapshotDao,
+                                          AccountManager accountManager,
                                           EnvironmentParser environmentParser,
                                           @Named("workspace.runtime.auto_snapshot") boolean defaultAutoSnapshot,
                                           @Named("workspace.runtime.auto_restore") boolean defaultAutoRestore,
                                           @Named("machine.default_mem_size_mb") int defaultMachineMemorySizeMB) {
-        super(workspaceDao, runtimes, eventService, defaultAutoSnapshot, defaultAutoRestore, snapshotDao);
+        super(workspaceDao, runtimes, eventService, accountManager, defaultAutoSnapshot, defaultAutoRestore, snapshotDao);
         this.systemRamInfoProvider = systemRamInfoProvider;
         this.userManager = userManager;
         this.workspacesPerUser = workspacesPerUser;
@@ -108,33 +110,30 @@ public class LimitsCheckingWorkspaceManager extends WorkspaceManager {
 
     @Override
     public WorkspaceImpl createWorkspace(WorkspaceConfig config,
-                                         String namespace,
-                                         @Nullable String accountId) throws ServerException,
-                                                                            ConflictException,
-                                                                            NotFoundException {
+                                         String namespace) throws ServerException,
+                                                                  ConflictException,
+                                                                  NotFoundException {
         checkMaxEnvironmentRam(config);
         checkNamespaceValidity(namespace, "Unable to create workspace because its namespace owner is " +
                                           "unavailable and it is impossible to check resources limit.");
-        return checkCountAndPropagateCreation(namespace, () -> super.createWorkspace(config, namespace, accountId));
+        return checkCountAndPropagateCreation(namespace, () -> super.createWorkspace(config, namespace));
     }
 
     @Override
     public WorkspaceImpl createWorkspace(WorkspaceConfig config,
                                          String namespace,
-                                         Map<String, String> attributes,
-                                         @Nullable String accountId) throws ServerException,
-                                                                            NotFoundException,
-                                                                            ConflictException {
+                                         Map<String, String> attributes) throws ServerException,
+                                                                                NotFoundException,
+                                                                                ConflictException {
         checkMaxEnvironmentRam(config);
         checkNamespaceValidity(namespace, "Unable to create workspace because its namespace owner is " +
                                           "unavailable and it is impossible to check resources limit.");
-        return checkCountAndPropagateCreation(namespace, () -> super.createWorkspace(config, namespace, attributes, accountId));
+        return checkCountAndPropagateCreation(namespace, () -> super.createWorkspace(config, namespace, attributes));
     }
 
     @Override
     public WorkspaceImpl startWorkspace(String workspaceId,
                                         @Nullable String envName,
-                                        @Nullable String accountId,
                                         @Nullable Boolean restore) throws NotFoundException,
                                                                           ServerException,
                                                                           ConflictException {
@@ -146,21 +145,20 @@ public class LimitsCheckingWorkspaceManager extends WorkspaceManager {
         return checkRamAndPropagateLimitedThroughputStart(workspace.getConfig(),
                                                           envName,
                                                           workspace.getNamespace(),
-                                                          () -> super.startWorkspace(workspaceId, envName, accountId, restore));
+                                                          () -> super.startWorkspace(workspaceId, envName, restore));
     }
 
     @Override
     public WorkspaceImpl startWorkspace(WorkspaceConfig config,
                                         String namespace,
-                                        boolean isTemporary,
-                                        @Nullable String accountId) throws ServerException,
-                                                                           NotFoundException,
-                                                                           ConflictException {
+                                        boolean isTemporary) throws ServerException,
+                                                                    NotFoundException,
+                                                                    ConflictException {
         checkMaxEnvironmentRam(config);
         return checkRamAndPropagateLimitedThroughputStart(config,
                                                           config.getDefaultEnv(),
                                                           namespace,
-                                                          () -> super.startWorkspace(config, namespace, isTemporary, accountId));
+                                                          () -> super.startWorkspace(config, namespace, isTemporary));
     }
 
     @Override
@@ -183,10 +181,10 @@ public class LimitsCheckingWorkspaceManager extends WorkspaceManager {
 
     /**
      * One of the checks in {@link #checkRamAndPropagateStart(WorkspaceConfig, String, String, WorkspaceCallback)}
-     * is needed to deny starting workspace, if system ram limit exceeded.
+     * is needed to deny starting workspace, if system RAM limit exceeded.
      * This check may be slow because it is based on request to swarm for memory amount allocated on all nodes, but it
      * can't be performed more than specified times at the same time, and the semaphore is used to control that.
-     * The semaphore is a trade off between speed and risk to exceed system ram limit.
+     * The semaphore is a trade off between speed and risk to exceed system RAM limit.
      * In the worst case specified number of permits to start workspace can happen at the same time after the actually
      * system limit allows to start only one workspace, all permits will be allowed to start workspace.
      * If more than specified number of permits to start workspace happens, they will wait in a queue.

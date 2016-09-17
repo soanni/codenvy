@@ -14,27 +14,22 @@
  */
 package com.codenvy.api.license.server;
 
+import com.codenvy.api.license.CodenvyLicense;
+import com.codenvy.api.license.InvalidLicenseException;
+import com.codenvy.api.license.LicenseException;
+import com.codenvy.api.license.LicenseFeature;
+import com.codenvy.api.license.LicenseNotFoundException;
+import com.google.common.collect.ImmutableMap;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-
-import com.codenvy.api.license.server.license.CodenvyLicense;
-import com.codenvy.api.license.server.license.CodenvyLicenseFactory;
-import com.codenvy.api.license.server.license.CodenvyLicenseManager;
-import com.codenvy.api.license.server.license.InvalidLicenseException;
-import com.codenvy.api.license.server.license.LicenseException;
-import com.codenvy.api.license.server.license.LicenseFeature;
-import com.codenvy.api.license.server.license.LicenseNotFoundException;
-import com.codenvy.api.user.server.dao.AdminUserDao;
-import com.codenvy.swarm.client.SwarmDockerConnector;
-import com.google.common.collect.ImmutableMap;
-
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.dto.server.JsonStringMapImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +45,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.AbstractMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -72,19 +66,10 @@ public class LicenseService {
     private static final String VALUE                               = "value";
 
     private final CodenvyLicenseManager licenseManager;
-    private final CodenvyLicenseFactory licenseFactory;
-    private final AdminUserDao          adminUserDao;
-    private final SwarmDockerConnector  dockerConnector;
 
     @Inject
-    public LicenseService(CodenvyLicenseManager licenseManager,
-                          CodenvyLicenseFactory licenseFactory,
-                          AdminUserDao adminUserDao,
-                          SwarmDockerConnector dockerConnector) {
+    public LicenseService(CodenvyLicenseManager licenseManager) {
         this.licenseManager = licenseManager;
-        this.licenseFactory = licenseFactory;
-        this.adminUserDao = adminUserDao;
-        this.dockerConnector = dockerConnector;
     }
 
     @DELETE
@@ -132,8 +117,7 @@ public class LicenseService {
                            @ApiResponse(code = 500, message = "Server error")})
     public Response storeLicense(String license) throws ApiException {
         try {
-            CodenvyLicense codenvyLicense = licenseFactory.create(license);
-            licenseManager.store(codenvyLicense);
+            licenseManager.store(license);
             return status(CREATED).build();
         } catch (InvalidLicenseException e) {
             throw new ConflictException(e.getMessage());
@@ -157,10 +141,9 @@ public class LicenseService {
             Map<LicenseFeature, String> features = codenvyLicense.getFeatures();
 
             Map<String, String> properties = features
-                    .entrySet()
-                    .stream()
-                    .map(entry -> new AbstractMap.SimpleEntry<>(entry.getKey().toString(), entry.getValue()))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(entry -> entry.getKey().toString(), Map.Entry::getValue));
 
             boolean licenseExpired = codenvyLicense.isExpired();
             properties.put(CODENVY_LICENSE_PROPERTY_IS_EXPIRED, valueOf(licenseExpired));
@@ -183,31 +166,13 @@ public class LicenseService {
     @ApiResponses(value = {@ApiResponse(code = 200, message = "OK"),
                            @ApiResponse(code = 500, message = "Server error")})
     public Response isCodenvyUsageLegal() throws ApiException {
-        long actualUsers;
-        int actualServers;
-
         try {
-            //TODO Rework getting total items count after merge with jpa integration
-            actualUsers = adminUserDao.getAll(1, 0).getTotalItemsCount();
-            actualServers = dockerConnector.getAvailableNodes().size();
-        } catch (IOException e) {
-            LOG.error(e.getMessage(), e);
-            throw new ServerException(e.getMessage(), e);
-        } catch (ServerException e) {
-            LOG.error(e.getMessage(), e);
-            throw new ServerException("Failed to get amount of users for license validation. ", e);
-        }
-
-        try {
-            CodenvyLicense codenvyLicense = licenseManager.load();
-            boolean isLicenseUsageLegal = codenvyLicense.isLicenseUsageLegal(actualUsers, actualServers);
+            boolean isLicenseUsageLegal = licenseManager.isCodenvyUsageLegal();
             Map<String, String> isCodenvyUsageLegalResponse = ImmutableMap.of(VALUE, String.valueOf(isLicenseUsageLegal));
             return status(OK).entity(new JsonStringMapImpl<>(isCodenvyUsageLegalResponse)).build();
-
-        } catch (LicenseException e) {
-            boolean isFreeUsageLegal = CodenvyLicense.isFreeUsageLegal(actualUsers, actualServers);
-            Map<String, String> isFreeUsageLegalResponse = ImmutableMap.of(VALUE, String.valueOf(isFreeUsageLegal));
-            return status(OK).entity(new JsonStringMapImpl<>(isFreeUsageLegalResponse)).build();
+        } catch (IOException e) {
+            LOG.error(e.getMessage(), e);
+            throw new ServerException("Failed to check if Codenvy usage matches Codenvy License constraints. ", e);
         }
     }
 
@@ -222,22 +187,13 @@ public class LicenseService {
                                              @QueryParam("nodeNumber")
                                              Integer nodeNumber) throws ApiException {
         try {
-            if (nodeNumber == null) {
-                nodeNumber = dockerConnector.getAvailableNodes().size();
-            }
+            boolean isLicenseUsageLegal = licenseManager.isCodenvyNodesUsageLegal(nodeNumber);
+            Map<String, String> isCodenvyUsageLegalResponse = ImmutableMap.of(VALUE, valueOf(isLicenseUsageLegal));
+            return status(OK).entity(new JsonStringMapImpl<>(isCodenvyUsageLegalResponse)).build();
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);
-            throw new ServerException(e.getMessage(), e);
-        }
-
-        try {
-            CodenvyLicense codenvyLicense = licenseManager.load();
-
-            boolean isLicenseNodesUsageLegal = codenvyLicense.isLicenseNodesUsageLegal(nodeNumber);
-            return status(OK).entity(new JsonStringMapImpl<>(ImmutableMap.of(VALUE, valueOf(isLicenseNodesUsageLegal)))).build();
-        } catch (LicenseException e) {
-            boolean isFreeUsageLegal = CodenvyLicense.isFreeUsageLegal(0, nodeNumber);
-            return status(OK).entity(new JsonStringMapImpl<>(ImmutableMap.of(VALUE, valueOf(isFreeUsageLegal)))).build();
+            throw new ServerException("Failed to check if Codenvy nodes usage matches Codenvy License constraints. ", e);
         }
     }
+
 }

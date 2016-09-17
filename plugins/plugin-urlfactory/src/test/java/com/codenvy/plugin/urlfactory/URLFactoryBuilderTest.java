@@ -14,7 +14,7 @@
  */
 package com.codenvy.plugin.urlfactory;
 
-import org.eclipse.che.api.factory.shared.dto.Factory;
+import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.workspace.shared.dto.EnvironmentDto;
 import org.eclipse.che.api.workspace.shared.dto.EnvironmentRecipeDto;
 import org.eclipse.che.api.workspace.shared.dto.ExtendedMachineDto;
@@ -153,7 +153,7 @@ public class URLFactoryBuilderTest {
     public void checkWithCustomFactoryJsonFile() throws Exception {
 
         WorkspaceConfigDto workspaceConfigDto = newDto(WorkspaceConfigDto.class);
-        Factory templateFactory = newDto(Factory.class).withV("4.0").withName("florent").withWorkspace(workspaceConfigDto);
+        FactoryDto templateFactory = newDto(FactoryDto.class).withV("4.0").withName("florent").withWorkspace(workspaceConfigDto);
         String jsonFactory = DtoFactory.getInstance().toJson(templateFactory);
 
 
@@ -161,7 +161,7 @@ public class URLFactoryBuilderTest {
         when(URLChecker.exists(myLocation)).thenReturn(FALSE);
         when(URLFetcher.fetch(myLocation)).thenReturn(jsonFactory);
 
-        Factory factory = urlFactoryBuilder.createFactory(CreateFactoryParams.create().codenvyJsonFileLocation(myLocation));
+        FactoryDto factory = urlFactoryBuilder.createFactory(CreateFactoryParams.create().codenvyJsonFileLocation(myLocation));
 
         assertEquals(templateFactory, factory);
 
@@ -174,7 +174,7 @@ public class URLFactoryBuilderTest {
     @Test
     public void checkWithDefaultFactoryJsonFile() throws Exception {
 
-        Factory factory = urlFactoryBuilder.createFactory(null);
+        FactoryDto factory = urlFactoryBuilder.createFactory(null);
 
         assertNull(factory.getWorkspace());
         assertEquals(factory.getV(), "4.0");

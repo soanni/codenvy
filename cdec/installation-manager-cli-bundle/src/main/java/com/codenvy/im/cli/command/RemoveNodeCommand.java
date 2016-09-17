@@ -34,17 +34,17 @@ public class RemoveNodeCommand extends AbstractIMCommand {
     protected void doExecuteCommand() throws Exception {
         if (dns != null && !dns.isEmpty()) {
             try {
-                console.showProgressor();
+                getConsole().showProgressor();
 
-                NodeInfo nodeInfo = facade.removeNode(dns);
+                NodeInfo nodeInfo = getFacade().removeNode(dns);
 
                 NodeManagerResponse nodeManagerResponse = new NodeManagerResponse();
                 nodeManagerResponse.setStatus(ResponseCode.OK);
                 nodeManagerResponse.setNode(nodeInfo);
 
-                console.printResponseExitInError(nodeManagerResponse);
+                getConsole().printResponseExitInError(nodeManagerResponse);
             } finally {
-                console.hideProgressor();
+                getConsole().hideProgressor();
             }
         }
     }

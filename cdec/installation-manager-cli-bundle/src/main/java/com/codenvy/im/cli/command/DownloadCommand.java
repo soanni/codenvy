@@ -82,37 +82,37 @@ public class DownloadCommand extends AbstractIMCommand {
                                      IOException,
                                      DownloadAlreadyStartedException,
                                      DownloadNotStartedException {
-        console.println("Downloading might take several minutes depending on your internet connection. Please wait.");
+        getConsole().println("Downloading might take several minutes depending on your internet connection. Please wait.");
 
-        facade.startDownload(createArtifactOrNull(artifactName), createVersionOrNull(versionNumber));
+        getFacade().startDownload(createArtifactOrNull(artifactName), createVersionOrNull(versionNumber));
 
         boolean isCanceled = false;
 
         for (; ; ) {
-            DownloadProgressResponse downloadProgressResponse = facade.getDownloadProgress();
+            DownloadProgressResponse downloadProgressResponse = getFacade().getDownloadProgress();
             DownloadResponse downloadResponse = new DownloadResponse(downloadProgressResponse);
 
             if (downloadProgressResponse.getStatus() == DownloadArtifactInfo.Status.FAILED) {
-                console.cleanCurrentLine();
-                console.printResponseExitInError(downloadResponse);
+                getConsole().cleanCurrentLine();
+                getConsole().printResponseExitInError(downloadResponse);
                 break;
             }
 
             if (!isCanceled) {
-                console.printProgress(downloadProgressResponse.getPercents());
+                getConsole().printProgress(downloadProgressResponse.getPercents());
             }
 
             try {
                 sleep(1000);
             } catch (InterruptedException ie) {
-                facade.stopDownload();
-                console.cleanLineAbove();
+                getFacade().stopDownload();
+                getConsole().cleanLineAbove();
                 isCanceled = true;
             }
 
             if (downloadProgressResponse.getStatus() != DownloadArtifactInfo.Status.DOWNLOADING) {
-                console.cleanCurrentLine();
-                console.printResponseExitInError(downloadResponse);
+                getConsole().cleanCurrentLine();
+                getConsole().printResponseExitInError(downloadResponse);
                 break;
             }
         }
@@ -122,13 +122,13 @@ public class DownloadCommand extends AbstractIMCommand {
         Artifact artifact = Commons.createArtifactOrNull(artifactName);
         Version version = Commons.createVersionOrNull(versionNumber);
 
-        Collection<DownloadArtifactInfo> downloads = facade.getDownloads(artifact, version);
+        Collection<DownloadArtifactInfo> downloads = getFacade().getDownloads(artifact, version);
 
         DownloadResponse downloadResponse = new DownloadResponse();
         downloadResponse.setStatus(ResponseCode.OK);
         downloadResponse.setArtifacts(downloads);
 
-        console.printResponseExitInError(downloadResponse);
+        getConsole().printResponseExitInError(downloadResponse);
     }
 
     private void doListRemote() throws JsonParseException, IOException {
@@ -138,9 +138,9 @@ public class DownloadCommand extends AbstractIMCommand {
             artifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
         }
 
-        List<UpdateArtifactInfo> versions = facade.getAllUpdates(artifact);
+        List<UpdateArtifactInfo> versions = getFacade().getAllUpdates(artifact);
         List<UpdateArtifactInfo> versionsInReverseOrder = versions.stream().sorted((v1, v2) -> v1.compareTo(v2)).collect(Collectors.toList());
 
-        console.println(toJson(versionsInReverseOrder));
+        getConsole().println(toJson(versionsInReverseOrder));
     }
 }

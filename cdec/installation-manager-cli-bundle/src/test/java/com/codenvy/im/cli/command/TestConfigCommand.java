@@ -17,12 +17,8 @@ package com.codenvy.im.cli.command;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.Config;
 import com.google.common.collect.ImmutableMap;
-import org.apache.felix.service.command.CommandSession;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -47,22 +43,10 @@ import static org.testng.Assert.assertEquals;
  */
 public class TestConfigCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
-    private CommandInvoker    commandInvoker;
-
-    @Mock
-    private IMArtifactLabeledFacade mockFacade;
-    @Mock
-    private CommandSession          mockCommandSession;
 
     @BeforeMethod
     public void initMocks() throws IOException {
-        MockitoAnnotations.initMocks(this);
-
         spyCommand = spy(new ConfigCommand());
-        spyCommand.facade = mockFacade;
-
-        commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
-
         performBaseMocks(spyCommand, true);
     }
 
@@ -149,7 +133,7 @@ public class TestConfigCommand extends AbstractTestCommand {
         doReturn(properties).when(mockFacade).getArtifactConfig(createArtifact(CDECArtifact.NAME));
 
         String messageToConfirmUpdate = "Do you want to update Codenvy property '" + propertyToUpdate + "' with new value '" + newValue + "'?";
-        doReturn(true).when(spyCommand.console).askUser(messageToConfirmUpdate);
+        doReturn(true).when(spyConsole).askUser(messageToConfirmUpdate);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("property", propertyToUpdate);
@@ -162,7 +146,7 @@ public class TestConfigCommand extends AbstractTestCommand {
         verify(mockFacade).updateArtifactConfig(createArtifact(CDECArtifact.NAME),
                                                 ImmutableMap.of(propertyToUpdate, newValue));
 
-        verify(spyCommand.console).askUser(messageToConfirmUpdate);
+        verify(spyConsole).askUser(messageToConfirmUpdate);
     }
 
     @Test
@@ -175,7 +159,7 @@ public class TestConfigCommand extends AbstractTestCommand {
         doReturn(properties).when(mockFacade).getArtifactConfig(createArtifact(CDECArtifact.NAME));
 
         String messageToConfirmUpdate = "Do you want to update Codenvy property '" + propertyToUpdate + "' with new value '" + newValue + "'?";
-        doReturn(true).when(spyCommand.console).askUser(messageToConfirmUpdate);
+        doReturn(true).when(spyConsole).askUser(messageToConfirmUpdate);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("property", propertyToUpdate);
@@ -188,7 +172,7 @@ public class TestConfigCommand extends AbstractTestCommand {
         verify(mockFacade).updateArtifactConfig(createArtifact(CDECArtifact.NAME),
                                                 ImmutableMap.of(propertyToUpdate, newValue));
 
-        verify(spyCommand.console).askUser(messageToConfirmUpdate);
+        verify(spyConsole).askUser(messageToConfirmUpdate);
     }
 
     @Test
@@ -197,7 +181,7 @@ public class TestConfigCommand extends AbstractTestCommand {
         final String propertyToUpdate = "prop2";
 
         String messageToConfirmUpdate = "Do you want to update Codenvy property '" + propertyToUpdate + "' with new value '" + newValue + "'?";
-        doReturn(false).when(spyCommand.console).askUser(messageToConfirmUpdate);
+        doReturn(false).when(spyConsole).askUser(messageToConfirmUpdate);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("property", propertyToUpdate);
@@ -213,7 +197,7 @@ public class TestConfigCommand extends AbstractTestCommand {
         verify(mockFacade, never()).getArtifactConfig(any(Artifact.class));
 
 
-        verify(spyCommand.console).askUser(messageToConfirmUpdate);
+        verify(spyConsole).askUser(messageToConfirmUpdate);
     }
 
     @Test
@@ -225,7 +209,7 @@ public class TestConfigCommand extends AbstractTestCommand {
         doReturn(properties).when(mockFacade).getArtifactConfig(createArtifact(CDECArtifact.NAME));
 
         String messageToConfirmUpdate = "Do you want to update Codenvy property '" + propertyToUpdate + "' with new value '" + newValue + "'?";
-        doReturn(true).when(spyCommand.console).askUser(messageToConfirmUpdate);
+        doReturn(true).when(spyConsole).askUser(messageToConfirmUpdate);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("property", propertyToUpdate);
@@ -241,7 +225,7 @@ public class TestConfigCommand extends AbstractTestCommand {
         verify(mockFacade, never()).updateArtifactConfig(createArtifact(CDECArtifact.NAME),
                                                          ImmutableMap.of(anyString(), anyString()));
 
-        verify(spyCommand.console).askUser(messageToConfirmUpdate);
+        verify(spyConsole).askUser(messageToConfirmUpdate);
     }
 
     @Test
@@ -256,7 +240,7 @@ public class TestConfigCommand extends AbstractTestCommand {
                                                                                 ImmutableMap.of(propertyToUpdate, newValue));
 
         String messageToConfirmUpdate = "Do you want to update Codenvy property '" + propertyToUpdate + "' with new value '" + newValue + "'?";
-        doReturn(true).when(spyCommand.console).askUser(messageToConfirmUpdate);
+        doReturn(true).when(spyConsole).askUser(messageToConfirmUpdate);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.argument("property", propertyToUpdate);
@@ -269,7 +253,7 @@ public class TestConfigCommand extends AbstractTestCommand {
                              + "  \"status\" : \"ERROR\"\n"
                              + "}\n");
 
-        verify(spyCommand.console).askUser(messageToConfirmUpdate);
+        verify(spyConsole).askUser(messageToConfirmUpdate);
     }
 
     @Test

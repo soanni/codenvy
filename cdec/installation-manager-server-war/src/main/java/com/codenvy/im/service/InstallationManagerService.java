@@ -131,8 +131,8 @@ public class InstallationManagerService {
                            @ApiResponse(code = 409, message = "Downloading already in progress"),
                            @ApiResponse(code = 500, message = "Server error")})
     public Response startDownload(
-            @QueryParam(value = "artifact") @ApiParam(value = "Artifact name", allowableValues = CDECArtifact.NAME) String artifactName,
-            @QueryParam(value = "version") @ApiParam(value = "Version number") String versionNumber) {
+        @QueryParam(value = "artifact") @ApiParam(value = "Artifact name", allowableValues = CDECArtifact.NAME) String artifactName,
+        @QueryParam(value = "version") @ApiParam(value = "Version number") String versionNumber) {
 
         try {
             // DownloadManager has to support tokens
@@ -206,8 +206,8 @@ public class InstallationManagerService {
                            @ApiResponse(code = 400, message = "Illegal version format or artifact name"),
                            @ApiResponse(code = 500, message = "Server error")})
     public Response deleteDownloadedArtifact(
-            @PathParam("artifact") @ApiParam(value = "Artifact name") final String artifactName,
-            @PathParam("version") @ApiParam(value = "Artifact version") final String artifactVersion) {
+        @PathParam("artifact") @ApiParam(value = "Artifact name") final String artifactName,
+        @PathParam("version") @ApiParam(value = "Artifact version") final String artifactVersion) {
 
         try {
             Artifact artifact = createArtifact(artifactName);
@@ -480,8 +480,8 @@ public class InstallationManagerService {
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successfully created"),
                            @ApiResponse(code = 500, message = "Server error")})
     public Response backup(@DefaultValue(CDECArtifact.NAME)
-                                            @QueryParam(value = "artifact")
-                                            @ApiParam(allowableValues = CDECArtifact.NAME) String artifactName) {
+                           @QueryParam(value = "artifact")
+                           @ApiParam(allowableValues = CDECArtifact.NAME) String artifactName) {
 
         try {
             BackupConfig config = new BackupConfig();
@@ -505,11 +505,11 @@ public class InstallationManagerService {
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Successfully restored"),
                            @ApiResponse(code = 500, message = "Server error")})
     public Response restore(@DefaultValue(CDECArtifact.NAME)
-                                             @QueryParam(value = "artifact")
-                                             @ApiParam(allowableValues = CDECArtifact.NAME) String artifactName,
-                                             @QueryParam(value = "backupFile")
-                                             @ApiParam(value = "path to backup file", required = true)
-                                             String backupFile) throws IOException {
+                            @QueryParam(value = "artifact")
+                            @ApiParam(allowableValues = CDECArtifact.NAME) String artifactName,
+                            @QueryParam(value = "backupFile")
+                            @ApiParam(value = "path to backup file", required = true)
+                            String backupFile) throws IOException {
 
         try {
             BackupConfig config = new BackupConfig();
@@ -527,11 +527,11 @@ public class InstallationManagerService {
     @Path("login")
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "OK"),
-            @ApiResponse(code = 400, message = "Authentication failed"),
-            @ApiResponse(code = 500, message = "Unexpected error occurred")})
+        @ApiResponse(code = 200, message = "OK"),
+        @ApiResponse(code = 400, message = "Authentication failed"),
+        @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Login to Codenvy SaaS",
-            notes = "After login is successful SaaS user credentials will be cached.")
+        notes = "After login is successful SaaS user credentials will be cached.")
     public Response loginToCodenvySaaS(Credentials credentials) {
         try {
             logoutFromCodenvySaaS();
@@ -553,8 +553,8 @@ public class InstallationManagerService {
     @POST
     @Path("logout")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "OK"),
-            @ApiResponse(code = 500, message = "Unexpected error occurred")})
+        @ApiResponse(code = 200, message = "OK"),
+        @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Logout from Codenvy SaaS")
     public Response logoutFromCodenvySaaS() {
         try {
@@ -575,9 +575,9 @@ public class InstallationManagerService {
     @Path("artifact/{artifact}/version/{version}/properties")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "OK"),
-            @ApiResponse(code = 404, message = "Artifact not found"),
-            @ApiResponse(code = 500, message = "Unexpected error occurred")})
+        @ApiResponse(code = 200, message = "OK"),
+        @ApiResponse(code = 404, message = "Artifact not found"),
+        @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Gets list of the specific artifact and version properties")
     public Response getArtifactProperties(@PathParam("artifact") final String artifactName,
                                           @PathParam("version") final String artifactVersion) {
@@ -608,8 +608,8 @@ public class InstallationManagerService {
     @Path("storage/properties")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "OK"),
-            @ApiResponse(code = 500, message = "Unexpected error occurred")})
+        @ApiResponse(code = 200, message = "OK"),
+        @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Gets list of properties from the storage")
     public Response getStorageProperties() {
         try {
@@ -625,8 +625,8 @@ public class InstallationManagerService {
     @Path("storage/properties")
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "OK"),
-            @ApiResponse(code = 500, message = "Unexpected error occurred")})
+        @ApiResponse(code = 200, message = "OK"),
+        @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Inserts new properties into the storage and update existed")
     public Response insertStorageProperties(Map<String, String> properties) {
         try {
@@ -642,9 +642,9 @@ public class InstallationManagerService {
     @Path("storage/properties/{key}")
     @Produces(MediaType.TEXT_PLAIN)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "OK"),
-            @ApiResponse(code = 404, message = "Property not found"),
-            @ApiResponse(code = 500, message = "Unexpected error occurred")})
+        @ApiResponse(code = 200, message = "OK"),
+        @ApiResponse(code = 404, message = "Property not found"),
+        @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Gets property value from the storage")
     public Response getStorageProperty(@PathParam("key") String key) {
         try {
@@ -659,9 +659,9 @@ public class InstallationManagerService {
     @Path("storage/properties/{key}")
     @Consumes("text/plain")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "OK"),
-            @ApiResponse(code = 404, message = "Property not found"),
-            @ApiResponse(code = 500, message = "Unexpected error occurred")})
+        @ApiResponse(code = 200, message = "OK"),
+        @ApiResponse(code = 404, message = "Property not found"),
+        @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Updates property in the storage")
     public Response updateStorageProperty(@PathParam("key") String key, String value) {
         try {
@@ -675,9 +675,9 @@ public class InstallationManagerService {
     @DELETE
     @Path("storage/properties/{key}")
     @ApiResponses(value = {
-            @ApiResponse(code = 204, message = "No Content"),
-            @ApiResponse(code = 404, message = "Property not found"),
-            @ApiResponse(code = 500, message = "Unexpected error occurred")})
+        @ApiResponse(code = 204, message = "No Content"),
+        @ApiResponse(code = 404, message = "Property not found"),
+        @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Deletes property from the storage")
     public Response deleteStorageProperty(@PathParam("key") String key) {
         try {
@@ -693,8 +693,8 @@ public class InstallationManagerService {
     @Path("codenvy/properties")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "OK"),
-            @ApiResponse(code = 500, message = "Unexpected error occurred")})
+        @ApiResponse(code = 200, message = "OK"),
+        @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Gets Codenvy configuration properties")
     public Response getCodenvyProperties() {
         try {
@@ -710,9 +710,9 @@ public class InstallationManagerService {
     @Path("codenvy/properties/{key}")
     @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "OK"),
-            @ApiResponse(code = 404, message = "Property not found"),
-            @ApiResponse(code = 500, message = "Unexpected error occurred")})
+        @ApiResponse(code = 200, message = "OK"),
+        @ApiResponse(code = 404, message = "Property not found"),
+        @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Gets specific Codenvy configuration property")
     public Response getCodenvyProperty(@PathParam("key") String key) {
         try {
@@ -733,9 +733,9 @@ public class InstallationManagerService {
     @Path("codenvy/properties")
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Successfully updated"),
-            @ApiResponse(code = 404, message = "Properties not found"),
-            @ApiResponse(code = 500, message = "Unexpected error occurred")})
+        @ApiResponse(code = 201, message = "Successfully updated"),
+        @ApiResponse(code = 404, message = "Properties not found"),
+        @ApiResponse(code = 500, message = "Unexpected error occurred")})
     @ApiOperation(value = "Updates property of configuration of Codenvy on-prem. It could take 5-7 minutes.")
     public Response updateCodenvyProperties(Map<String, String> properties) {
         try {

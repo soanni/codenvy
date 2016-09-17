@@ -16,7 +16,7 @@ package com.codenvy.plugin.urlfactory;
 
 import com.google.common.base.Strings;
 
-import org.eclipse.che.api.factory.shared.dto.Factory;
+import org.eclipse.che.api.factory.shared.dto.FactoryDto;
 import org.eclipse.che.api.workspace.shared.dto.EnvironmentDto;
 import org.eclipse.che.api.workspace.shared.dto.EnvironmentRecipeDto;
 import org.eclipse.che.api.workspace.shared.dto.ExtendedMachineDto;
@@ -31,7 +31,7 @@ import static java.util.Collections.singletonMap;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
 /**
- * Handle the creation of some elements used inside a {@link Factory}
+ * Handle the creation of some elements used inside a {@link FactoryDto}
  *
  * @author Florent Benoit
  */
@@ -68,18 +68,18 @@ public class URLFactoryBuilder {
      *         optional parameters
      * @return a factory
      */
-    public Factory createFactory(CreateFactoryParams createFactoryParams) {
+    public FactoryDto createFactory(CreateFactoryParams createFactoryParams) {
 
         // Check if there is factory json file inside the repository
         if (createFactoryParams != null && createFactoryParams.codenvyJsonFileLocation() != null) {
             String factoryJsonContent = URLFetcher.fetch(createFactoryParams.codenvyJsonFileLocation());
             if (!Strings.isNullOrEmpty(factoryJsonContent)) {
-                return DtoFactory.getInstance().createDtoFromJson(factoryJsonContent, Factory.class);
+                return DtoFactory.getInstance().createDtoFromJson(factoryJsonContent, FactoryDto.class);
             }
         }
 
         // else return a default factory
-        return newDto(Factory.class).withV("4.0");
+        return newDto(FactoryDto.class).withV("4.0");
     }
 
 

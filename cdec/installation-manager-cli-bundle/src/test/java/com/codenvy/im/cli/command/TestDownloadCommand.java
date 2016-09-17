@@ -18,7 +18,6 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
-import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.response.DownloadArtifactInfo;
@@ -27,11 +26,7 @@ import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.response.UpdateArtifactInfo;
 import com.codenvy.im.utils.Version;
-
 import com.google.common.collect.ImmutableList;
-import org.apache.felix.service.command.CommandSession;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -51,30 +46,21 @@ import static org.testng.Assert.assertTrue;
 public class TestDownloadCommand extends AbstractTestCommand {
     private AbstractIMCommand spyCommand;
 
-    @Mock
-    private IMArtifactLabeledFacade service;
-    @Mock
-    private CommandSession          commandSession;
-
     @BeforeMethod
     public void initMocks() throws IOException {
-        MockitoAnnotations.initMocks(this);
-
         AbstractIMCommand.updateImClientDone = false;
         spyCommand = spy(new DownloadCommand());
-        spyCommand.facade = service;
-
         performBaseMocks(spyCommand, true);
     }
 
     @Test
     public void testDownload() throws Exception {
-        doNothing().when(service).startDownload(null, null);
+        doNothing().when(mockFacade).startDownload(null, null);
         doReturn(new DownloadProgressResponse(DownloadArtifactInfo.Status.DOWNLOADED,
                                               100,
-                                              Collections.<DownloadArtifactInfo>emptyList())).when(service).getDownloadProgress();
+                                              Collections.<DownloadArtifactInfo>emptyList())).when(mockFacade).getDownloadProgress();
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
@@ -88,12 +74,12 @@ public class TestDownloadCommand extends AbstractTestCommand {
 
     @Test
     public void testDownloadWhenErrorInResponse() throws Exception {
-        doNothing().when(service).startDownload(null, null);
+        doNothing().when(mockFacade).startDownload(null, null);
         doReturn(new DownloadProgressResponse(DownloadArtifactInfo.Status.FAILED,
                                               0,
-                                              Collections.<DownloadArtifactInfo>emptyList())).when(service).getDownloadProgress();
+                                              Collections.<DownloadArtifactInfo>emptyList())).when(mockFacade).getDownloadProgress();
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
@@ -110,9 +96,9 @@ public class TestDownloadCommand extends AbstractTestCommand {
                                 + "  \"message\" : \"Server Error Exception\",\n"
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
-        doThrow(new RuntimeException("Server Error Exception")).when(service).startDownload(null, null);
+        doThrow(new RuntimeException("Server Error Exception")).when(mockFacade).startDownload(null, null);
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
@@ -121,9 +107,9 @@ public class TestDownloadCommand extends AbstractTestCommand {
 
     @Test
     public void testListLocalOption() throws Exception {
-        doReturn(Collections.emptyList()).when(service).getDownloads(null, null);
+        doReturn(Collections.emptyList()).when(mockFacade).getDownloads(null, null);
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.option("--list-local", Boolean.TRUE);
 
         CommandInvoker.Result result = commandInvoker.invoke();
@@ -147,9 +133,9 @@ public class TestDownloadCommand extends AbstractTestCommand {
                                   UpdateArtifactInfo.createInstance(codenvy.getName(),
                                                                     "1.0.2",
                                                                     UpdateArtifactInfo.Status.AVAILABLE_TO_DOWNLOAD)))
-            .when(service).getAllUpdates(codenvy);
+            .when(mockFacade).getAllUpdates(codenvy);
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.option("--list-remote", Boolean.TRUE);
 
         CommandInvoker.Result result = commandInvoker.invoke();
@@ -177,10 +163,10 @@ public class TestDownloadCommand extends AbstractTestCommand {
         UpdateArtifactInfo updateInfo = UpdateArtifactInfo.createInstance(imArtifact.getName(),
                                                                           versionToUpdate.toString(),
                                                                           UpdateArtifactInfo.Status.AVAILABLE_TO_DOWNLOAD);
-        doReturn(Collections.singletonList(updateInfo)).when(spyCommand.facade).getAllUpdatesAfterInstalledVersion(imArtifact);
+        doReturn(Collections.singletonList(updateInfo)).when(mockFacade).getAllUpdatesAfterInstalledVersion(imArtifact);
 
         doReturn(new DownloadProgressResponse(DownloadArtifactInfo.Status.DOWNLOADED, null, 100, Collections.EMPTY_LIST))
-            .when(spyCommand.facade).getDownloadProgress();
+            .when(mockFacade).getDownloadProgress();
 
         InstallOptions installOptions = new InstallOptions();
         installOptions.setConfigProperties(Collections.EMPTY_MAP);
@@ -188,30 +174,30 @@ public class TestDownloadCommand extends AbstractTestCommand {
         installOptions.setStep(0);
 
         String stepId = "1";
-        doReturn(stepId).when(spyCommand.facade).update(imArtifact, versionToUpdate, installOptions);
+        doReturn(stepId).when(mockFacade).update(imArtifact, versionToUpdate, installOptions);
         InstallArtifactStepInfo installStepInfo = new InstallArtifactStepInfo();
         installStepInfo.setStatus(InstallArtifactInfo.Status.SUCCESS);
-        doReturn(installStepInfo).when(spyCommand.facade).getUpdateStepInfo(stepId);
+        doReturn(installStepInfo).when(mockFacade).getUpdateStepInfo(stepId);
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.option("--list-local", Boolean.TRUE);
         CommandInvoker.Result result = commandInvoker.invoke();
 
         String output = result.disableAnsi().getOutputStream();
         assertTrue(output.startsWith("The Codenvy CLI is out of date. We are doing an automatic update. Relaunch.\n"));
 
-        verify(spyCommand.facade).startDownload(imArtifact, versionToUpdate);
-        verify(spyCommand.facade).waitForInstallStepCompleted(stepId);
-        verify(spyCommand.console).exit(0);
+        verify(mockFacade).startDownload(imArtifact, versionToUpdate);
+        verify(mockFacade).waitForInstallStepCompleted(stepId);
+        verify(spyConsole).exit(0);
     }
 
     @Test
     public void testAutomaticUpdateCliWhenException() throws Exception {
         final Artifact imArtifact = createArtifact(InstallManagerArtifact.NAME);
 
-        doThrow(new RuntimeException("Error")).when(spyCommand.facade).getAllUpdatesAfterInstalledVersion(imArtifact);
+        doThrow(new RuntimeException("Error")).when(mockFacade).getAllUpdatesAfterInstalledVersion(imArtifact);
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.option("--list-local", Boolean.TRUE);
         CommandInvoker.Result result = commandInvoker.invoke();
 
@@ -232,12 +218,12 @@ public class TestDownloadCommand extends AbstractTestCommand {
         UpdateArtifactInfo updateInfo = UpdateArtifactInfo.createInstance(imArtifact.getName(),
                                                                           versionToUpdate.toString(),
                                                                           UpdateArtifactInfo.Status.AVAILABLE_TO_DOWNLOAD);
-        doReturn(Collections.singletonList(updateInfo)).when(spyCommand.facade).getAllUpdatesAfterInstalledVersion(imArtifact);
+        doReturn(Collections.singletonList(updateInfo)).when(mockFacade).getAllUpdatesAfterInstalledVersion(imArtifact);
 
         doReturn(new DownloadProgressResponse(DownloadArtifactInfo.Status.FAILED, "Download error.", 100, Collections.EMPTY_LIST))
-            .when(spyCommand.facade).getDownloadProgress();
+            .when(mockFacade).getDownloadProgress();
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.option("--list-local", Boolean.TRUE);
         CommandInvoker.Result result = commandInvoker.invoke();
 
@@ -249,7 +235,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
                              + "  \"status\" : \"OK\"\n"
                              + "}\n");
 
-        verify(spyCommand.facade).startDownload(imArtifact, versionToUpdate);
+        verify(mockFacade).startDownload(imArtifact, versionToUpdate);
     }
 
     @Test
@@ -260,10 +246,10 @@ public class TestDownloadCommand extends AbstractTestCommand {
         UpdateArtifactInfo updateInfo = UpdateArtifactInfo.createInstance(imArtifact.getName(),
                                                                           versionToUpdate.toString(),
                                                                           UpdateArtifactInfo.Status.AVAILABLE_TO_DOWNLOAD);
-        doReturn(Collections.singletonList(updateInfo)).when(spyCommand.facade).getAllUpdatesAfterInstalledVersion(imArtifact);
+        doReturn(Collections.singletonList(updateInfo)).when(mockFacade).getAllUpdatesAfterInstalledVersion(imArtifact);
 
         doReturn(new DownloadProgressResponse(DownloadArtifactInfo.Status.DOWNLOADED, null, 100, Collections.EMPTY_LIST))
-            .when(spyCommand.facade).getDownloadProgress();
+            .when(mockFacade).getDownloadProgress();
 
         InstallOptions installOptions = new InstallOptions();
         installOptions.setConfigProperties(Collections.EMPTY_MAP);
@@ -271,15 +257,15 @@ public class TestDownloadCommand extends AbstractTestCommand {
         installOptions.setStep(0);
 
         String stepId = "1";
-        doReturn(stepId).when(spyCommand.facade).update(imArtifact, versionToUpdate, installOptions);
+        doReturn(stepId).when(mockFacade).update(imArtifact, versionToUpdate, installOptions);
         InstallArtifactStepInfo installStepInfo = new InstallArtifactStepInfo();
         installStepInfo.setStatus(InstallArtifactInfo.Status.FAILURE);
         installStepInfo.setMessage("Install error.");
-        doReturn(installStepInfo).when(spyCommand.facade).getUpdateStepInfo(stepId);
+        doReturn(installStepInfo).when(mockFacade).getUpdateStepInfo(stepId);
 
-        doNothing().when(spyCommand.console).pressAnyKey("This CLI client is out-dated. To finish automatic update, please, press any key to exit and then restart it.\n");
+        doNothing().when(spyConsole).pressAnyKey("This CLI client is out-dated. To finish automatic update, please, press any key to exit and then restart it.\n");
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, mockCommandSession);
         commandInvoker.option("--list-local", Boolean.TRUE);
         CommandInvoker.Result result = commandInvoker.invoke();
 
@@ -291,8 +277,8 @@ public class TestDownloadCommand extends AbstractTestCommand {
                              + "  \"status\" : \"OK\"\n"
                              + "}\n");
 
-        verify(spyCommand.facade).startDownload(imArtifact, versionToUpdate);
-        verify(spyCommand.facade).waitForInstallStepCompleted(stepId);
+        verify(mockFacade).startDownload(imArtifact, versionToUpdate);
+        verify(mockFacade).waitForInstallStepCompleted(stepId);
     }
 
 }

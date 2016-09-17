@@ -40,6 +40,7 @@ echo 'Uploading:'
     # override package name without version for dev servers
     if [ ${SERVER} != "prod" ]; then
         FILE_NAME=`echo ${FILE_NAME} | sed 's/-[0-9].*\.zip/.zip/g' | sed 's/-[0-9].*\.tar.gz/.tar.gz/g'`
+        echo ${FILE_NAME}
     fi
     ssh -i ~/.ssh/${SSH_KEY_NAME} -o StrictHostKeyChecking=no ${SSH_USER_NAME}@${PUPPET_DNS} "mv -f /tmp/${FILE_NAME_WITH_POSTFIX} /mnt/u03/puppet/files/servers/${UPLOAD_DESTINATION}/${FILE_NAME}"
 }
