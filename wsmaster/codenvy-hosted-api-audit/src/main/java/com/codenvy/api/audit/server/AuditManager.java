@@ -97,10 +97,8 @@ public class AuditManager {
      *         if failed to create file for audit report
      */
     public Path generateAuditReport() throws ServerException, ConflictException, IOException {
-        if (inProgress.get()) {
+        if (inProgress.getAndSet(true)) {
             throw new ConflictException("This command has been running by other user");
-        } else {
-            inProgress.set(true);
         }
 
         String dateTime = new SimpleDateFormat("dd-MM-yyyy_hh:mm:ss").format(new Date());
