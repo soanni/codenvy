@@ -23,6 +23,7 @@
         <class>org.eclipse.che.api.user.server.model.impl.UserImpl</class>
         <class>org.eclipse.che.api.user.server.model.impl.ProfileImpl</class>
         <class>org.eclipse.che.api.user.server.jpa.PreferenceEntity</class>
+        <class>com.codenvy.api.permission.server.model.impl.SystemPermissionsImpl</class>
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
         <properties>
             <property name="javax.persistence.jdbc.driver" value="org.h2.Driver"/>

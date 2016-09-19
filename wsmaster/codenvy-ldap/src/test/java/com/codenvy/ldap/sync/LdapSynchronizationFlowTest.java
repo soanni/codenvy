@@ -14,6 +14,8 @@
  */
 package com.codenvy.ldap.sync;
 
+import com.codenvy.api.permission.server.PermissionsModule;
+import com.codenvy.api.permission.server.jpa.SystemPermissionsJpaModule;
 import com.codenvy.ldap.MyLdapServer;
 import com.codenvy.ldap.TestConnectionFactoryProvider;
 import com.codenvy.ldap.sync.LdapSynchronizer.SyncResult;
@@ -68,6 +70,7 @@ public class LdapSynchronizationFlowTest {
         synchronizer = injector.getInstance(LdapSynchronizer.class);
         userDao = injector.getInstance(UserDao.class);
         injector.getInstance(JpaProfileDao.RemoveProfileBeforeUserRemovedEventSubscriber.class).subscribe();
+        injector.getInstance(FakeListener.class).subscribe();
     }
 
     @AfterClass
@@ -213,6 +216,8 @@ public class LdapSynchronizationFlowTest {
             bind(new TypeLiteral<Pair<String, String>[]>() {}).annotatedWith(Names.named("ldap.sync.profile.attrs"))
                                                               .toInstance(attributes);
 
+            install(new PermissionsModule());
+            install(new SystemPermissionsJpaModule());
         }
     }
 }
