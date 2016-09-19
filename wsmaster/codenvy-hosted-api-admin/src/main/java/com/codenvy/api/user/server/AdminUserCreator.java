@@ -23,7 +23,7 @@ import com.google.inject.Singleton;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.jdbc.jpa.guice.JpaInitializer;
+import org.eclipse.che.api.core.jdbc.jpa.eclipselink.EntityListenerInjectionManagerInitializer;
 import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.core.notification.EventSubscriber;
@@ -63,7 +63,7 @@ public class AdminUserCreator implements EventSubscriber<AfterUserPersistedEvent
     @SuppressWarnings("unused")
     // this work around needed for Guice to help initialize components in right sequence,
     // because instance of JpaInitializer should be created before components that dependent on dao (such as UserManager)
-    private JpaInitializer jpaInitializer;
+    private EntityListenerInjectionManagerInitializer jpaInitializer;
 
     @Inject
     @Named("codenvy.admin.name")
