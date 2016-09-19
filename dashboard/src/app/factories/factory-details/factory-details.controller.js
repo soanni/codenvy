@@ -31,7 +31,7 @@ export class FactoryDetailsCtrl {
 
     this.factory = codenvyAPI.getFactory().getFactoryById(factoryId);
 
-    codenvyAPI.getFactory().fetchFactory(factoryId).then((factory) => {
+    codenvyAPI.getFactory().fetchFactoryById(factoryId).then((factory) => {
       this.factory = factory;
     }, (error) => {
       cheNotification.showError(error.data.message ? error.data.message : 'Get factory failed.');

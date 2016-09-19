@@ -42,30 +42,11 @@ export class FactoryInformationCtrl {
       }
     });
 
+    this.updateData();
     $scope.$watch(() => {
-      return this.factory ? this.factory.originFactory : null;
-    }, (newOriginFactory) => {
-      if (!newOriginFactory) {
-        return;
-      }
-
-      this.copyOriginFactory = newOriginFactory ? angular.copy(newOriginFactory) : null;
-
-      if (this.copyOriginFactory.links) {
-        delete this.copyOriginFactory.links;
-      }
-
-      let factoryContent = this.$filter('json')(this.copyOriginFactory);
-      if (factoryContent !== this.factoryContent) {
-        if (!this.factoryContent) {
-          this.editorLoadedPromise.then((instance) => {
-            this.$timeout(() => {
-              instance.refresh();
-            }, 500);
-          })
-        }
-        this.factoryContent = factoryContent;
-      }
+      return this.factory;
+    }, () => {
+      this.updateData();
     });
 
     this.factoryInformationForm;
@@ -80,12 +61,43 @@ export class FactoryInformationCtrl {
     };
   }
 
+
+  /**
+   * Update factory content data for editor
+   */
+  updateData() {
+    if (!this.factory) {
+      return;
+    }
+
+    this.copyOriginFactory = angular.copy(this.factory);
+    if (this.copyOriginFactory.links) {
+      delete this.copyOriginFactory.links;
+    }
+
+    let factoryContent = this.$filter('json')(this.copyOriginFactory);
+    if (factoryContent !== this.factoryContent) {
+      if (!this.factoryContent) {
+        this.editorLoadedPromise.then((instance) => {
+          this.$timeout(() => {
+            instance.refresh();
+          }, 500);
+        })
+      }
+      this.factoryContent = factoryContent;
+    }
+  }
+
+  getObjectKeys(targetObject) {
+    return Object.keys(targetObject);
+  }
+
   isFactoryChanged() {
     if (!this.copyOriginFactory) {
       return false;
     }
 
-    let testFactory = angular.copy(this.factory.originFactory);
+    let testFactory = angular.copy(this.factory);
     if (testFactory.links) {
       delete testFactory.links;
     }
@@ -94,10 +106,9 @@ export class FactoryInformationCtrl {
   }
 
   updateFactory() {
-
     this.factoryContent = this.$filter('json')(this.copyOriginFactory);
 
-    if (this.factoryInformationForm.$invalid || !this.isFactoryChanged()){
+    if (this.factoryInformationForm.$invalid || !this.isFactoryChanged()) {
       return;
     }
 
@@ -107,12 +118,14 @@ export class FactoryInformationCtrl {
     }, 500);
   }
 
-  //Udpate factory content.
+  /**
+   * Callback to update factory
+   */
   doUpdateFactory(factory) {
     let promise = this.codenvyAPI.getFactory().setFactory(factory);
 
-    promise.then(() => {
-      this.factory.originFactory = factory;
+    promise.then((factory) => {
+      this.factory = factory;
       this.cheNotification.showInfo('Factory information successfully updated.');
     }, (error) => {
       this.cheNotification.showError(error.data.message ? error.data.message : 'Update factory failed.');
@@ -132,7 +145,7 @@ export class FactoryInformationCtrl {
   }
 
   updateFactoryContent() {
-    let promise = this.codenvyAPI.getFactory().setFactoryContent(this.factory.originFactory.id, this.factoryContent);
+    let promise = this.codenvyAPI.getFactory().setFactoryContent(this.factory.id, this.factoryContent);
 
     promise.then((factory) => {
       this.factory = factory;
@@ -147,7 +160,7 @@ export class FactoryInformationCtrl {
   //Perform factory deletion.
   deleteFactory(event) {
     let confirm = this.$mdDialog.confirm()
-      .title('Would you like to delete the factory ' + (this.factory.originFactory.name ? '"' + this.factory.originFactory.name + '"' : this.factory.originFactory.id + '?'))
+      .title('Would you like to delete the factory ' + (this.factory.name ? '"' + this.factory.name + '"' : this.factory.id + '?'))
       .content('Please confirm for the factory removal.')
       .ariaLabel('Remove factory')
       .ok('Delete it!')
@@ -156,7 +169,7 @@ export class FactoryInformationCtrl {
       .targetEvent(event);
     this.$mdDialog.show(confirm).then(() => {
       // remove it !
-      let promise = this.codenvyAPI.getFactory().deleteFactoryById(this.factory.originFactory.id);
+      let promise = this.codenvyAPI.getFactory().deleteFactoryById(this.factory.id);
       promise.then(() => {
         this.$location.path('/factories');
       }, (error) => {
@@ -180,6 +193,7 @@ export class FactoryInformationCtrl {
   cheStackLibrarySelecter(stack) {
     this.stack = stack
   }
+
   /**
    * Callback when user ask to validate a stack
    * We need then to create (if required) recipe and update JSON factory configuration

@@ -19,7 +19,7 @@
 # load lib.sh from path stored in parameter 1
 . $1
 
-if [[ -n "$1" ]] && [[ "$1" == "rhel" ]]; then
+if [[ -n "$2" ]] && [[ "$2" == "rhel" ]]; then
     RHEL_OS=true
     printAndLog "TEST CASE: Backup and restore single-node Codenvy On Premise in RHEL OS"
     vagrantUp ${SINGLE_NODE_RHEL_VAGRANT_FILE}
@@ -60,7 +60,7 @@ WORKSPACE_ID=${OUTPUT}
 doPost "application/json" "{}" "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}/runtime?token=${TOKEN}"
 
 # verify is workspace running
-doSleep "4m"  "Wait until workspace starts to avoid 'java.lang.NullPointerException' error on verifying workspace state"
+doSleep "6m"  "Wait until workspace starts to avoid 'java.lang.NullPointerException' error on verifying workspace state"
 
 # obtain network ports
 doGet "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"

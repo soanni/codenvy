@@ -24,16 +24,24 @@ export class FactoryItemCtrl {
    * Default constructor that is using resource injection
    * @ngInject for Dependency injection
    */
-  constructor($location) {
+  constructor($location, codenvyFactory) {
     this.$location = $location;
+    this.codenvyFactory = codenvyFactory;
   }
 
-  //Redirect to factory details.
+  /**
+   * Detect factory links.
+   * @returns [string]
+   */
+  getFactoryLinks() {
+    return this.codenvyFactory.detectLinks(this.factory);
+  }
+
+  /**
+   * Redirect to factory details.
+   */
   redirectToFactoryDetails() {
-    if (!this.factory || !this.factory.originFactory) {
-      return;
-    }
-    this.$location.path('/factory/' + this.factory.originFactory.id);
+    this.$location.path('/factory/' + this.factory.id);
   }
 
 }
