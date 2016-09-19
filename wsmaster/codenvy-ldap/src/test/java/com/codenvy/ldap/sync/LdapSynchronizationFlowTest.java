@@ -14,6 +14,9 @@
  */
 package com.codenvy.ldap.sync;
 
+import com.codenvy.api.permission.server.jpa.JpaSystemPermissionsDao;
+import com.codenvy.api.permission.server.model.impl.AbstractPermissions;
+import com.codenvy.api.permission.server.spi.PermissionsDao;
 import com.codenvy.ldap.MyLdapServer;
 import com.codenvy.ldap.TestConnectionFactoryProvider;
 import com.codenvy.ldap.sync.LdapSynchronizer.SyncResult;
@@ -22,6 +25,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
+import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import com.google.inject.persist.jpa.JpaPersistModule;
 import com.google.inject.util.Providers;
@@ -44,7 +48,10 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.util.HashSet;
+import java.util.Set;
 
 import static java.util.Arrays.asList;
 import static org.apache.directory.shared.ldap.entry.ModificationOperation.REPLACE_ATTRIBUTE;
@@ -187,6 +194,7 @@ public class LdapSynchronizationFlowTest {
             bind(EntityListenerInjectionManagerInitializer.class).asEagerSingleton();
             install(new JpaPersistModule("test"));
             install(new UserJpaModule());
+            bind(AdminUserCreator.class);
 
             // configure synchronizer
             bind(LdapEntrySelector.class).toProvider(LdapEntrySelectorProvider.class);
@@ -204,6 +212,20 @@ public class LdapSynchronizationFlowTest {
             bind(String.class).annotatedWith(Names.named("ldap.sync.group.filter")).toProvider(Providers.of(null));
             bind(String.class).annotatedWith(Names.named("ldap.sync.group.attr.members")).toProvider(Providers.of(null));
             bind(String.class).annotatedWith(Names.named("ldap.sync.user.additional_dn")).toProvider(Providers.of(null));
+
+            bindConstant().annotatedWith(Names.named("codenvy.admin.name")).to("name1");
+            bindConstant().annotatedWith(Names.named("codenvy.admin.initial_password")).to("name1");
+            bindConstant().annotatedWith(Names.named("codenvy.admin.email")).to("email@email.com");
+            bindConstant().annotatedWith(Names.named("auth.handler.default")).to("ldap");
+
+            bind(String[].class).annotatedWith(Names.named("che.account.reserved_names")).toInstance(new String[]{});
+            bind(new TypeLiteral<Set<String>>(){}).annotatedWith(Names.named("system.domain.actions")).toInstance(new HashSet<>());
+
+            Multibinder<PermissionsDao<? extends AbstractPermissions>> storages = Multibinder.newSetBinder(binder(),
+                                                                                                           new TypeLiteral<PermissionsDao<? extends AbstractPermissions>>() {});
+            storages.addBinding().to(JpaSystemPermissionsDao.class);
+
+
             @SuppressWarnings("unchecked") // all the pairs are (string, string) pairs
             final Pair<String, String>[] attributes = new Pair[] {
                     Pair.of("firstName", "giveName"),

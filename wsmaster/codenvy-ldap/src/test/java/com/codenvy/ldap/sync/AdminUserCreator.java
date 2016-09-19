@@ -12,7 +12,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.api.user.server;
+package com.codenvy.ldap.sync;
 
 import com.codenvy.api.permission.server.PermissionsManager;
 import com.codenvy.api.permission.server.SystemDomain;
@@ -57,7 +57,7 @@ public class AdminUserCreator implements EventSubscriber<AfterUserPersistedEvent
     PermissionsManager permissionsManager;
 
     @Inject
-    EventService  eventService;
+    EventService eventService;
 
     @Inject
     @SuppressWarnings("unused")
