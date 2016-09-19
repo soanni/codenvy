@@ -111,10 +111,18 @@ public class AdminUserCreator implements EventSubscriber<AfterUserPersistedEvent
         eventService.unsubscribe(this);
     }
 
+
+    public void subscribe() {
+        if (LdapAuthenticationHandler.TYPE.equals(authHandler)) {
+            eventService.subscribe(this);
+        }
+    }
+
     @Override
     public void onEvent(AfterUserPersistedEvent event) {
-        System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" + event.getUser().getName());
+
         if (event.getUser().getName().equals(name)) {
+            System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" + event.getUser().getName());
             grantSystemPermissions(event.getUser().getId());
         }
     }

@@ -75,6 +75,7 @@ public class LdapSynchronizationFlowTest {
         synchronizer = injector.getInstance(LdapSynchronizer.class);
         userDao = injector.getInstance(UserDao.class);
         injector.getInstance(JpaProfileDao.RemoveProfileBeforeUserRemovedEventSubscriber.class).subscribe();
+        injector.getInstance(AdminUserCreator.class).subscribe();
     }
 
     @AfterClass
