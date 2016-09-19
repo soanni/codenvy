@@ -29,10 +29,11 @@ export class LastFactoriesController {
    */
   constructor(codenvyAPI) {
 
-    this.factories = codenvyAPI.getFactory().getFactories();
+    this.factories = [];
+    this.factoriesMap = codenvyAPI.getFactory().getFactoriesMap();
 
     //TODO we should change to modificationDate after model's change
-    this.factoriesOrderBy = '-originFactory.creator.created';
+    this.factoriesOrderBy = '-creator.created';
 
     this.maxItems = 5;
 
@@ -40,10 +41,19 @@ export class LastFactoriesController {
     let promise = codenvyAPI.getFactory().fetchFactories(this.maxItems, 0);
 
     this.isLoading = true;
-    promise.then(() => {
+    promise.finally(() => {
       this.isLoading = false;
-    }, () => {
-      this.isLoading = false;
+      this.updateFactories();
+    });
+  }
+
+  /**
+   * Update factories array
+   */
+  updateFactories() {
+    this.factories.length = 0;
+    this.factoriesMap.forEach((factory) => {
+      this.factories.push(factory);
     });
   }
 
