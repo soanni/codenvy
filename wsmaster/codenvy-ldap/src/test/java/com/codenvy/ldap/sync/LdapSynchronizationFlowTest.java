@@ -50,6 +50,8 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -220,7 +222,8 @@ public class LdapSynchronizationFlowTest {
             bindConstant().annotatedWith(Names.named("auth.handler.default")).to("ldap");
 
             bind(String[].class).annotatedWith(Names.named("che.account.reserved_names")).toInstance(new String[]{});
-            bind(new TypeLiteral<Set<String>>(){}).annotatedWith(Names.named("system.domain.actions")).toInstance(new HashSet<>());
+            bind(new TypeLiteral<Set<String>>(){}).annotatedWith(Names.named("system.domain.actions")).toInstance(new HashSet<>(
+                    Arrays.asList("manageCodenvy", "setPermissions")));
 
             Multibinder<PermissionsDao<? extends AbstractPermissions>> storages = Multibinder.newSetBinder(binder(),
                                                                                                            new TypeLiteral<PermissionsDao<? extends AbstractPermissions>>() {});
