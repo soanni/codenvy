@@ -146,15 +146,11 @@ public class AuditManagerTest {
                 .thenReturn(asList(ws2User1Permissions, ws2User2Permissions));
         //Page
         Page page = mock(Page.class);
-        Page emptyPage = mock(Page.class);
         when(page.getItems()).thenReturn(asList(user1, user2));
-        when(page.getNextPageRef()).thenReturn(Optional.empty());
-        when(emptyPage.getItems()).thenReturn(emptyList());
-        when(userManager.getAll(1, 0)).thenReturn(page);
+        when(page.hasNextPage()).thenReturn(false);
         when(userManager.getAll(30, 0)).thenReturn(page);
-        when(userManager.getAll(30, 2)).thenReturn(emptyPage);
 
-        when(userDao.getTotalCount()).thenReturn(2);
+        when(userDao.getTotalCount()).thenReturn(2L);
 
         auditManager =
                 new AuditManager(userManager, userDao, workspaceManager, permissionsManager, licenseManager, new AuditReportPrinter());

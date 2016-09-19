@@ -25,7 +25,6 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.Page;
-import org.eclipse.che.api.core.Page.PageRef;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.user.server.jpa.JpaUserDao;
@@ -47,7 +46,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.google.common.io.Files.createTempDir;
@@ -95,6 +93,8 @@ public class AuditManager {
      *         if an error occurs
      * @throws ConflictException
      *         if generating report is not finished by other user
+     * @throws IOException
+     *         if failed to create file for audit report
      */
     public Path generateAuditReport() throws ServerException, ConflictException, IOException {
         if (inProgress.get()) {
@@ -118,6 +118,7 @@ public class AuditManager {
             printAllUsers(auditReport);
         } catch (Exception exception) {
             deleteReport(auditReport);
+            LOG.error(exception.getMessage(), exception);
             throw new ServerException(exception.getMessage(), exception);
         } finally {
             inProgress.set(false);
@@ -127,11 +128,12 @@ public class AuditManager {
     }
 
     private void printAllUsers(Path auditReport) throws ServerException {
-        //Get first page.
-        Page<UserImpl> currentPage = userManager.getAll(30, 0);
-        do {
-            //Print info about users from page with their workspaces to audit report.
-            for (UserImpl user : currentPage.getItems()) {
+        int skipItems = 0;
+        while (true) {
+            Page<UserImpl> page = userManager.getAll(30, skipItems);
+            skipItems += page.getItemsCount();
+
+            for (UserImpl user : page.getItems()) {
                 List<WorkspaceImpl> workspaces;
                 try {
                     workspaces = workspaceManager.getWorkspaces(user.getId());
@@ -149,23 +151,20 @@ public class AuditManager {
                 }
                 reportPrinter.printUserInfoWithHisWorkspacesInfo(auditReport, user, workspaces, wsPermissions);
             }
-            //Get next page if exist, otherwise stop printing the audit report.
-            final Optional<PageRef> nextPageRefOpt = currentPage.getNextPageRef();
-            if (nextPageRefOpt.isPresent()) {
-                final PageRef nextPageRef = nextPageRefOpt.get();
-                currentPage = userManager.getAll(nextPageRef.getPageSize(), nextPageRef.getItemsBefore());
-            } else {
+
+            //Stop printing report if last page was printed
+            if (!page.hasNextPage()) {
                 break;
             }
-        } while (true);
+        }
     }
 
     @VisibleForTesting
     void deleteReport(Path auditReport) {
         try {
             FileUtils.deleteDirectory(new File(auditReport.toFile().getParent()));
-        } catch (IOException e) {
-            LOG.error(e.getMessage(), e);
+        } catch (IOException exception) {
+            LOG.error(exception.getMessage(), exception);
         }
     }
 }

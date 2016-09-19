@@ -63,7 +63,7 @@ class AuditReportPrinter {
      * @throws ServerException
      *         if an error occurs
      */
-    void printHeader(Path auditReport, int allUsersNumber, CodenvyLicense license) throws ServerException {
+    void printHeader(Path auditReport, long allUsersNumber, CodenvyLicense license) throws ServerException {
         printRow("Number of all users: " + allUsersNumber + "\n", auditReport);
         if (license != null) {
             printRow("Number of users licensed: " + license.getNumberOfUsers() + "\n", auditReport);
