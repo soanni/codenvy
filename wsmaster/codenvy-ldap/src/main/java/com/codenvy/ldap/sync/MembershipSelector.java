@@ -26,10 +26,10 @@ import org.ldaptive.ad.handler.ObjectGuidHandler;
 
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Set;
 
 import static java.lang.String.format;
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 import static org.ldaptive.ResultCode.SUCCESS;
 import static org.ldaptive.SearchScope.OBJECT;
 import static org.ldaptive.SearchScope.SUBTREE;
@@ -78,7 +78,7 @@ public class MembershipSelector implements LdapEntrySelector {
                                                         .flatMap(entry -> entry.getAttribute(membersAttr)
                                                                                .getStringValues()
                                                                                .stream())
-                                                        .collect(toList()),
+                                                        .collect(toSet()),
                                                 connection,
                                                 usersFilter,
                                                 returnAttrs);
@@ -99,11 +99,11 @@ public class MembershipSelector implements LdapEntrySelector {
     }
 
     private static class RequestEachEntryIterable implements Iterable<LdapEntry> {
-        private final List<String> dns;
+        private final Set<String>  dns;
         private final Connection   connection;
         private final SearchFilter usersFilter;
 
-        private RequestEachEntryIterable(List<String> dns,
+        private RequestEachEntryIterable(Set<String> dns,
                                          Connection connection,
                                          String usersFilter,
                                          String[] returnAttrs) {
