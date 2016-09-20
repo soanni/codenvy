@@ -20,8 +20,8 @@ import com.codenvy.api.permission.server.model.impl.SystemPermissionsImpl;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Stage;
 import com.google.inject.name.Names;
+import com.google.inject.persist.jpa.JpaPersistModule;
 
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.jdbc.jpa.guice.JpaInitializer;
@@ -128,12 +128,13 @@ public class AdminUserCreatorTest {
         @Override
         protected void configure() {
             install(new InitModule(PostConstruct.class));
+            install(new JpaPersistModule("main"));
             bind(JpaInitializer.class).toInstance(mock(JpaInitializer.class));
             bind(UserManager.class).toInstance(userManager);
             bindConstant().annotatedWith(Names.named("codenvy.admin.name")).to(NAME);
             bindConstant().annotatedWith(Names.named("codenvy.admin.initial_password")).to(PASSWORD);
             bindConstant().annotatedWith(Names.named("codenvy.admin.email")).to(EMAIL);
-            bindConstant().annotatedWith(Names.named("auth.handler.default")).to("org");
+            bindConstant().annotatedWith(Names.named("sys.auth.handler.default")).to("org");
             bind(PermissionsManager.class).toInstance(permissionsManager);
         }
     }
@@ -142,12 +143,13 @@ public class AdminUserCreatorTest {
         @Override
         protected void configure() {
             install(new InitModule(PostConstruct.class));
+            install(new JpaPersistModule("main"));
             bind(JpaInitializer.class).toInstance(mock(JpaInitializer.class));
             bind(UserManager.class).toInstance(userManager);
             bindConstant().annotatedWith(Names.named("codenvy.admin.name")).to(NAME);
             bindConstant().annotatedWith(Names.named("codenvy.admin.initial_password")).to(PASSWORD);
             bindConstant().annotatedWith(Names.named("codenvy.admin.email")).to(EMAIL);
-            bindConstant().annotatedWith(Names.named("auth.handler.default")).to("ldap");
+            bindConstant().annotatedWith(Names.named("sys.auth.handler.default")).to("ldap");
             bind(PermissionsManager.class).toInstance(permissionsManager);
         }
     }

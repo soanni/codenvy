@@ -78,7 +78,7 @@ public class AdminUserCreator implements EventSubscriber<AfterUserPersistedEvent
     private String email;
 
     @Inject
-    @Named("auth.handler.default")
+    @Named("sys.auth.handler.default")
     private String authHandler;
 
     @PostConstruct
