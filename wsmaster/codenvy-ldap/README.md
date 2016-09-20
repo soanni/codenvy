@@ -160,20 +160,20 @@ attribute mapping pairs. Available application attributes:
 
 #### AD example
 ```
-ldap.url=ldap://????
+ldap.url=ldap://???? <--- Change this 
 
-ldap.base_dn=DC=ad,DC=codenvy-dev,DC=com
-ldap.auth.user.filter=(&(objectCategory=Person)(sAMAccountName=*))
-ldap.auth.authentication_type=AD
+ldap.base_dn=DC=ad,DC=codenvy-dev,DC=com <--- Change this 
+ldap.auth.user.filter=(&(objectCategory=Person)(sAMAccountName=*)) <--- Change this 
+ldap.auth.authentication_type=AD <--- Change this 
 
-ldap.auth.dn_format=CN=%1$s,CN=Users,DC=ad,DC=codenvy-dev,DC=com
+ldap.auth.dn_format=CN=%1$s,CN=Users,DC=ad,DC=codenvy-dev,DC=com <--- Change this 
 ldap.auth.user_password_attribute=NULL
 ldap.auth.allow_multiple_dns=false
 ldap.auth.subtree_search=true
 
 ldap.connection.provider=NULL
-ldap.connection.bind.dn=CN=skryzhny,CN=Users,DC=ad,DC=codenvy-dev,DC=com
-ldap.connection.bind.password=?????
+ldap.connection.bind.dn=CN=skryzhny,CN=Users,DC=ad,DC=codenvy-dev,DC=com <--- Change this 
+ldap.connection.bind.password=????? <--- Change this 
 ldap.connection.use_ssl=false
 ldap.connection.use_start_tls=false
 ldap.connection.pool.min_size=3
@@ -207,11 +207,11 @@ ldap.sync.period_ms=-1
 ldap.sync.page.size=1000
 ldap.sync.page.read_timeout_ms=30000
 ldap.sync.user.additional_dn=NULL
-ldap.sync.user.filter=(&(objectCategory=Person)(sAMAccountName=*))
-ldap.sync.user.attr.email=cn
-ldap.sync.user.attr.id=objectGUID
-ldap.sync.user.attr.name=cn
-ldap.sync.profile.attrs=firstName=sAMAccountName
+ldap.sync.user.filter=(&(objectCategory=Person)(sAMAccountName=*)) <--- Change this 
+ldap.sync.user.attr.email=cn <--- Change this 
+ldap.sync.user.attr.id=objectGUID <--- Change this 
+ldap.sync.user.attr.name=cn <--- Change this 
+ldap.sync.profile.attrs=firstName=sAMAccountName <--- Change this 
 ldap.sync.group.additional_dn=NULL
 ldap.sync.group.filter=NULL
 ldap.sync.group.attr.members=NULL
