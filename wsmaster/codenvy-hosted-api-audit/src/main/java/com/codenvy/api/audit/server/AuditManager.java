@@ -94,7 +94,7 @@ public class AuditManager {
      * @throws ServerException
      *         if an error occurs
      * @throws ConflictException
-     *         if generating report is not finished by other user
+     *         if generating report is being run by other user
      * @throws IOException
      *         if failed to create file for audit report
      */
@@ -172,15 +172,4 @@ public class AuditManager {
             LOG.error(exception.getMessage(), exception);
         }
     }
-
-
-    public static void main(String[] args) {
-        long a = Long.MAX_VALUE-1000;
-        System.out.println(a);
-
-        int b = (int)a;
-        System.out.println(b);
-    }
-
-
 }
