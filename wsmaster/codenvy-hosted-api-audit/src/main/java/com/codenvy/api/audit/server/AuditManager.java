@@ -95,19 +95,18 @@ public class AuditManager {
      *         if an error occurs
      * @throws ConflictException
      *         if generating report is being run by other user
-     * @throws IOException
-     *         if failed to create file for audit report
      */
-    public Path generateAuditReport() throws ServerException, ConflictException, IOException {
-        if (inProgress.getAndSet(true)) {
-            throw new ConflictException("This command has been running by other user");
+    public Path generateAuditReport() throws ServerException, ConflictException {
+        if (!inProgress.compareAndSet(false, true)) {
+            throw new ConflictException("This command is being run by other user");
         }
 
-        String dateTime = new SimpleDateFormat("dd-MM-yyyy_hh:mm:ss").format(new Date());
-        Path auditReport = Paths.get(createTempDir().getAbsolutePath(), "/report_" + dateTime + ".txt");
-        Files.createFile(auditReport);
-
+        Path auditReport = null;
         try {
+            String dateTime = new SimpleDateFormat("dd-MM-yyyy_hh:mm:ss").format(new Date());
+            auditReport = Paths.get(createTempDir().getAbsolutePath(), "/report_" + dateTime + ".txt");
+            Files.createFile(auditReport);
+
             CodenvyLicense license = null;
             try {
                 license = licenseManager.load();
