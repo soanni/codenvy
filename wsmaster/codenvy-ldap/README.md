@@ -8,6 +8,8 @@ LDAP Authentication
      *  ANONYMOUS -  Anonymous search followed by user simple bind.
      *  DIRECT -  Direct Bind. Compute user DN from format string and perform simple bind.
      *  SASL - SASL bind search.
+- __ldap.auth.dn_format__ - Resolves an entry DN by using String#format. This resolver is typically used when an entry DN
+can be formatted directly from the user identifier. For instance, entry DNs of the form  uid=dfisher,ou=people,dc=ldaptive,dc=org could be formattedfrom uid=%s,ou=people,dc=ldaptive,dc=org. The example: _CN=%1$s,CN=Users,DC=ad,DC=codenvy-dev,DC=com_
 
 #### Connection configuration
 
