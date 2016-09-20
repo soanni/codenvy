@@ -25,6 +25,7 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.Page;
+import org.eclipse.che.api.core.Page.PageRef;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.user.server.jpa.JpaUserDao;
@@ -46,6 +47,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.google.common.io.Files.createTempDir;
@@ -126,12 +128,10 @@ public class AuditManager {
     }
 
     private void printAllUsers(Path auditReport) throws ServerException {
-        int skipItems = 0;
-        while (true) {
-            Page<UserImpl> page = userManager.getAll(30, skipItems);
-            skipItems += page.getItemsCount();
-
-            for (UserImpl user : page.getItems()) {
+        Page<UserImpl> currentPage = userManager.getAll(30, 0);
+        do {
+            //Print users with their workspaces from current page
+            for (UserImpl user : currentPage.getItems()) {
                 List<WorkspaceImpl> workspaces;
                 try {
                     workspaces = workspaceManager.getWorkspaces(user.getId());
@@ -149,12 +149,19 @@ public class AuditManager {
                 }
                 reportPrinter.printUserInfoWithHisWorkspacesInfo(auditReport, user, workspaces, wsPermissions);
             }
-
-            //Stop printing report if last page was printed
-            if (!page.hasNextPage()) {
+            //Initialize next page if exist, otherwise stop printing report
+            final Optional<PageRef> nextPageRefOpt = currentPage.getNextPageRef();
+            if (nextPageRefOpt.isPresent()) {
+                final PageRef nextPageRef = nextPageRefOpt.get();
+                final long itemsBefore = nextPageRef.getItemsBefore();
+                if (itemsBefore < Integer.MAX_VALUE) {
+                    throw new IllegalArgumentException("Skip count limit was reached while retrieving all users");
+                }
+                currentPage = userManager.getAll(nextPageRef.getPageSize(), (int)itemsBefore);
+            } else {
                 break;
             }
-        }
+        } while (true);
     }
 
     @VisibleForTesting
@@ -165,4 +172,15 @@ public class AuditManager {
             LOG.error(exception.getMessage(), exception);
         }
     }
+
+
+    public static void main(String[] args) {
+        long a = Long.MAX_VALUE-1000;
+        System.out.println(a);
+
+        int b = (int)a;
+        System.out.println(b);
+    }
+
+
 }
