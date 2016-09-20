@@ -15,7 +15,8 @@ in milliseconds. The example: _60000_
 the pool. The example: _3_
 - __ldap.connection.pool.max_size__ - the size of maximum available connections in
 the pool. The example: _10_
-
+- __ldap.connection.bind.dn__ -  DN to bind as before performing operations. The example: _userX_
+- __ldap.connection.bind.password__ - Credential for the bind DN. The example: _password_
 
 
 LDAP Synchronizer
