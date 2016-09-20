@@ -98,7 +98,7 @@ class AuditReportPrinter {
      * @throws ServerException
      *         if an error occurs
      */
-    void printUserInfoWithHisWorkspacesInfo(Path auditReport, UserImpl user, List<WorkspaceImpl> workspaces,
+    void printUserInfoWithHisWorkspacesInfo(Path auditReport, UserImpl user, @Nullable List<WorkspaceImpl> workspaces,
                                             Map<String, List<AbstractPermissions>> wsPermissions)
             throws ServerException {
 
