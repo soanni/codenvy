@@ -21,6 +21,7 @@ import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +64,7 @@ class AuditReportPrinter {
      * @throws ServerException
      *         if an error occurs
      */
-    void printHeader(Path auditReport, long allUsersNumber, CodenvyLicense license) throws ServerException {
+    void printHeader(Path auditReport, long allUsersNumber, @Nullable CodenvyLicense license) throws ServerException {
         printRow("Number of all users: " + allUsersNumber + "\n", auditReport);
         if (license != null) {
             printRow("Number of users licensed: " + license.getNumberOfUsers() + "\n", auditReport);
