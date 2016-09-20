@@ -70,6 +70,7 @@ export class CodenvyNavBarCtrl {
       login: '/site/login',
       dashboard: '#/',
       workspaces: '#/workspaces',
+      stacks: '#/stacks',
       factories: '#/factories',
       administration: '#/onprem/administration',
       usermanagement: '#/admin/usermanagement',

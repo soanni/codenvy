@@ -65,6 +65,7 @@ import org.eclipse.che.api.factory.server.FactoryEditValidator;
 import org.eclipse.che.api.factory.server.FactoryMessageBodyAdapter;
 import org.eclipse.che.api.factory.server.FactoryParametersResolver;
 import org.eclipse.che.api.factory.server.FactoryService;
+import org.eclipse.che.api.factory.server.jpa.FactoryJpaModule;
 import org.eclipse.che.api.factory.server.jpa.JpaFactoryDao;
 import org.eclipse.che.api.factory.server.spi.FactoryDao;
 import org.eclipse.che.api.machine.server.jpa.JpaRecipeDao;
@@ -179,6 +180,7 @@ public class OnPremisesIdeApiModule extends AbstractModule {
         install(new WorkspaceJpaModule());
         install(new OnPremisesJpaWorkspaceModule());
         install(new OnPremisesJpaMachineModule());
+        install(new FactoryJpaModule());
         bind(AccountDao.class).to(JpaAccountDao.class);
         bind(FactoryDao.class).to(JpaFactoryDao.class);
         bind(StackDao.class).to(JpaStackDao.class);
