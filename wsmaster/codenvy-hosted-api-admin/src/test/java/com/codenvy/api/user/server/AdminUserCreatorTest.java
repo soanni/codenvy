@@ -24,6 +24,7 @@ import com.google.inject.name.Names;
 import com.google.inject.persist.jpa.JpaPersistModule;
 
 import org.eclipse.che.api.core.NotFoundException;
+import org.eclipse.che.api.core.jdbc.jpa.eclipselink.EntityListenerInjectionManagerInitializer;
 import org.eclipse.che.api.core.jdbc.jpa.guice.JpaInitializer;
 import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.user.server.event.AfterUserPersistedEvent;
@@ -128,14 +129,15 @@ public class AdminUserCreatorTest {
         @Override
         protected void configure() {
             install(new InitModule(PostConstruct.class));
-            install(new JpaPersistModule("main"));
-            bind(JpaInitializer.class).toInstance(mock(JpaInitializer.class));
+            install(new JpaPersistModule("test"));
+            bind(JpaInitializer.class).asEagerSingleton();
             bind(UserManager.class).toInstance(userManager);
             bindConstant().annotatedWith(Names.named("codenvy.admin.name")).to(NAME);
             bindConstant().annotatedWith(Names.named("codenvy.admin.initial_password")).to(PASSWORD);
             bindConstant().annotatedWith(Names.named("codenvy.admin.email")).to(EMAIL);
             bindConstant().annotatedWith(Names.named("sys.auth.handler.default")).to("org");
             bind(PermissionsManager.class).toInstance(permissionsManager);
+            bind(EntityListenerInjectionManagerInitializer.class).asEagerSingleton();
         }
     }
 
@@ -143,14 +145,15 @@ public class AdminUserCreatorTest {
         @Override
         protected void configure() {
             install(new InitModule(PostConstruct.class));
-            install(new JpaPersistModule("main"));
-            bind(JpaInitializer.class).toInstance(mock(JpaInitializer.class));
+            install(new JpaPersistModule("test"));
+            bind(JpaInitializer.class).asEagerSingleton();
             bind(UserManager.class).toInstance(userManager);
             bindConstant().annotatedWith(Names.named("codenvy.admin.name")).to(NAME);
             bindConstant().annotatedWith(Names.named("codenvy.admin.initial_password")).to(PASSWORD);
             bindConstant().annotatedWith(Names.named("codenvy.admin.email")).to(EMAIL);
             bindConstant().annotatedWith(Names.named("sys.auth.handler.default")).to("ldap");
             bind(PermissionsManager.class).toInstance(permissionsManager);
+            bind(EntityListenerInjectionManagerInitializer.class).asEagerSingleton();
         }
     }
 }
