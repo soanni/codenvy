@@ -43,7 +43,7 @@ import static com.google.common.io.Files.append;
 @Singleton
 class AuditReportPrinter {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AuditService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AuditReportPrinter.class);
 
     /**
      * Prints header of audit report in format:

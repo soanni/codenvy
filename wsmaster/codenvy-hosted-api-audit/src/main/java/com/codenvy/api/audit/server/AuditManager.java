@@ -61,7 +61,7 @@ import static java.util.Collections.emptyList;
 @Singleton
 public class AuditManager {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AuditService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AuditManager.class);
 
     private final JpaUserDao            userDao;
     private final WorkspaceManager      workspaceManager;
