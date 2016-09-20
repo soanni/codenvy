@@ -159,6 +159,8 @@ attribute mapping pairs. Available application attributes:
 
 
 #### AD example
+
+Properties to be configured in `/etc/puppet/manifests/nodes/codenvy/codenvy.pp`(this is an example, take a look at comments)
 ```
 ldap.url=ldap://???? <--- Change this 
 
