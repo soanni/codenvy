@@ -1,5 +1,13 @@
 LDAP Authentication
 ---
+#### Authentication configuration
+- __ldap.auth.user.filter__ - Search filter to execute. The example: _(&(objectCategory=Person)(sAMAccountName=*))_
+- __ldap.auth.authentication_type__ - Type authentication to use:
+     *  AD - Active Directory. Users authenticate with sAMAccountName.
+     *  AUTHENTICATED - Authenticated Search.  Manager bind/search followed by user simple bind.
+     *  ANONYMOUS -  Anonymous search followed by user simple bind.
+     *  DIRECT -  Direct Bind. Compute user DN from format string and perform simple bind.
+     *  SASL - SASL bind search.
 
 #### Connection configuration
 
