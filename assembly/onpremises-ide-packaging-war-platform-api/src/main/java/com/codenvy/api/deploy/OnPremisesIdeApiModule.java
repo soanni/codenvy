@@ -282,8 +282,7 @@ public class OnPremisesIdeApiModule extends AbstractModule {
                                 new RequestMethodFilter("GET")
                         ),
                         new UriStartFromRequestFilter("/api/license/legality")
-                )
-                                            );
+                ));
 
 
         bindConstant().annotatedWith(Names.named("notification.server.propagate_events")).to("vfs,workspace");
