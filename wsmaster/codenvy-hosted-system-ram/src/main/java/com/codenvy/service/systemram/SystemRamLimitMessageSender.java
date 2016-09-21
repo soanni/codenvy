@@ -17,7 +17,6 @@ package com.codenvy.service.systemram;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 
-import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.commons.schedule.ScheduleDelay;
 import com.codenvy.service.systemram.dto.SystemRamLimitDto;
 
@@ -38,7 +37,7 @@ import static org.eclipse.che.dto.server.DtoFactory.newDto;
  * @author Igor Vinokur
  */
 @Singleton
-class SystemRamLimitMessageSender {
+public class SystemRamLimitMessageSender {
 
     private final static Logger LOG = LoggerFactory.getLogger(SystemRamLimitMessageSender.class);
 

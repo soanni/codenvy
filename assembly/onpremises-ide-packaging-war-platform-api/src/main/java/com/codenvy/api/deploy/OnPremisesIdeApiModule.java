@@ -40,6 +40,7 @@ import com.codenvy.report.ReportModule;
 import com.codenvy.service.systemram.DockerBasedSystemRamInfoProvider;
 import com.codenvy.service.systemram.SystemRamInfoProvider;
 import com.codenvy.service.systemram.SystemRamService;
+import com.codenvy.service.systemram.SystemRamLimitMessageSender;
 import com.google.inject.AbstractModule;
 import com.google.inject.Key;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
@@ -209,6 +210,8 @@ public class OnPremisesIdeApiModule extends AbstractModule {
         bind(com.codenvy.service.http.WorkspaceInfoCache.class);
 
         bind(com.codenvy.service.password.PasswordService.class);
+
+        bind(SystemRamLimitMessageSender.class);
 
         bind(SystemRamService.class);
 
