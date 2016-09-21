@@ -42,6 +42,7 @@ public class OnPremisesIdeApiServletModule extends ServletModule {
                "/admin/user",
                "/admin/user/*",
                "/analytics/*",
+               "/workspace-agent-health/*",
                "/invite/*",
                "/factory",
                "/workspace",
