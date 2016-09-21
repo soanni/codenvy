@@ -34,6 +34,8 @@ import com.codenvy.auth.sso.client.filter.RequestMethodFilter;
 import com.codenvy.auth.sso.client.filter.UriStartFromRequestFilter;
 import com.codenvy.auth.sso.server.organization.UserCreationValidator;
 import com.codenvy.auth.sso.server.organization.UserCreator;
+import com.codenvy.ldap.LdapModule;
+import com.codenvy.ldap.auth.LdapAuthenticationHandler;
 import com.codenvy.plugin.github.factory.resolver.GithubFactoryParametersResolver;
 import com.codenvy.plugin.gitlab.factory.resolver.GitlabFactoryParametersResolver;
 import com.codenvy.report.ReportModule;
@@ -382,6 +384,11 @@ public class OnPremisesIdeApiModule extends AbstractModule {
         final MessageBodyAdapterInterceptor interceptor = new MessageBodyAdapterInterceptor();
         requestInjection(interceptor);
         bindInterceptor(subclassesOf(CheJsonProvider.class), names("readFrom"), interceptor);
+
+        //ldap
+        if (LdapAuthenticationHandler.TYPE.equals(System.getProperty("auth.handler.default"))) {
+            install(new LdapModule());
+        }
 
         // install report sender
         install(new ReportModule());
