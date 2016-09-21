@@ -67,9 +67,6 @@ public class AuditReportPrinterTest {
             "user@email.com is owner of 1 workspace and has permissions in 2 workspaces\n" +
             "   └ Workspace1Name, is owner: true, permissions: [read, use, run, configure, setPermissions, delete]\n" +
             "   └ Workspace2Name, is owner: false, permissions: [ERROR] Failed to retrieve workspace permissions!\n";
-    private static final String GET_USER_WORKSPACES_ERROR                                         =
-            "[ERROR] Failed to receive list of related workspaces for user User1Id!\n";
-
 
     @Mock
     UserImpl user;
@@ -159,6 +156,7 @@ public class AuditReportPrinterTest {
         auditReportPrinter.printUserInfoWithHisWorkspacesInfo(auditReport,
                                                               user,
                                                               asList(workspace1, workspace2),
+                                                              2,
                                                               map);
 
         //then
@@ -166,7 +164,7 @@ public class AuditReportPrinterTest {
     }
 
     @Test
-    public void shouldWriteUserInfoWithHisWorkspacesInfoWithoutWSToFileWithoutWorkspace1Permissions() throws Exception {
+    public void shouldWriteUserInfoWithHisWorkspacesInfoEvenIfUserDoNotHavePermissionsToHisWorkspace() throws Exception {
         //given
         Map<String, List<AbstractPermissions>> map = new HashMap<>();
         map.put("Workspace1Id", singletonList(ws1User1Permissions));
@@ -176,21 +174,10 @@ public class AuditReportPrinterTest {
         auditReportPrinter.printUserInfoWithHisWorkspacesInfo(auditReport,
                                                               user,
                                                               asList(workspace1, workspace2),
+                                                              2,
                                                               map);
 
         //then
         assertEquals(USER_INFO_WITH_HIS_WORKSPACES_INFO_WITHOUT_WORKSPACE2_PERMISSIONS, readFileToString(auditReport.toFile()));
-    }
-
-    @Test
-    public void shouldPrintErrorIfWorkspacesListIsNull() throws Exception {
-        //when
-        auditReportPrinter.printUserInfoWithHisWorkspacesInfo(auditReport,
-                                                              user,
-                                                              null,
-                                                              emptyMap());
-
-        //then
-        assertEquals(GET_USER_WORKSPACES_ERROR, readFileToString(auditReport.toFile()));
     }
 }
