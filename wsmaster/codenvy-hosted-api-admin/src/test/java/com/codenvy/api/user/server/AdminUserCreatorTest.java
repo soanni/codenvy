@@ -16,6 +16,7 @@ package com.codenvy.api.user.server;
 
 import com.codenvy.api.permission.server.AbstractPermissionsDomain;
 import com.codenvy.api.permission.server.PermissionsManager;
+import com.codenvy.api.permission.server.model.impl.AbstractPermissions;
 import com.codenvy.api.permission.server.model.impl.SystemPermissionsImpl;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -32,6 +33,8 @@ import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.inject.lifecycle.InitModule;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
@@ -39,9 +42,13 @@ import org.testng.annotations.Test;
 
 import javax.annotation.PostConstruct;
 
+import java.util.List;
+
 import static java.util.Collections.emptyList;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyList;
+import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.doNothing;
@@ -75,6 +82,8 @@ public class AdminUserCreatorTest {
         doNothing().when(permissionsManager).storePermission(any(SystemPermissionsImpl.class));
         when(permissionsManager.getDomain(anyString())).thenReturn(cast(mock));
         when(mock.getAllowedActions()).thenReturn(emptyList());
+        when(mock.newInstance(anyString(), anyString(), anyListOf(String.class))).then(
+                invocation -> new SystemPermissionsImpl((String)invocation.getArguments()[0], (List<String>)invocation.getArguments()[2]));
         when(userManager.getByName(anyString())).thenReturn(user);
         when(userManager.create(any(UserImpl.class), anyBoolean())).thenReturn(user);
     }
@@ -124,24 +133,23 @@ public class AdminUserCreatorTest {
         }));
     }
 
-
-    public class OrgModule extends AbstractModule {
+    public class OrgModule extends BaseModule {
         @Override
         protected void configure() {
-            install(new InitModule(PostConstruct.class));
-            install(new JpaPersistModule("test"));
-            bind(JpaInitializer.class).asEagerSingleton();
-            bind(UserManager.class).toInstance(userManager);
-            bindConstant().annotatedWith(Names.named("codenvy.admin.name")).to(NAME);
-            bindConstant().annotatedWith(Names.named("codenvy.admin.initial_password")).to(PASSWORD);
-            bindConstant().annotatedWith(Names.named("codenvy.admin.email")).to(EMAIL);
+            super.configure();
             bindConstant().annotatedWith(Names.named("sys.auth.handler.default")).to("org");
-            bind(PermissionsManager.class).toInstance(permissionsManager);
-            bind(EntityListenerInjectionManagerInitializer.class).asEagerSingleton();
         }
     }
 
-    public class LdapModule extends AbstractModule {
+    public class LdapModule extends BaseModule {
+        @Override
+        protected void configure() {
+            super.configure();
+            bindConstant().annotatedWith(Names.named("sys.auth.handler.default")).to("ldap");
+        }
+    }
+
+    private class BaseModule extends AbstractModule {
         @Override
         protected void configure() {
             install(new InitModule(PostConstruct.class));
@@ -151,9 +159,9 @@ public class AdminUserCreatorTest {
             bindConstant().annotatedWith(Names.named("codenvy.admin.name")).to(NAME);
             bindConstant().annotatedWith(Names.named("codenvy.admin.initial_password")).to(PASSWORD);
             bindConstant().annotatedWith(Names.named("codenvy.admin.email")).to(EMAIL);
-            bindConstant().annotatedWith(Names.named("sys.auth.handler.default")).to("ldap");
             bind(PermissionsManager.class).toInstance(permissionsManager);
             bind(EntityListenerInjectionManagerInitializer.class).asEagerSingleton();
         }
     }
+
 }

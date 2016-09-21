@@ -14,9 +14,10 @@
  */
 package com.codenvy.api.user.server;
 
+import com.codenvy.api.permission.server.AbstractPermissionsDomain;
 import com.codenvy.api.permission.server.PermissionsManager;
 import com.codenvy.api.permission.server.SystemDomain;
-import com.codenvy.api.permission.server.model.impl.SystemPermissionsImpl;
+import com.codenvy.api.permission.server.model.impl.AbstractPermissions;
 import com.codenvy.ldap.auth.LdapAuthenticationHandler;
 import com.google.inject.Singleton;
 
@@ -88,14 +89,13 @@ public class AdminUserCreator implements EventSubscriber<AfterUserPersistedEvent
             eventService.subscribe(this);
             shouldCreateAdmin = false;
         }
-        User adminUser;
         try {
-            adminUser = userManager.getByName(name);
+            User adminUser = userManager.getByName(name);
             grantSystemPermissions(adminUser.getId());
         } catch (NotFoundException ex) {
             if (shouldCreateAdmin) {
                 try {
-                    adminUser = userManager.create(new UserImpl(name, email, name, password, emptyList()), false);
+                    User adminUser = userManager.create(new UserImpl(name, email, name, password, emptyList()), false);
                     grantSystemPermissions(adminUser.getId());
                     LOG.info("Admin user '" + name + "' successfully created");
                 } catch (ConflictException cfEx) {
@@ -120,8 +120,8 @@ public class AdminUserCreator implements EventSubscriber<AfterUserPersistedEvent
     private void grantSystemPermissions(String userId) {
         // Add all possible system permissions
         try {
-            permissionsManager.storePermission(
-                    new SystemPermissionsImpl(userId, permissionsManager.getDomain(SystemDomain.DOMAIN_ID).getAllowedActions()));
+            AbstractPermissionsDomain<? extends AbstractPermissions> systemDomain = permissionsManager.getDomain(SystemDomain.DOMAIN_ID);
+            permissionsManager.storePermission(systemDomain.newInstance(userId, null, systemDomain.getAllowedActions()));
         } catch (ServerException | NotFoundException | ConflictException e) {
             LOG.warn(format("System permissions creation failed for user %s", userId), e.getLocalizedMessage());
         }
