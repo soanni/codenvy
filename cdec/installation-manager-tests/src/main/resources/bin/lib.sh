@@ -138,9 +138,9 @@ retrieveTestLogs() {
     scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${INSTALL_ON_NODE}:/home/vagrant/codenvy/cli/logs/cli.log ${logDirName}/cli.log
 }
 
-vagrantDestroy() {
-    vagrant destroy -f >> ${TEST_LOG}
-}
+#vagrantDestroy() {
+#    vagrant destroy -f >> ${TEST_LOG}
+#}
 
 validateInstalledCodenvyVersion() {
     VERSION=$1

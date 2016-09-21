@@ -38,11 +38,12 @@ import org.testng.annotations.Test;
 
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static java.nio.file.Files.createTempFile;
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.io.FileUtils.readFileToString;
 import static org.mockito.Matchers.anyString;
@@ -50,6 +51,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * Tests for {@link AuditService}.
@@ -59,7 +61,7 @@ import static org.testng.Assert.assertEquals;
 @Listeners(value = {EverrestJetty.class, MockitoTestNGListener.class})
 public class AuditManagerTest {
 
-    private static final String FULL_AUDIT_REPORT                          =
+    private static final String FULL_AUDIT_REPORT                    =
             "Number of all users: 2\n" +
             "Number of users licensed: 15\n" +
             "Date when license expires: 01 January 2016\n" +
@@ -68,7 +70,7 @@ public class AuditManagerTest {
             "   └ Workspace2Name, is owner: false, permissions: [read, use, run, configure, setPermissions]\n" +
             "user2@email.com is owner of 1 workspace and has permissions in 1 workspace\n" +
             "   └ Workspace2Name, is owner: true, permissions: [read, use, run, configure, setPermissions, delete]\n";
-    private static final String AUDIT_REPORT_WITHOUT_LICENSE               =
+    private static final String AUDIT_REPORT_WITHOUT_LICENSE         =
             "Number of all users: 2\n" +
             "[ERROR] Failed to retrieve license!\n" +
             "user@email.com is owner of 1 workspace and has permissions in 2 workspaces\n" +
@@ -76,7 +78,7 @@ public class AuditManagerTest {
             "   └ Workspace2Name, is owner: false, permissions: [read, use, run, configure, setPermissions]\n" +
             "user2@email.com is owner of 1 workspace and has permissions in 1 workspace\n" +
             "   └ Workspace2Name, is owner: true, permissions: [read, use, run, configure, setPermissions, delete]\n";
-    private static final String AUDIT_REPORT_WITHOUT_USER_WORKSPACES       =
+    private static final String AUDIT_REPORT_WITHOUT_USER_WORKSPACES =
             "Number of all users: 2\n" +
             "Number of users licensed: 15\n" +
             "Date when license expires: 01 January 2016\n" +
@@ -89,13 +91,15 @@ public class AuditManagerTest {
     @Mock
     private UserManager           userManager;
     @Mock
-    private JpaUserDao            userDao;
-    @Mock
     private WorkspaceManager      workspaceManager;
     @Mock
     private PermissionsManager    permissionsManager;
     @Mock
     private CodenvyLicenseManager licenseManager;
+    @Mock
+    private WorkspaceImpl         workspace1;
+    @Mock
+    private WorkspaceImpl         workspace2;
 
     private AuditManager auditManager;
 
@@ -121,8 +125,6 @@ public class AuditManagerTest {
         when(ws1config.getName()).thenReturn("Workspace1Name");
         when(ws2config.getName()).thenReturn("Workspace2Name");
         //Workspace
-        WorkspaceImpl workspace1 = mock(WorkspaceImpl.class);
-        WorkspaceImpl workspace2 = mock(WorkspaceImpl.class);
         when(workspace1.getNamespace()).thenReturn("User1");
         when(workspace2.getNamespace()).thenReturn("User2");
         when(workspace1.getId()).thenReturn("Workspace1Id");
@@ -151,16 +153,16 @@ public class AuditManagerTest {
         when(userManager.getAll(1, 0)).thenReturn(page);
         when(userManager.getAll(30, 0)).thenReturn(page);
 
-        when(userDao.getTotalCount()).thenReturn(2L);
+        when(userManager.getTotalCount()).thenReturn(2L);
 
         auditManager =
-                new AuditManager(userManager, userDao, workspaceManager, permissionsManager, licenseManager, new AuditReportPrinter());
+                new AuditManager(userManager, workspaceManager, permissionsManager, licenseManager, new AuditReportPrinter());
         auditReport = createTempFile("report", ".txt");
     }
 
     @AfterMethod
     public void tearDown() throws Exception {
-        auditManager.deleteReport(auditReport);
+        auditManager.deleteReportDirectory(auditReport);
     }
 
     @Test
@@ -170,6 +172,24 @@ public class AuditManagerTest {
 
         //then
         assertEquals(readFileToString(auditReport.toFile()), FULL_AUDIT_REPORT);
+    }
+
+    @Test
+    public void shouldReturnFullAuditReportWithWorkspaceThatBelongsToUserButWithoutPermissionsToUser() throws Exception {
+        //given
+        List<WorkspaceImpl> workspaces = new ArrayList<>();
+        workspaces.add(workspace2);
+        when(workspace1.getNamespace()).thenReturn("User2");
+        when(workspace2.getNamespace()).thenReturn("User2");
+        when(workspaceManager.getWorkspaces("User2Id")).thenReturn(workspaces);
+        when(workspaceManager.getByNamespace("User2")).thenReturn(asList(workspace1, workspace2));
+
+        //when
+        auditReport = auditManager.generateAuditReport();
+
+        //then
+        assertTrue(readFileToString(auditReport.toFile())
+                           .contains("user2@email.com is owner of 2 workspaces and has permissions in 1 workspace"));
     }
 
     @Test

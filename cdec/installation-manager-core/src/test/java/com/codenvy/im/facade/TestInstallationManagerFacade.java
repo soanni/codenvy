@@ -107,6 +107,7 @@ public class TestInstallationManagerFacade extends BaseTest {
         initMocks(this);
         cdecArtifact = ArtifactFactory.createArtifact(CDECArtifact.NAME);
         installationManagerFacade = spy(new InstallationManagerFacade(transport,
+                                                                      configManager,
                                                                       saasAuthServiceProxy,
                                                                       saasRepositoryServiceProxy,
                                                                       ldapManager,

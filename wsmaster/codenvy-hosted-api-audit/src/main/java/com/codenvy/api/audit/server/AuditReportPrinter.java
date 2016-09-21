@@ -90,7 +90,7 @@ class AuditReportPrinter {
      * @param auditReport
      *         file of audit report
      * @param user
-     *         {@link UserImpl} object
+     *         information about user collected in {@link UserImpl} object
      * @param workspaces
      *         list of workspaces that are related to given user
      * @param wsPermissions
@@ -98,21 +98,16 @@ class AuditReportPrinter {
      * @throws ServerException
      *         if an error occurs
      */
-    void printUserInfoWithHisWorkspacesInfo(Path auditReport, UserImpl user, @Nullable List<WorkspaceImpl> workspaces,
-                                            Map<String, List<AbstractPermissions>> wsPermissions)
-            throws ServerException {
-
-        if (workspaces == null) {
-            printError("Failed to receive list of related workspaces for user " + user.getId(), auditReport);
-            return;
-        }
-
-        int workspacesNumber = workspaces.size();
+    void printUserInfoWithHisWorkspacesInfo(Path auditReport,
+                                            UserImpl user,
+                                            List<WorkspaceImpl> workspaces,
+                                            int permissionsNumber,
+                                            Map<String, List<AbstractPermissions>> wsPermissions) throws ServerException {
         long ownWorkspacesNumber = workspaces.stream().filter(workspace -> workspace.getNamespace().equals(user.getName())).count();
         printRow(user.getEmail() + " is owner of " +
                  ownWorkspacesNumber + " workspace" + (ownWorkspacesNumber > 1 | ownWorkspacesNumber == 0 ? "s" : "") +
-                 " and has permissions in " + workspacesNumber + " workspace" +
-                 (workspacesNumber > 1 | workspacesNumber == 0 ? "s" : "") + "\n", auditReport);
+                 " and has permissions in " + permissionsNumber + " workspace" +
+                 (permissionsNumber > 1 | permissionsNumber == 0 ? "s" : "") + "\n", auditReport);
         for (WorkspaceImpl workspace : workspaces) {
             printUserWorkspaceInfo(workspace, user, wsPermissions, auditReport);
         }

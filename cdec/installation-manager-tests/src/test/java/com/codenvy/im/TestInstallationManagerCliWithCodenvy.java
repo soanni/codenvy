@@ -29,69 +29,74 @@ import org.testng.annotations.Test;
  */
 public class TestInstallationManagerCliWithCodenvy extends BaseIntegrationTest {
 
-    @Test
-    public void testInstallSingleNodeAndChangeConfig() throws Exception {
-        doTest("codenvy/install/test-install-single-node-and-change-config.sh");
-    }
+//    @Test
+//    public void testInstallSingleNodeAndChangeConfig() throws Exception {
+//        doTest("codenvy/install/test-install-single-node-and-change-config.sh");
+//    }
+//
+//    @Test
+//    public void testInstallSudoPasswordRequired() throws Exception {
+//        doTest("codenvy/install/test-install-sudo-password-required.sh");
+//    }
+//
+//    @Test
+//    public void testInstallSingleNodeBehindTheProxy() throws Exception {
+//        doTest("codenvy/install/test-install-single-node-behind-the-proxy.sh");
+//    }
+//
+//    @Test
+//    public void testAddRemoveCodenvyNodes() throws Exception {
+//        doTest("codenvy/node/test-add-remove-codenvy-nodes.sh");
+//    }
+//
+//    @Test
+//    public void testBackupRestoreSingleNode() throws Exception {
+//        doTest("codenvy/backup/test-backup-restore-single-node.sh");
+//    }
+//
+//    @Test
+//    public void testUpdateSingleNode() throws Exception {
+//        doTest("codenvy/update/test-update-single-node.sh");
+//    }
+//
+//    @Test
+//    public void testUpdateSingleNodeFromBinary() throws Exception {
+//        doTest("codenvy/update/test-update-single-node-from-binary.sh");
+//    }
+//
+//    @Test
+//    public void testVersionCommand() throws Exception {
+//        doTest("codenvy/test-version.sh");
+//    }
+//
+//    @Test
+//    public void testLogin() throws Exception {
+//        doTest("codenvy/test-login.sh");
+//    }
+//
+//    @Test
+//    public void testSetupAndUpdateCodenvyConfig() throws Exception {
+//        doTest("codenvy/test-setup-and-update-codenvy-config.sh");
+//    }
+//
+//    /* Repeat tests in RHEL OS*/
+//    @Test
+//    public void testAddRemoveCodenvyNodesInRhelOs() throws Exception {
+//        doTest("codenvy/node/test-add-remove-codenvy-nodes.sh", RHEL);
+//    }
+//
+//    @Test
+//    public void testBackupRestoreSingleNodeInRhelOs() throws Exception {
+//        doTest("codenvy/backup/test-backup-restore-single-node.sh", RHEL);
+//    }
+//
+//    @Test
+//    public void testInstallSingleNodeBehindTheProxyInRhelOs() throws Exception {
+//        doTest("codenvy/install/test-install-single-node-behind-the-proxy.sh", RHEL);
+//    }
 
     @Test
-    public void testInstallSudoPasswordRequired() throws Exception {
-        doTest("codenvy/install/test-install-sudo-password-required.sh");
-    }
-
-    @Test
-    public void testInstallSingleNodeBehindTheProxy() throws Exception {
-        doTest("codenvy/install/test-install-single-node-behind-the-proxy.sh");
-    }
-
-    @Test
-    public void testAddRemoveCodenvyNodes() throws Exception {
-        doTest("codenvy/node/test-add-remove-codenvy-nodes.sh");
-    }
-
-    @Test
-    public void testBackupRestoreSingleNode() throws Exception {
-        doTest("codenvy/backup/test-backup-restore-single-node.sh");
-    }
-
-    @Test
-    public void testUpdateSingleNode() throws Exception {
-        doTest("codenvy/update/test-update-single-node.sh");
-    }
-
-    @Test
-    public void testUpdateSingleNodeFromBinary() throws Exception {
-        doTest("codenvy/update/test-update-single-node-from-binary.sh");
-    }
-
-    @Test
-    public void testVersionCommand() throws Exception {
-        doTest("codenvy/test-version.sh");
-    }
-
-    @Test
-    public void testLogin() throws Exception {
-        doTest("codenvy/test-login.sh");
-    }
-
-    @Test
-    public void testSetupAndUpdateCodenvyConfig() throws Exception {
-        doTest("codenvy/test-setup-and-update-codenvy-config.sh");
-    }
-
-    /* Repeat tests in RHEL OS*/
-    @Test
-    public void testAddRemoveCodenvyNodesInRhelOs() throws Exception {
-        doTest("codenvy/node/test-add-remove-codenvy-nodes.sh", RHEL);
-    }
-
-    @Test
-    public void testBackupRestoreSingleNodeInRhelOs() throws Exception {
-        doTest("codenvy/backup/test-backup-restore-single-node.sh", RHEL);
-    }
-
-    @Test
-    public void testInstallSingleNodeBehindTheProxyInRhelOs() throws Exception {
-        doTest("codenvy/install/test-install-single-node-behind-the-proxy.sh", RHEL);
+    public void testAudit() throws Exception {
+        doTest("codenvy/audit/test-audit.sh");
     }
 }

@@ -28,7 +28,6 @@ import org.eclipse.che.api.core.Page;
 import org.eclipse.che.api.core.Page.PageRef;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.user.server.UserManager;
-import org.eclipse.che.api.user.server.jpa.JpaUserDao;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
@@ -37,11 +36,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -50,7 +47,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.google.common.io.Files.createTempDir;
+import static java.nio.file.Files.createTempDirectory;
 import static java.util.Collections.emptyList;
 
 /**
@@ -63,7 +60,6 @@ public class AuditManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(AuditManager.class);
 
-    private final JpaUserDao            userDao;
     private final WorkspaceManager      workspaceManager;
     private final PermissionsManager    permissionsManager;
     private final CodenvyLicenseManager licenseManager;
@@ -74,13 +70,11 @@ public class AuditManager {
 
     @Inject
     public AuditManager(UserManager userManager,
-                        JpaUserDao userDao,
                         WorkspaceManager workspaceManager,
                         PermissionsManager permissionsManager,
                         CodenvyLicenseManager licenseManager,
                         AuditReportPrinter reportPrinter) {
         this.userManager = userManager;
-        this.userDao = userDao;
         this.workspaceManager = workspaceManager;
         this.permissionsManager = permissionsManager;
         this.licenseManager = licenseManager;
@@ -96,7 +90,7 @@ public class AuditManager {
      * @throws ConflictException
      *         if generating report is being run by other user
      */
-    public Path generateAuditReport() throws ServerException, ConflictException {
+    public Path generateAuditReport() throws ServerException, ConflictException, IOException {
         if (!inProgress.compareAndSet(false, true)) {
             throw new ConflictException("This command is being run by other user");
         }
@@ -104,7 +98,7 @@ public class AuditManager {
         Path auditReport = null;
         try {
             String dateTime = new SimpleDateFormat("dd-MM-yyyy_hh:mm:ss").format(new Date());
-            auditReport = Paths.get(createTempDir().getAbsolutePath(), "/report_" + dateTime + ".txt");
+            auditReport = createTempDirectory(null).resolve("report_" + dateTime + ".txt");
             Files.createFile(auditReport);
 
             CodenvyLicense license = null;
@@ -113,10 +107,12 @@ public class AuditManager {
             } catch (LicenseException ignored) {
                 //Continue printing report without license info
             }
-            reportPrinter.printHeader(auditReport, userDao.getTotalCount(), license);
+            reportPrinter.printHeader(auditReport, userManager.getTotalCount(), license);
             printAllUsers(auditReport);
         } catch (Exception exception) {
-            deleteReport(auditReport);
+            if (auditReport != null) {
+                deleteReportDirectory(auditReport);
+            }
             LOG.error(exception.getMessage(), exception);
             throw new ServerException(exception.getMessage(), exception);
         } finally {
@@ -132,8 +128,15 @@ public class AuditManager {
             //Print users with their workspaces from current page
             for (UserImpl user : currentPage.getItems()) {
                 List<WorkspaceImpl> workspaces;
+                int permissionsNumber;
                 try {
                     workspaces = workspaceManager.getWorkspaces(user.getId());
+                    permissionsNumber = workspaces.size();
+                    //add workspaces witch are belong to user, but user doesn't have permissions for them.
+                    workspaceManager.getByNamespace(user.getName())
+                                    .stream()
+                                    .filter(workspace -> !workspaces.contains(workspace))
+                                    .forEach(workspaces::add);
                 } catch (ServerException exception) {
                     reportPrinter.printError("Failed to receive list of related workspaces for user " + user.getId(), auditReport);
                     continue;
@@ -146,15 +149,16 @@ public class AuditManager {
                         wsPermissions.put(workspace.getId(), emptyList());
                     }
                 }
-                reportPrinter.printUserInfoWithHisWorkspacesInfo(auditReport, user, workspaces, wsPermissions);
+                reportPrinter.printUserInfoWithHisWorkspacesInfo(auditReport, user, workspaces, permissionsNumber, wsPermissions);
             }
             //Initialize next page if exist, otherwise stop printing report
             final Optional<PageRef> nextPageRefOpt = currentPage.getNextPageRef();
             if (nextPageRefOpt.isPresent()) {
                 final PageRef nextPageRef = nextPageRefOpt.get();
                 final long itemsBefore = nextPageRef.getItemsBefore();
+                //TODO: fix when https://github.com/eclipse/che/issues/2524 will be resolved
                 if (itemsBefore < Integer.MAX_VALUE) {
-                    throw new IllegalArgumentException("Skip count limit was reached while retrieving all users");
+                    throw new ServerException("Skip count limit was reached while retrieving all users");
                 }
                 currentPage = userManager.getAll(nextPageRef.getPageSize(), (int)itemsBefore);
             } else {
@@ -164,9 +168,9 @@ public class AuditManager {
     }
 
     @VisibleForTesting
-    void deleteReport(Path auditReport) {
+    void deleteReportDirectory(Path auditReport) {
         try {
-            FileUtils.deleteDirectory(new File(auditReport.toFile().getParent()));
+            FileUtils.deleteDirectory(auditReport.getParent().toFile());
         } catch (IOException exception) {
             LOG.error(exception.getMessage(), exception);
         }
