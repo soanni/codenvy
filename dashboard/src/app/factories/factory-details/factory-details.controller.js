@@ -27,6 +27,7 @@ export class FactoryDetailsCtrl {
   constructor($route, codenvyAPI, cheNotification) {
     'ngInject';
 
+    this.codenvyAPI = codenvyAPI;
     let factoryId = $route.current.params.id;
 
     this.factory = codenvyAPI.getFactory().getFactoryById(factoryId);
@@ -37,6 +38,17 @@ export class FactoryDetailsCtrl {
       cheNotification.showError(error.data.message ? error.data.message : 'Get factory failed.');
       console.log('error', error);
     });
+  }
+
+  /**
+   * Returns the factory url based on id.
+   * @returns {link.href|*} link value
+   */
+  getFactoryIdUrl() {
+    if (!this.factory) {
+      return null;
+    }
+    return this.codenvyAPI.getFactory().getFactoryIdUrl(this.factory);
   }
 }
 

@@ -42,16 +42,6 @@ export class FactoryInformationCtrl {
       }
     });
 
-    this.updateData();
-    $scope.$watch(() => {
-      return this.factory;
-    }, () => {
-      this.updateData();
-    });
-
-    this.factoryInformationForm;
-    this.stackRecipeMode = 'current-recipe';
-
     let editorLoadedDefer = $q.defer();
     this.editorLoadedPromise = editorLoadedDefer.promise;
     this.editorOptions = {
@@ -59,6 +49,16 @@ export class FactoryInformationCtrl {
         editorLoadedDefer.resolve(instance);
       })
     };
+
+    this.factoryInformationForm;
+    this.stackRecipeMode = 'current-recipe';
+
+    this.updateData();
+    $scope.$watch(() => {
+      return this.factory;
+    }, () => {
+      this.updateData();
+    });
   }
 
 
@@ -116,6 +116,23 @@ export class FactoryInformationCtrl {
     this.timeoutPromise = this.$timeout(() => {
       this.doUpdateFactory(this.copyOriginFactory);
     }, 500);
+  }
+
+  /**
+   * Returns the factory url based on id.
+   * @returns {link.href|*} link value
+   */
+  getFactoryIdUrl() {
+    return this.codenvyAPI.getFactory().getFactoryIdUrl(this.factory);
+  }
+
+  /**
+   * Returns the factory url based on name.
+   *
+   * @returns {link.href|*} link value
+   */
+  getFactoryNamedUrl() {
+    return this.codenvyAPI.getFactory().getFactoryNamedUrl(this.factory);
   }
 
   /**

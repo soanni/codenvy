@@ -24,9 +24,11 @@ export class FactoryItemCtrl {
    * Default constructor that is using resource injection
    * @ngInject for Dependency injection
    */
-  constructor($location, codenvyFactory) {
+  constructor($location, codenvyFactory, cheEnvironmentRegistry, lodash) {
     this.$location = $location;
     this.codenvyFactory = codenvyFactory;
+    this.cheEnvironmentRegistry = cheEnvironmentRegistry;
+    this.lodash = lodash;
   }
 
   /**
@@ -44,5 +46,26 @@ export class FactoryItemCtrl {
     this.$location.path('/factory/' + this.factory.id);
   }
 
+  getMemoryLimit() {
+    if (!this.factory.workspace) {
+      return '-';
+    }
+
+    let defaultEnvName = this.factory.workspace.defaultEnv;
+    let environment = this.factory.workspace.environments[defaultEnvName];
+
+    let recipeType = environment.recipe.type;
+    let environmentManager = this.cheEnvironmentRegistry.getEnvironmentManager(recipeType);
+    let machines = environmentManager.getMachines(environment);
+
+    let limits = this.lodash.pluck(machines, 'attributes.memoryLimitBytes');
+    let total = 0;
+    limits.forEach((limit) => {
+      if (limit) {
+        total += limit / (1024*1024);
+      }
+    });
+    return (total > 0) ? total + ' MB' : '-';
+  }
 }
 

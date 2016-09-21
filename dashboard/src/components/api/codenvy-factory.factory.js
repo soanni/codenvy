@@ -568,4 +568,28 @@ export class CodenvyFactory {
       return factoryURL.slice(index + '/factory/'.length, factoryURL.length);
     }
   }
+
+  /**
+   * Returns the factory url based on id.
+   * @returns {link.href|*} link value
+   */
+  getFactoryIdUrl(factory) {
+    let link = this.lodash.find(factory.links, (link) => {
+      return 'accept' === link.rel;
+    });
+    return link ? link.href : 'No value';
+  }
+
+  /**
+   * Returns the factory url based on name.
+   *
+   * @returns {link.href|*} link value
+   */
+  getFactoryNamedUrl(factory) {
+    let link = this.lodash.find(factory.links, (link) => {
+      return 'accept-named' === link.rel;
+    });
+
+    return link ? link.href : null;
+  }
 }

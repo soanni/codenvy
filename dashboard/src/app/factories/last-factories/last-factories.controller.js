@@ -29,8 +29,7 @@ export class LastFactoriesController {
    */
   constructor(codenvyAPI) {
 
-    this.factories = [];
-    this.factoriesMap = codenvyAPI.getFactory().getFactoriesMap();
+    this.factories = codenvyAPI.getFactory().getPageFactories();
 
     //TODO we should change to modificationDate after model's change
     this.factoriesOrderBy = '-creator.created';
@@ -51,10 +50,7 @@ export class LastFactoriesController {
    * Update factories array
    */
   updateFactories() {
-    this.factories.length = 0;
-    this.factoriesMap.forEach((factory) => {
-      this.factories.push(factory);
-    });
+    this.factories = codenvyAPI.getFactory().getPageFactories();
   }
 
   getFactories() {

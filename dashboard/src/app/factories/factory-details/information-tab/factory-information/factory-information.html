@@ -47,13 +47,13 @@
 
   <!-- URL -->
   <che-label-container che-label-name="URL">
-    <che-text-info ng-show="factoryInformationCtrl.factory.nameURL"
-                   che-text="factoryInformationCtrl.factory.nameURL ? factoryInformationCtrl.factory.nameURL : 'No value'"
-                   che-href="factoryInformationCtrl.factory.nameURL"
+    <che-text-info ng-show="factoryInformationCtrl.getFactoryNamedUrl()"
+                   che-text="factoryInformationCtrl.getFactoryNamedUrl()"
+                   che-href="factoryInformationCtrl.getFactoryNamedUrl()"
                    che-copy-clipboard="true"
                    class="factory-information-panel-item"></che-text-info>
-    <che-text-info che-text="factoryInformationCtrl.factory.idURL ? factoryInformationCtrl.factory.idURL : 'No value'"
-                   che-href="factoryInformationCtrl.factory.idURL"
+    <che-text-info che-text="factoryInformationCtrl.getFactoryIdUrl()"
+                   che-href="factoryInformationCtrl.getFactoryIdUrl()"
                    che-copy-clipboard="true"
                    class="factory-information-panel-item"></che-text-info>
   </che-label-container>
