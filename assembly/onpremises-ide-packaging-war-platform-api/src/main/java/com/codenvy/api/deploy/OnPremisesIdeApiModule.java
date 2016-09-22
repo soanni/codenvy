@@ -85,6 +85,7 @@ import org.eclipse.che.api.user.server.ProfileService;
 import org.eclipse.che.api.user.server.TokenValidator;
 import org.eclipse.che.api.user.server.UserService;
 import org.eclipse.che.api.user.server.jpa.UserJpaModule;
+import org.eclipse.che.api.workspace.server.StopWorkspaceBeforeRemoveEventSubscriber;
 import org.eclipse.che.api.workspace.server.WorkspaceConfigMessageBodyAdapter;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.api.workspace.server.WorkspaceMessageBodyAdapter;
@@ -188,6 +189,7 @@ public class OnPremisesIdeApiModule extends AbstractModule {
         bind(RecipeDao.class).to(JpaRecipeDao.class);
         bind(SnapshotDao.class).to(JpaSnapshotDao.class);
         bind(AuthenticationDao.class).to(com.codenvy.api.dao.authentication.AuthenticationDaoImpl.class);
+        bind(StopWorkspaceBeforeRemoveEventSubscriber.class);
 
         final Multibinder<String> recipeBinder = Multibinder.newSetBinder(binder(),
                                                                           String.class,
