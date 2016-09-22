@@ -19,6 +19,7 @@ import com.codenvy.api.license.LicenseException;
 import com.codenvy.api.license.server.CodenvyLicenseManager;
 import com.codenvy.api.permission.server.PermissionsManager;
 import com.codenvy.api.permission.server.model.impl.AbstractPermissions;
+import com.codenvy.api.workspace.server.WorkspaceDomain;
 import com.google.common.annotations.VisibleForTesting;
 
 import org.apache.commons.io.FileUtils;
@@ -40,7 +41,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -49,8 +49,8 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import static com.codenvy.api.workspace.server.WorkspaceDomain.DOMAIN_ID;
 import static java.nio.file.Files.createTempDirectory;
-import static java.util.Collections.emptyList;
 
 /**
  * Facade for audit report related operations.
@@ -92,7 +92,7 @@ public class AuditManager {
      * @throws ConflictException
      *         if generating report is already in progress
      */
-    public Path generateAuditReport() throws ServerException, ConflictException, IOException {
+    public Path generateAuditReport() throws ServerException, ConflictException {
         if (!inProgress.compareAndSet(false, true)) {
             throw new ConflictException("Generating report is already in progress");
         }
@@ -130,13 +130,11 @@ public class AuditManager {
             //Print users with their workspaces from current page
             for (UserImpl user : currentPage.getItems()) {
                 List<WorkspaceImpl> workspaces;
-                int permissionsNumber;
                 try {
                     workspaces = workspaceManager.getWorkspaces(user.getId());
                     List<String> workspaceIds = workspaces.stream()
                                                           .map(WorkspaceImpl::getId)
                                                           .collect(Collectors.toList());
-                    permissionsNumber = workspaces.size();
                     //add workspaces witch are belong to user, but user doesn't have permissions for them.
                     workspaceManager.getByNamespace(user.getName())
                                     .stream()
@@ -146,15 +144,15 @@ public class AuditManager {
                     reportPrinter.printError("Failed to receive list of related workspaces for user " + user.getId(), auditReport);
                     continue;
                 }
-                List<AbstractPermissions> wsPermissions = new ArrayList<>();
+                Map<String, AbstractPermissions> wsPermissions = new HashMap<>();
                 for (WorkspaceImpl workspace : workspaces) {
                     try {
-                        wsPermissions.add(permissionsManager.get(user.getId(), "workspace", workspace.getId()));
-                    } catch (NotFoundException | ConflictException ignored) {
-                        //Continue printing report, error will be printed in workspace permissions row
+                        wsPermissions.put(workspace.getId(), permissionsManager.get(user.getId(), DOMAIN_ID, workspace.getId()));
+                    } catch (NotFoundException | ConflictException e) {
+                        wsPermissions.put(workspace.getId(), null);
                     }
                 }
-                reportPrinter.printUserInfoWithHisWorkspacesInfo(auditReport, user, workspaces, permissionsNumber, wsPermissions);
+                reportPrinter.printUserInfoWithHisWorkspacesInfo(auditReport, user, workspaces, wsPermissions);
             }
 
         } while ((currentPage = getNextPage(currentPage)) != null);
@@ -175,7 +173,6 @@ public class AuditManager {
         }
     }
 
-    @VisibleForTesting
     void deleteReportDirectory(Path auditReport) {
         try {
             FileUtils.deleteDirectory(auditReport.getParent().toFile());

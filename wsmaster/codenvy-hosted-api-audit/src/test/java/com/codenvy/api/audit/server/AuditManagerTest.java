@@ -43,7 +43,6 @@ import java.util.Optional;
 
 import static java.nio.file.Files.createTempFile;
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.io.FileUtils.readFileToString;
 import static org.mockito.Matchers.anyString;
@@ -93,7 +92,7 @@ public class AuditManagerTest {
             "   └ Workspace2Name, is owner: false, permissions: [read, use, run, configure, setPermissions]\n"+
             "user2@email.com is owner of 2 workspaces and has permissions in 1 workspace\n"+
             "   └ Workspace2Name, is owner: true, permissions: [read, use, run, configure, setPermissions, delete]\n"+
-            "   └ Workspace1Name, is owner: true, permissions: []\n";
+            "   └ Workspace1Name, is owner: true, permissions: [ERROR] Failed to retrieve workspace permissions!\n";
 
     private Path auditReport;
 
@@ -189,11 +188,6 @@ public class AuditManagerTest {
     @Test
     public void shouldReturnFullAuditReportWithWorkspaceThatBelongsToUserButWithoutPermissionsToUser() throws Exception {
         //given
-        AbstractPermissions ws1User2Permissions = mock(AbstractPermissions.class);
-        when(ws1User2Permissions.getUserId()).thenReturn("User2Id");
-        when(ws1User2Permissions.getActions()).thenReturn(emptyList());
-        when(ws1User2Permissions.getInstanceId()).thenReturn("Workspace1Id");
-        when(permissionsManager.get(eq("User2Id"), eq("workspace"), eq("Workspace1Id"))).thenReturn(ws1User2Permissions);
         List<WorkspaceImpl> workspaces = new ArrayList<>();
         workspaces.add(workspace2);
         when(workspace1.getNamespace()).thenReturn("User2");

@@ -24,8 +24,11 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 import java.io.IOException;
 import java.nio.file.Files;
+
+import static java.nio.file.Files.readAllBytes;
 
 /**
  * Defines Audit report REST API.
@@ -47,7 +50,12 @@ public class AuditService extends Service {
     public Response downloadReport() throws ServerException, ConflictException, IOException {
         java.nio.file.Path report = auditManager.generateAuditReport();
 
-        return Response.ok(report.toFile(), MediaType.APPLICATION_OCTET_STREAM)
+        StreamingOutput stream = outputStream -> {
+            outputStream.write(readAllBytes(report));
+            auditManager.deleteReportDirectory(report);
+        };
+
+        return Response.ok(stream, MediaType.APPLICATION_OCTET_STREAM)
                        .header("Content-Length", String.valueOf(Files.size(report)))
                        .header("Content-Disposition", "attachment; filename=" + report.getFileName().toString())
                        .build();

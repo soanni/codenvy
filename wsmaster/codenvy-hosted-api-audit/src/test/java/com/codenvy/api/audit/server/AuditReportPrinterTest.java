@@ -31,15 +31,10 @@ import org.testng.annotations.Test;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.emptyMap;
-import static java.util.Collections.singletonList;
 import static org.apache.commons.io.FileUtils.readFileToString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -64,10 +59,6 @@ public class AuditReportPrinterTest {
             "user@email.com is owner of 1 workspace and has permissions in 2 workspaces\n" +
             "   └ Workspace1Name, is owner: true, permissions: [read, use, run, configure, setPermissions, delete]\n" +
             "   └ Workspace2Name, is owner: false, permissions: [read, use, run, configure, setPermissions]\n";
-    private static final String USER_INFO_WITH_HIS_WORKSPACES_INFO_WITHOUT_WORKSPACE2_PERMISSIONS =
-            "user@email.com is owner of 1 workspace and has permissions in 2 workspaces\n" +
-            "   └ Workspace1Name, is owner: true, permissions: [read, use, run, configure, setPermissions, delete]\n" +
-            "   └ Workspace2Name, is owner: false, permissions: [ERROR] Failed to retrieve workspace permissions!\n";
 
     @Mock
     UserImpl user;
@@ -150,27 +141,18 @@ public class AuditReportPrinterTest {
 
     @Test
     public void shouldWriteUserInfoWithHisWorkspacesInfoToFile() throws Exception {
+        //given
+        Map<String, AbstractPermissions> map = new HashMap<>();
+        map.put("Workspace1Id", ws1User1Permissions);
+        map.put("Workspace2Id", ws2User1Permissions);
+
         //when
         auditReportPrinter.printUserInfoWithHisWorkspacesInfo(auditReport,
                                                               user,
                                                               asList(workspace1, workspace2),
-                                                              2,
-                                                              asList(ws1User1Permissions, ws2User1Permissions));
+                                                              map);
 
         //then
         assertEquals(USER_INFO_WITH_HIS_WORKSPACES_INFO, readFileToString(auditReport.toFile()));
-    }
-
-    @Test
-    public void shouldWriteUserInfoWithHisWorkspacesInfoEvenIfUserDoNotHavePermissionsToWorkspace() throws Exception {
-        //when
-        auditReportPrinter.printUserInfoWithHisWorkspacesInfo(auditReport,
-                                                              user,
-                                                              asList(workspace1, workspace2),
-                                                              2,
-                                                              singletonList(ws1User1Permissions));
-
-        //then
-        assertEquals(USER_INFO_WITH_HIS_WORKSPACES_INFO_WITHOUT_WORKSPACE2_PERMISSIONS, readFileToString(auditReport.toFile()));
     }
 }

@@ -101,8 +101,8 @@ class AuditReportPrinter {
     void printUserInfoWithHisWorkspacesInfo(Path auditReport,
                                             UserImpl user,
                                             List<WorkspaceImpl> workspaces,
-                                            int permissionsNumber,
-                                            List<AbstractPermissions> wsPermissions) throws ServerException {
+                                            Map<String, AbstractPermissions> wsPermissions) throws ServerException {
+        long permissionsNumber = wsPermissions.values().stream().filter(permissions -> permissions != null).count();
         long ownWorkspacesNumber = workspaces.stream().filter(workspace -> workspace.getNamespace().equals(user.getName())).count();
         printRow(user.getEmail() + " is owner of " +
                  ownWorkspacesNumber + " workspace" + (ownWorkspacesNumber > 1 | ownWorkspacesNumber == 0 ? "s" : "") +
@@ -128,17 +128,14 @@ class AuditReportPrinter {
         printRow("[ERROR] " + error + "!\n", auditReport);
     }
 
-    private void printUserWorkspaceInfo(WorkspaceImpl workspace, UserImpl user, List<AbstractPermissions> wsPermissions, Path auditReport)
-            throws ServerException {
+    private void printUserWorkspaceInfo(WorkspaceImpl workspace, UserImpl user, Map<String, AbstractPermissions> wsPermissions,
+                                        Path auditReport) throws ServerException {
         printRow("   └ " + workspace.getConfig().getName() +
                  ", is owner: " + workspace.getNamespace().equals(user.getName()) + ", permissions: ", auditReport);
-        try {
-            String workspaceId = workspace.getId();
-            printRow(
-                    getWorkspacePermissionsOfUser(workspaceId, user.getId(), wsPermissions).getActions().toString() + "\n",
-                    auditReport);
-        } catch (NotFoundException e) {
-            LOG.error(e.getMessage(), e);
+        AbstractPermissions permissions = wsPermissions.get(workspace.getId());
+        if (permissions != null) {
+            printRow(permissions.getActions().toString() + "\n", auditReport);
+        } else {
             printError("Failed to retrieve workspace permissions", auditReport);
         }
     }
@@ -149,22 +146,6 @@ class AuditReportPrinter {
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);
             throw new ServerException("Failed to generate audit report. " + e.getMessage(), e);
-        }
-    }
-
-    private AbstractPermissions getWorkspacePermissionsOfUser(String workspaceId, String userId, List<AbstractPermissions> permissions)
-            throws ServerException, NotFoundException {
-
-        Optional<AbstractPermissions> optional = permissions.stream()
-                                                            .filter(wsPermissions -> wsPermissions.getUserId().equals(userId) &&
-                                                                                     wsPermissions.getInstanceId().equals(workspaceId))
-                                                            .findFirst();
-
-        if (optional.isPresent()) {
-            return optional.get();
-        } else {
-            throw new NotFoundException("Permissions for user " + userId + " in workspace " + workspaceId +
-                                        " was not found while generating audit report");
         }
     }
 }
