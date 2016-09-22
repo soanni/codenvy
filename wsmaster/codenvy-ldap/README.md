@@ -5,7 +5,7 @@ LDAP Authentication
      *  AD - Active Directory. Users authenticate with sAMAccountName. Requires the `ldap.auth.dn_format` property to be correctly configured. 
      *  AUTHENTICATED - Authenticated Search.  Manager bind/search followed by user simple bind.
      *  ANONYMOUS -  Anonymous search followed by user simple bind.
-        Both AUTHENTICATED and ANONYMOUS types are depends on following set of properties: `ldap.base_dn`, `ldap.auth.subtree_search`, `dap.auth.allow_multiple_dns`, `ldap.auth.user.filter`, `ldap.auth.user_password_attribute`.
+     Both AUTHENTICATED and ANONYMOUS types are depends on following set of properties: `ldap.base_dn`, `ldap.auth.subtree_search`, `dap.auth.allow_multiple_dns`, `ldap.auth.user.filter`, `ldap.auth.user_password_attribute`.
      *  DIRECT -  Direct Bind. Compute user DN from format string and perform simple bind. Requires the `ldap.base_dn` property to be correctly configured.
      *  SASL - SASL bind search. Depends on following set of properties: `ldap.base_dn`, `ldap.auth.subtree_search`, `ldap.auth.allow_multiple_dns` and `ldap.auth.user.filter`.
 - __ldap.auth.dn_format__ - Resolves an entry DN by using String#format. This resolver is typically used when an entry DN
@@ -31,8 +31,25 @@ in milliseconds. The example: _60000_
 the pool. The example: _3_
 - __ldap.connection.pool.max_size__ - the size of maximum available connections in
 the pool. The example: _10_
-- __ldap.connection.bind.dn__ -  DN to bind as before performing operations. The example: _userX_
+- __ldap.connection.pool.validate.on_checkout__ - Indicates whether connections will be validated before being picked from the pool. Connections that fail validation are evicted from the pool.  
+- __ldap.connection.pool.validate.on_checkin__ - Indicates whether connections will be validated before being returned to the pool. Connections that fail validation are evicted from the pool.
+- __ldap.connection.pool.validate.periodically__ - Indicates whether connections should be validated periodically when the pool is idle. Connections that fail validation are evicted from the pool.
+- __ldap.connection.pool.validate.period_ms__ - Period in milliseconds at which pool should be validated. Default value is 30 min.
+- __ldap.connection.pool.idle_ms__ - Time in milliseconds at which a connection should be considered idle and become a candidate for removal from the pool
+- __ldap.connection.pool.prune_ms__ - Period in milliseconds between connection pool prunes (e.g. idle connections are removed).
+- __ldap.connection.pool.fail_fast__ - Indicates whether exception should be thrown during pool initialization when pool does not contain at least one connection and it's minimum size is greater than zero
+- __ldap.connection.pool.block_wait_ms__ - Period in milliseconds during which an pool which is reached the maximum size will block new requests. BlockingTimeoutException will be thrown when time is exceeded. Default is _infinite_.
+- __ldap.connection.bind.dn__ - DN to bind as before performing operations. The example: _userX_
 - __ldap.connection.bind.password__ - Credential for the bind DN. The example: _password_
+
+#### SSL configuration
+   SSL can be configured in two ways - using trust certificates or using secure keystore. 
+- __ldap.connection.use_ssl__ - Indicates whether the secured protocol will be used for connections.
+- __ldap.connection.ssl.trust_certificates__ - Path to the certificates file. Example: _/etc/ssl/mycertificate.cer_
+- __ldap.connection.ssl.keystore.name__  - Defines name of the keystore to use.
+- __ldap.connection.ssl.keystore.password__ - Defines keystore password.
+- __ldap.connection.ssl.keystore.type__ - Defines keystore type.
+
 
 
 LDAP Synchronizer
