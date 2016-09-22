@@ -1,15 +1,21 @@
 LDAP Authentication
 ---
 #### Authentication configuration
-- __ldap.auth.user.filter__ - Search filter to execute. The example: _(&(objectCategory=Person)(sAMAccountName=*))_
-- __ldap.auth.authentication_type__ - Type authentication to use:
-     *  AD - Active Directory. Users authenticate with sAMAccountName.
+- __ldap.auth.authentication_type__ - Type of authentication to use:
+     *  AD - Active Directory. Users authenticate with sAMAccountName. Requires the `ldap.auth.dn_format` property to be correctly configured. 
      *  AUTHENTICATED - Authenticated Search.  Manager bind/search followed by user simple bind.
      *  ANONYMOUS -  Anonymous search followed by user simple bind.
-     *  DIRECT -  Direct Bind. Compute user DN from format string and perform simple bind.
-     *  SASL - SASL bind search.
+        Both AUTHENTICATED and ANONYMOUS types are depends on following set of properties: `ldap.base_dn`, `ldap.auth.subtree_search`, `dap.auth.allow_multiple_dns`, `ldap.auth.user.filter`, `ldap.auth.user_password_attribute`.
+     *  DIRECT -  Direct Bind. Compute user DN from format string and perform simple bind. Requires the `ldap.base_dn` property to be correctly configured.
+     *  SASL - SASL bind search. Depends on following set of properties: `ldap.base_dn`, `ldap.auth.subtree_search`, `ldap.auth.allow_multiple_dns` and `ldap.auth.user.filter`.
 - __ldap.auth.dn_format__ - Resolves an entry DN by using String#format. This resolver is typically used when an entry DN
-can be formatted directly from the user identifier. For instance, entry DNs of the form  uid=dfisher,ou=people,dc=ldaptive,dc=org could be formattedfrom uid=%s,ou=people,dc=ldaptive,dc=org. The example: _CN=%1$s,CN=Users,DC=ad,DC=codenvy-dev,DC=com_
+can be formatted directly from the user identifier. For instance, entry DNs of the form  uid=dfisher,ou=people,dc=ldaptive,dc=org could be formatted from uid=%s,ou=people,dc=ldaptive,dc=org. The example: _CN=%1$s,CN=Users,DC=ad,DC=codenvy-dev,DC=com_
+- __ldap.auth.subtree_search__ - Indicates whether subtree search will be used. When set to true, allows to search authenticating DN out of the `base_dn` tree.
+- __ldap.auth.allow_multiple_dns__ - Indicates whether DN resolution should fail if multiple DNs are found. When false, exception will be thrown if multiple DNs is found during search. When true, the first entry will be used for authentication attempt.
+- __ldap.auth.user.filter__ - Defines the filter parameters applied during search for the user. Typical examples: 
+          OpenLDAP: _cn={user}_ 
+          ActiveDirectory: _(&(objectCategory=Person)(sAMAccountName=*))_ 
+- __ldap.auth.user_password_attribute__ - Defines the LDAP attribute name, which value will be interpreted as the password during authentication. 
 
 #### Connection configuration
 
@@ -89,7 +95,7 @@ on sever startup.
 #### Users selection configuration
 
 - __ldap.base_dn__ - the root distinguished name to search LDAP entries,
-seves as a base point for searching users.
+serves as a base point for searching users.
 The example: _dc=codenvy,dc=com_
 
 - __ldap.sync.user.additional_dn__ _(optional)_ - if set will be used
