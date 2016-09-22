@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static java.nio.file.Files.createTempDirectory;
 import static java.util.Collections.emptyList;
@@ -88,11 +89,11 @@ public class AuditManager {
      * @throws ServerException
      *         if an error occurs
      * @throws ConflictException
-     *         if generating report is being run by other user
+     *         if generating report is already in progress
      */
     public Path generateAuditReport() throws ServerException, ConflictException, IOException {
         if (!inProgress.compareAndSet(false, true)) {
-            throw new ConflictException("This command is being run by other user");
+            throw new ConflictException("Generating report is already in progress");
         }
 
         Path auditReport = null;
@@ -131,11 +132,14 @@ public class AuditManager {
                 int permissionsNumber;
                 try {
                     workspaces = workspaceManager.getWorkspaces(user.getId());
+                    List<String> workspaceIds = workspaces.stream()
+                                                          .map(WorkspaceImpl::getId)
+                                                          .collect(Collectors.toList());
                     permissionsNumber = workspaces.size();
                     //add workspaces witch are belong to user, but user doesn't have permissions for them.
                     workspaceManager.getByNamespace(user.getName())
                                     .stream()
-                                    .filter(workspace -> !workspaces.contains(workspace))
+                                    .filter(workspace -> !workspaceIds.contains(workspace.getId()))
                                     .forEach(workspaces::add);
                 } catch (ServerException exception) {
                     reportPrinter.printError("Failed to receive list of related workspaces for user " + user.getId(), auditReport);
@@ -151,20 +155,23 @@ public class AuditManager {
                 }
                 reportPrinter.printUserInfoWithHisWorkspacesInfo(auditReport, user, workspaces, permissionsNumber, wsPermissions);
             }
-            //Initialize next page if exist, otherwise stop printing report
-            final Optional<PageRef> nextPageRefOpt = currentPage.getNextPageRef();
-            if (nextPageRefOpt.isPresent()) {
-                final PageRef nextPageRef = nextPageRefOpt.get();
-                final long itemsBefore = nextPageRef.getItemsBefore();
-                //TODO: fix when https://github.com/eclipse/che/issues/2524 will be resolved
-                if (itemsBefore < Integer.MAX_VALUE) {
-                    throw new ServerException("Skip count limit was reached while retrieving all users");
-                }
-                currentPage = userManager.getAll(nextPageRef.getPageSize(), (int)itemsBefore);
-            } else {
-                break;
+
+        } while ((currentPage = getNextPage(currentPage)) != null);
+    }
+
+    private Page<UserImpl> getNextPage(Page<UserImpl> currentPage) throws ServerException {
+        final Optional<PageRef> nextPageRefOpt = currentPage.getNextPageRef();
+        if (nextPageRefOpt.isPresent()) {
+            final PageRef nextPageRef = nextPageRefOpt.get();
+            final long itemsBefore = nextPageRef.getItemsBefore();
+            //TODO: fix when https://github.com/eclipse/che/issues/2524 will be resolved
+            if (itemsBefore < Integer.MAX_VALUE) {
+                throw new ServerException("Skip count limit was reached while retrieving all users");
             }
-        } while (true);
+            return userManager.getAll(nextPageRef.getPageSize(), (int)itemsBefore);
+        } else {
+            return null;
+        }
     }
 
     @VisibleForTesting
