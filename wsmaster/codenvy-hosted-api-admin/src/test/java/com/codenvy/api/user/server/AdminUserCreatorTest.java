@@ -16,7 +16,6 @@ package com.codenvy.api.user.server;
 
 import com.codenvy.api.permission.server.AbstractPermissionsDomain;
 import com.codenvy.api.permission.server.PermissionsManager;
-import com.codenvy.api.permission.server.model.impl.AbstractPermissions;
 import com.codenvy.api.permission.server.model.impl.SystemPermissionsImpl;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -28,13 +27,11 @@ import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.jdbc.jpa.eclipselink.EntityListenerInjectionManagerInitializer;
 import org.eclipse.che.api.core.jdbc.jpa.guice.JpaInitializer;
 import org.eclipse.che.api.user.server.UserManager;
-import org.eclipse.che.api.user.server.event.AfterUserPersistedEvent;
+import org.eclipse.che.api.user.server.event.BeforeUserPersistedEvent;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.eclipse.che.inject.lifecycle.InitModule;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
@@ -47,7 +44,6 @@ import java.util.List;
 import static java.util.Collections.emptyList;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
@@ -124,7 +120,7 @@ public class AdminUserCreatorTest {
     public void shouldAddSystemPermissionsInLdapMode() throws Exception {
         Injector injector = Guice.createInjector(new LdapModule());
         AdminUserCreator creator = injector.getInstance(AdminUserCreator.class);
-        creator.onEvent(new AfterUserPersistedEvent(new UserImpl(NAME, EMAIL, NAME, PASSWORD, emptyList())));
+        creator.onEvent(new BeforeUserPersistedEvent(new UserImpl(NAME, EMAIL, NAME, PASSWORD, emptyList())));
         verify(permissionsManager).storePermission(argThat(new ArgumentMatcher<SystemPermissionsImpl>() {
             @Override
             public boolean matches(Object argument) {

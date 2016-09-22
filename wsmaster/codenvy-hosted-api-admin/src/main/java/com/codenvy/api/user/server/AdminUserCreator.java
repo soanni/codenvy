@@ -29,7 +29,7 @@ import org.eclipse.che.api.core.model.user.User;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.core.notification.EventSubscriber;
 import org.eclipse.che.api.user.server.UserManager;
-import org.eclipse.che.api.user.server.event.AfterUserPersistedEvent;
+import org.eclipse.che.api.user.server.event.BeforeUserPersistedEvent;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +48,7 @@ import static java.util.Collections.emptyList;
  * @author Anton Korneta
  */
 @Singleton
-public class AdminUserCreator implements EventSubscriber<AfterUserPersistedEvent> {
+public class AdminUserCreator implements EventSubscriber<BeforeUserPersistedEvent> {
     private static final Logger LOG = LoggerFactory.getLogger(AdminUserCreator.class);
 
     @Inject
@@ -111,7 +111,7 @@ public class AdminUserCreator implements EventSubscriber<AfterUserPersistedEvent
     }
 
     @Override
-    public void onEvent(AfterUserPersistedEvent event) {
+    public void onEvent(BeforeUserPersistedEvent event) {
         if (event.getUser().getName().equals(name)) {
             grantSystemPermissions(event.getUser().getId());
         }
