@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -145,12 +146,12 @@ public class AuditManager {
                     reportPrinter.printError("Failed to receive list of related workspaces for user " + user.getId(), auditReport);
                     continue;
                 }
-                Map<String, List<AbstractPermissions>> wsPermissions = new HashMap<>();
+                List<AbstractPermissions> wsPermissions = new ArrayList<>();
                 for (WorkspaceImpl workspace : workspaces) {
                     try {
-                        wsPermissions.put(workspace.getId(), permissionsManager.getByInstance("workspace", workspace.getId()));
-                    } catch (NotFoundException | ConflictException e) {
-                        wsPermissions.put(workspace.getId(), emptyList());
+                        wsPermissions.add(permissionsManager.get(user.getId(), "workspace", workspace.getId()));
+                    } catch (NotFoundException | ConflictException ignored) {
+                        //Continue printing report, error will be printed in workspace permissions row
                     }
                 }
                 reportPrinter.printUserInfoWithHisWorkspacesInfo(auditReport, user, workspaces, permissionsNumber, wsPermissions);

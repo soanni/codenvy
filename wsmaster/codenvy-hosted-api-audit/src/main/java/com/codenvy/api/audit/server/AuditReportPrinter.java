@@ -102,7 +102,7 @@ class AuditReportPrinter {
                                             UserImpl user,
                                             List<WorkspaceImpl> workspaces,
                                             int permissionsNumber,
-                                            Map<String, List<AbstractPermissions>> wsPermissions) throws ServerException {
+                                            List<AbstractPermissions> wsPermissions) throws ServerException {
         long ownWorkspacesNumber = workspaces.stream().filter(workspace -> workspace.getNamespace().equals(user.getName())).count();
         printRow(user.getEmail() + " is owner of " +
                  ownWorkspacesNumber + " workspace" + (ownWorkspacesNumber > 1 | ownWorkspacesNumber == 0 ? "s" : "") +
@@ -128,15 +128,14 @@ class AuditReportPrinter {
         printRow("[ERROR] " + error + "!\n", auditReport);
     }
 
-    private void printUserWorkspaceInfo(WorkspaceImpl workspace, UserImpl user, Map<String, List<AbstractPermissions>> wsPermissions,
-                                        Path auditReport)
+    private void printUserWorkspaceInfo(WorkspaceImpl workspace, UserImpl user, List<AbstractPermissions> wsPermissions, Path auditReport)
             throws ServerException {
         printRow("   └ " + workspace.getConfig().getName() +
                  ", is owner: " + workspace.getNamespace().equals(user.getName()) + ", permissions: ", auditReport);
         try {
             String workspaceId = workspace.getId();
             printRow(
-                    getWorkspacePermissionsOfUser(workspaceId, user.getId(), wsPermissions.get(workspaceId)).getActions().toString() + "\n",
+                    getWorkspacePermissionsOfUser(workspaceId, user.getId(), wsPermissions).getActions().toString() + "\n",
                     auditReport);
         } catch (NotFoundException e) {
             LOG.error(e.getMessage(), e);
@@ -157,7 +156,8 @@ class AuditReportPrinter {
             throws ServerException, NotFoundException {
 
         Optional<AbstractPermissions> optional = permissions.stream()
-                                                            .filter(wsPermissions -> wsPermissions.getUserId().equals(userId))
+                                                            .filter(wsPermissions -> wsPermissions.getUserId().equals(userId) &&
+                                                                                     wsPermissions.getInstanceId().equals(workspaceId))
                                                             .findFirst();
 
         if (optional.isPresent()) {

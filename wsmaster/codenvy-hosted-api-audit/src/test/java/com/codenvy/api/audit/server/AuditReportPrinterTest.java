@@ -31,6 +31,7 @@ import org.testng.annotations.Test;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -109,6 +110,8 @@ public class AuditReportPrinterTest {
         ws2User1Permissions = mock(AbstractPermissions.class);
         when(ws1User1Permissions.getUserId()).thenReturn("User1Id");
         when(ws2User1Permissions.getUserId()).thenReturn("User1Id");
+        when(ws1User1Permissions.getInstanceId()).thenReturn("Workspace1Id");
+        when(ws2User1Permissions.getInstanceId()).thenReturn("Workspace2Id");
         when(ws1User1Permissions.getActions()).thenReturn(asList("read", "use", "run", "configure", "setPermissions", "delete"));
         when(ws2User1Permissions.getActions()).thenReturn(asList("read", "use", "run", "configure", "setPermissions"));
 
@@ -147,35 +150,25 @@ public class AuditReportPrinterTest {
 
     @Test
     public void shouldWriteUserInfoWithHisWorkspacesInfoToFile() throws Exception {
-        //given
-        Map<String, List<AbstractPermissions>> map = new HashMap<>();
-        map.put("Workspace1Id", singletonList(ws1User1Permissions));
-        map.put("Workspace2Id", singletonList(ws2User1Permissions));
-
         //when
         auditReportPrinter.printUserInfoWithHisWorkspacesInfo(auditReport,
                                                               user,
                                                               asList(workspace1, workspace2),
                                                               2,
-                                                              map);
+                                                              asList(ws1User1Permissions, ws2User1Permissions));
 
         //then
         assertEquals(USER_INFO_WITH_HIS_WORKSPACES_INFO, readFileToString(auditReport.toFile()));
     }
 
     @Test
-    public void shouldWriteUserInfoWithHisWorkspacesInfoEvenIfUserDoNotHavePermissionsToHisWorkspace() throws Exception {
-        //given
-        Map<String, List<AbstractPermissions>> map = new HashMap<>();
-        map.put("Workspace1Id", singletonList(ws1User1Permissions));
-        map.put("Workspace2Id", emptyList());
-
+    public void shouldWriteUserInfoWithHisWorkspacesInfoEvenIfUserDoNotHavePermissionsToWorkspace() throws Exception {
         //when
         auditReportPrinter.printUserInfoWithHisWorkspacesInfo(auditReport,
                                                               user,
                                                               asList(workspace1, workspace2),
                                                               2,
-                                                              map);
+                                                              singletonList(ws1User1Permissions));
 
         //then
         assertEquals(USER_INFO_WITH_HIS_WORKSPACES_INFO_WITHOUT_WORKSPACE2_PERMISSIONS, readFileToString(auditReport.toFile()));
