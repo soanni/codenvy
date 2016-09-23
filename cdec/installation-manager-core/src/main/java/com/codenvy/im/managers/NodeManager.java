@@ -14,7 +14,6 @@
  */
 package com.codenvy.im.managers;
 
-import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.UnsupportedArtifactVersionException;
@@ -74,7 +73,14 @@ public class NodeManager {
         }
 
         if (! getHelper().isDefaultNode(addingNode, config.getHostUrl())) {
-            validate(addingNode);
+            String puppetMasterNodeDns;
+            if (configManager.detectInstallationType() == InstallType.MULTI_SERVER) {
+                puppetMasterNodeDns = configManager.fetchMasterHostName();
+            } else  {
+                puppetMasterNodeDns = config.getHostUrl();
+            }
+
+            getHelper().validate(addingNode, puppetMasterNodeDns);
         }
 
         Command addNodeCommand = getHelper().getAddNodeCommand(addingNode, property);
@@ -125,39 +131,7 @@ public class NodeManager {
         return getHelper().getNodes();
     }
 
-    void validate(NodeConfig node) throws IOException {
-        Command validateSudoRightsCommand = getHelper().getValidateSudoRightsCommand(node);
-        try {
-            validateSudoRightsCommand.execute();
-        } catch (IOException e) {
-            String errorMessage = e.getMessage();
-            if (e.getCause() instanceof AgentException) {
-                errorMessage = format("It seems user doesn't have sudo rights without password on node '%s'.", node.getHost());
-            }
 
-            throw new NodeException(errorMessage, e);
-        }
-
-        String puppetMasterNodeDns;
-        if (configManager.detectInstallationType() == InstallType.MULTI_SERVER) {
-            puppetMasterNodeDns = configManager.fetchMasterHostName();
-        } else  {
-            Config config = configManager.loadInstalledCodenvyConfig();
-            puppetMasterNodeDns = config.getHostUrl();
-        }
-
-        try {
-            Command validatePuppetMasterAccessibilityCommand = getHelper().getValidatePuppetMasterAccessibilityCommand(puppetMasterNodeDns, node);
-            validatePuppetMasterAccessibilityCommand.execute();
-        } catch (IOException e) {
-            String errorMessage = e.getMessage();
-            if (e.getCause() instanceof AgentException) {
-                errorMessage = format("It seems Puppet Master '%s:%s' is not accessible from the node '%s'.", puppetMasterNodeDns, 8140, node.getHost());
-            }
-
-            throw new NodeException(errorMessage, e);
-        }
-    }
 
     /**
      * @throws IOException, UnsupportedArtifactVersionException

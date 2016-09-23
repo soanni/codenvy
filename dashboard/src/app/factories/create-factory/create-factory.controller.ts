@@ -68,6 +68,13 @@ export class CreateFactoryCtrl {
     this.form;
   }
 
+  /**
+   * Clear factory content
+   */
+  clearFactoryContent() {
+    this.factoryContent = null;
+  }
+
   setForm(form) {
     this.form = form;
   }
@@ -136,6 +143,7 @@ export class CreateFactoryCtrl {
    * Flow of creating a factory is finished, we can redirect to details of factory
    */
   finishFlow() {
+    this.clearFactoryContent();
     this.$location.path('/factory/' + this.factoryId);
   }
 

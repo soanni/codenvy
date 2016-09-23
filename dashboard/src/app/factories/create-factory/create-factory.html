@@ -56,7 +56,7 @@
       <md-tabs md-dynamic-height="true" md-stretch-tabs="auto" md-center-tabs="false" md-selected="selectedIndex"
                md-border-bottom="true"
                class="factory-select-source-details">
-        <md-tab>
+        <md-tab md-on-select="createFactoryCtrl.clearFactoryContent()">
           <md-tab-label>
             <md-icon md-font-icon="fa fa-server" class="che-tab-label-icon"></md-icon>
             <span class="che-tab-label-title">Workspace</span>
@@ -67,7 +67,7 @@
                                          cdvy-is-importing="createFactoryCtrl.isImporting"></cdvy-factory-from-workspace>
           </md-tab-body>
         </md-tab>
-        <md-tab>
+        <md-tab md-on-select="createFactoryCtrl.clearFactoryContent()">
           <md-tab-label>
             <md-icon md-font-icon="fa-git" class="fa che-tab-label-icon"></md-icon>
             <span class="che-tab-label-title">Git</span>
@@ -79,7 +79,7 @@
             </div>
           </md-tab-body>
         </md-tab>
-        <md-tab>
+        <md-tab md-on-select="createFactoryCtrl.clearFactoryContent()">
           <md-tab-label>
             <md-icon md-font-icon="fa fa-download" class="che-tab-label-icon"></md-icon>
             <span class="che-tab-label-title">Config</span>
@@ -92,7 +92,7 @@
             </div>
           </md-tab-body>
         </md-tab>
-        <md-tab>
+        <md-tab md-on-select="createFactoryCtrl.clearFactoryContent()">
           <md-tab-label>
             <md-icon md-font-icon="fa fa-magic" class="che-tab-label-icon"></md-icon>
             <span class="che-tab-label-title">Template</span>

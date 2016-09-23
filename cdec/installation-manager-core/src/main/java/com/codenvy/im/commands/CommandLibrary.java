@@ -533,7 +533,7 @@ public class CommandLibrary {
      * @see "http://www.unix.com/302910488-post2.html?s=c351328813d6bc7a509c0a5dee5dc9e7"
      */
     private static String getCheckRemotePortOpenedCommand(String remoteHost, int remotePort) {
-        return format("2>/dev/null >/dev/tcp/%s/%s", remoteHost, remotePort);
+        return format("sleep 3 && echo >/dev/tcp/%s/%s", remoteHost, remotePort);
     }
 
     private static class EmptyCommand implements Command {

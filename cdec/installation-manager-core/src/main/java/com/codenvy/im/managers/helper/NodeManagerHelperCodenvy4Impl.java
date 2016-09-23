@@ -50,6 +50,7 @@ import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.commands.CommandLibrary.createFileBackupCommand;
 import static com.codenvy.im.commands.CommandLibrary.createForcePuppetAgentCommand;
 import static com.codenvy.im.commands.CommandLibrary.createPropertyReplaceCommand;
+import static com.codenvy.im.commands.CommandLibrary.createReplaceCommand;
 import static com.codenvy.im.commands.CommandLibrary.createWaitServiceActiveCommand;
 import static com.codenvy.im.commands.SimpleCommand.createCommand;
 import static com.codenvy.im.utils.Commons.asMap;
@@ -238,15 +239,48 @@ public class NodeManagerHelperCodenvy4Impl extends NodeManagerHelper {
     @Override
     public Command getUpdatePuppetConfigCommand(String oldHostName, String newHostName) throws IOException {
         Config config = configManager.loadInstalledCodenvyConfig();
+        NodeConfigHelper nodeConfigHelper = getNodeConfigHelper(config);
 
         List<Command> commands = new ArrayList<>();
 
-        NodeConfigHelper nodeConfigHelper = getNodeConfigHelper(config);
-        List<String> additionalNodes = nodeConfigHelper.extractNodesDns(NodeConfig.NodeType.MACHINE_NODE).get(nodeConfigHelper.getPropertyNameByType(NodeConfig.NodeType.MACHINE_NODE));
+        String nodeListPropertyName = nodeConfigHelper.getPropertyNameByType(NodeConfig.NodeType.MACHINE_NODE);
+        List<String> additionalNodes = nodeConfigHelper.extractNodesDns(NodeConfig.NodeType.MACHINE_NODE).get(nodeListPropertyName);
         if (additionalNodes == null) {
             return CommandLibrary.EMPTY_COMMAND;
         }
 
+        // check accessibility of nodes on new host url
+        for (String dns : additionalNodes) {
+            NodeConfig node = new NodeConfig(NodeConfig.NodeType.MACHINE_NODE, dns);
+            if (isDefaultNode(node, config.getHostUrl())) {
+                continue;
+            }
+
+            node.setHost(node.getHost().replace(oldHostName, newHostName));
+
+            try {
+                validate(node, newHostName);
+            } catch(NodeException e) {
+                throw new NodeException(format("There is a problem with one of the additional nodes with new hostname. %s", e.getMessage()));
+            }
+        }
+
+        // check autosign.conf on puppet master
+        for (String dns : additionalNodes) {
+            NodeConfig node = new NodeConfig(NodeConfig.NodeType.MACHINE_NODE, dns);
+            if (isDefaultNode(node, config.getHostUrl())) {
+                continue;
+            }
+
+            String oldNodeHostName = node.getHost();
+            String newNodeHostName = oldNodeHostName.replace(oldHostName, newHostName);
+
+            commands.add(createReplaceCommand("/etc/puppet/autosign.conf", oldNodeHostName, newNodeHostName));
+        }
+
+        commands.add(createCommand("sudo systemctl restart puppetmaster"));
+
+        // fix configuration of nodes
         for (String dns : additionalNodes) {
             NodeConfig node = new NodeConfig(NodeConfig.NodeType.MACHINE_NODE, dns);
 
@@ -254,20 +288,40 @@ public class NodeManagerHelperCodenvy4Impl extends NodeManagerHelper {
                 continue;
             }
 
+            String oldNodeHostName = node.getHost();
+            String newNodeHostName = oldNodeHostName.replace(oldHostName, newHostName);
+            node.setHost(newNodeHostName);
+
             List<Command> nodeCommands = new ArrayList<>();
 
             nodeCommands.add(createFileBackupCommand("/etc/puppet/puppet.conf", node));
-            nodeCommands.add(createCommand(format("sudo sed -i 's/certname = %1$s/certname = %2$s/g' /etc/puppet/puppet.conf", oldHostName, newHostName), node));
+            nodeCommands.add(createCommand(format("sudo sed -i 's/certname = %1$s/certname = %2$s/g' /etc/puppet/puppet.conf", oldNodeHostName,
+                                                  newNodeHostName), node));
             nodeCommands.add(createCommand(format("sudo sed -i 's/server = %1$s/server = %2$s/g' /etc/puppet/puppet.conf", oldHostName, newHostName), node));
             nodeCommands.add(createCommand(format("sudo grep \"dns_alt_names = .*,%1$s.*\" /etc/puppet/puppet.conf; "
                                                   + "if [ $? -ne 0 ]; then sudo sed -i 's/dns_alt_names = .*/&,%1$s/' /etc/puppet/puppet.conf; fi", newHostName),
                                            node));  // add new host name to dns_alt_names
+            nodeCommands.add(createCommand("sudo systemctl restart puppet", node));
 
-            commands.add(new MacroCommand(nodeCommands, format("Commands to update puppet.conf file in node '%s'", dns)));
-            commands.add(createCommand("sudo systemctl restart puppet", node));
+            commands.add(new MacroCommand(nodeCommands, format("Commands to update puppet.conf file on node '%s'", dns)));
         }
 
-        return new MacroCommand(commands, "Commands to update puppet.conf file in additional nodes.");
+        // --- update node in the swarm_nodes list
+        String nodeList = configManager.loadInstalledCodenvyConfig().getValueWithoutSubstitution(Config.SWARM_NODES);
+        nodeList = nodeList.replace(format(".%s", oldHostName),
+                                    format(".%s", newHostName));
+
+        Iterator<Path> propertiesFiles = configManager.getCodenvyPropertiesFiles(configManager.detectInstallationType());
+        while (propertiesFiles.hasNext()) {
+            Path file = propertiesFiles.next();
+
+            commands.add(createFileBackupCommand(file));
+            commands.add(createPropertyReplaceCommand(file, "$" + Config.SWARM_NODES, nodeList));
+        }
+
+        commands.add(createCommand("sudo systemctl restart puppet"));
+
+        return new MacroCommand(commands, "Commands to update Puppet config on additional nodes.");
     }
 
     @Override

@@ -14,17 +14,21 @@
  */
 package com.codenvy.im.managers.helper;
 
+import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.NodeConfig;
+import com.codenvy.im.managers.NodeException;
 import com.codenvy.im.managers.UnknownInstallationTypeException;
 import org.eclipse.che.commons.annotation.Nullable;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+
+import static java.lang.String.format;
 
 /**
  * @author Dmytro Nochevnov
@@ -89,6 +93,38 @@ public abstract class NodeManagerHelper {
      */
     public Command getValidatePuppetMasterAccessibilityCommand(String puppetMasterNodeDns, NodeConfig node) throws IOException {
         return CommandLibrary.createCheckRemotePortOpenedCommand(puppetMasterNodeDns, 8140, node);
+    }
+
+    /**
+     * Check if node is accessible and user on the node has sudo rights, and node is able to communicate with puppet master.
+     * @param node
+     * @param puppetMasterNodeDns
+     * @throws IOException
+     */
+    public void validate(NodeConfig node, String puppetMasterNodeDns) throws IOException {
+        Command validateSudoRightsCommand = getValidateSudoRightsCommand(node);
+        try {
+            validateSudoRightsCommand.execute();
+        } catch (IOException e) {
+            String errorMessage = e.getMessage();
+            if (e.getCause() instanceof AgentException) {
+                errorMessage = format("It seems user doesn't have sudo rights without password on node '%s'.", node.getHost());
+            }
+
+            throw new NodeException(errorMessage, e);
+        }
+
+        try {
+            Command validatePuppetMasterAccessibilityCommand = getValidatePuppetMasterAccessibilityCommand(puppetMasterNodeDns, node);
+            validatePuppetMasterAccessibilityCommand.execute();
+        } catch (IOException e) {
+            String errorMessage = e.getMessage();
+            if (e.getCause() instanceof AgentException) {
+                errorMessage = format("It seems Puppet Master '%s:%s' is not accessible from the node '%s'", puppetMasterNodeDns, 8140, node.getHost());
+            }
+
+            throw new NodeException(errorMessage, e);
+        }
     }
 
     abstract public void validateLicense() throws IOException;

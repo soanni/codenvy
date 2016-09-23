@@ -15,6 +15,7 @@
 package com.codenvy.machine.backup;
 
 import org.eclipse.che.api.core.NotFoundException;
+import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.machine.MachineStatus;
 import org.eclipse.che.api.core.model.workspace.WorkspaceStatus;
 import org.eclipse.che.api.machine.server.model.impl.MachineImpl;
@@ -40,6 +41,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -144,6 +146,25 @@ public class WorkspaceFsBackupSchedulerTest {
                                                                   .getRuntime()
                                                                   .getDevMachine()));
         }
+    }
+
+    @Test
+    public void shouldBackupOtherWorkspacesIfBackupOfPreviousFails() throws Exception {
+        // given
+        MachineImpl machine3 = addWorkspace("testWsId3", "id3");
+        MachineImpl machine4 = addWorkspace("testWsId4", "id4");
+        MachineImpl machine5 = addWorkspace("testWsId5", "id5");
+        doThrow(new ServerException("server exception")).when(scheduler).backupWorkspaceInMachine(eq(machine1));
+
+        // when
+        scheduler.scheduleBackup();
+
+        // then
+        verify(scheduler, timeout(1000)).backupWorkspaceInMachine(eq(machine1));
+        verify(scheduler, timeout(1000)).backupWorkspaceInMachine(eq(machine2));
+        verify(scheduler, timeout(1000)).backupWorkspaceInMachine(eq(machine3));
+        verify(scheduler, timeout(1000)).backupWorkspaceInMachine(eq(machine4));
+        verify(scheduler, timeout(1000)).backupWorkspaceInMachine(eq(machine5));
     }
 
     @Test
