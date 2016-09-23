@@ -35,6 +35,7 @@ import org.apache.directory.shared.ldap.schema.manager.impl.DefaultSchemaManager
 import org.apache.directory.shared.ldap.schema.registries.SchemaLoader;
 import org.eclipse.che.api.core.util.CustomPortService;
 import org.eclipse.che.commons.lang.Pair;
+import org.ldaptive.pool.PooledConnectionFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -81,12 +82,15 @@ public class MyLdapServer {
                            .build();
     }
 
-    private LdapServer       ldapServer;
-    private DirectoryService service;
-    private File             workingDir;
-    private String           url;
-    private int              port;
-    private DN               baseDn;
+
+    private LdapServer              ldapServer;
+    private DirectoryService        service;
+    private File                    workingDir;
+    private String                  url;
+    private int                     port;
+    private DN                      baseDn;
+    private PooledConnectionFactory connectionFactory;
+
 
     public MyLdapServer(File workingDir,
                         String partitionDn,
@@ -120,15 +124,28 @@ public class MyLdapServer {
      */
     public void start() throws Exception {
         ldapServer.start();
+        connectionFactory =
+                new LdapConnectionFactoryProvider(url, null, getAdminDn(), getAdminPassword(), null, null, null,
+                                                  null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                                                  null, null, null, null, null, null).get();
     }
 
     /**
      * Stops ldap server, releasing all the acquired resources.
      */
     public void shutdown() {
+        connectionFactory.getConnectionPool().close();
         ldapServer.stop();
         PORT_SERVICE.release(port);
         deleteRecursive(workingDir);
+    }
+
+    /**
+     *
+     * @return - ldaptive PooledConnectionFactory to this server.
+     */
+    public PooledConnectionFactory getConnectionFactory() {
+        return connectionFactory;
     }
 
     /** Returns this server url. */
@@ -342,6 +359,7 @@ public class MyLdapServer {
         service.addPartition(partition);
         return partition;
     }
+
 
     public static class Builder {
 

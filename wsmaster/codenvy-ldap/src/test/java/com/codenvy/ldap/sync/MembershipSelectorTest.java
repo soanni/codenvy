@@ -15,7 +15,6 @@
 package com.codenvy.ldap.sync;
 
 import com.codenvy.ldap.MyLdapServer;
-import com.codenvy.ldap.TestConnectionFactoryProvider;
 
 import org.apache.directory.shared.ldap.entry.ServerEntry;
 import org.eclipse.che.commons.lang.Pair;
@@ -48,7 +47,9 @@ public class MembershipSelectorTest {
     @BeforeClass
     public void setUpServer() throws Exception {
         (server = MyLdapServer.newDefaultServer()).start();
-        connFactory = new TestConnectionFactoryProvider(server).get();
+        connFactory = server.getConnectionFactory();
+
+
 
         // first 100 users don't belong to any group
         for (int i = 0; i < 100; i++) {

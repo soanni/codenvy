@@ -16,6 +16,7 @@ package com.codenvy.ldap.auth;
 
 
 import com.codenvy.api.dao.authentication.AuthenticationHandler;
+import com.codenvy.ldap.sync.UserMapper;
 
 import org.eclipse.che.api.auth.AuthenticationException;
 import org.ldaptive.Credential;
@@ -43,21 +44,24 @@ public class LdapAuthenticationHandler implements AuthenticationHandler {
     public static final String TYPE = "ldap";
 
     private final Authenticator ldapAuthenticator;
+    private final UserMapper    userMapper;
 
     @Inject
-    public LdapAuthenticationHandler(Authenticator ldapAuthenticator) {
+    public LdapAuthenticationHandler(Authenticator ldapAuthenticator, UserMapper userMapper) {
         this.ldapAuthenticator = ldapAuthenticator;
+        this.userMapper = userMapper;
     }
 
 
     @Override
-    public void authenticate(String login, String password) throws AuthenticationException {
+    public String authenticate(String login, String password) throws AuthenticationException {
 
         final AuthenticationResponse response;
         try {
             LOG.debug("Attempting LDAP authentication for: {}", login);
             final AuthenticationRequest request = new AuthenticationRequest(login,
                                                                             new Credential(password));
+            request.setReturnAttributes(userMapper.getLdapEntryAttributeNames());
             response = this.ldapAuthenticator.authenticate(request);
         } catch (final LdapException e) {
             throw new AuthenticationException(401, "Unexpected LDAP error");
@@ -71,6 +75,8 @@ public class LdapAuthenticationHandler implements AuthenticationHandler {
         if (AuthenticationResultCode.DN_RESOLUTION_FAILURE == response.getAuthenticationResultCode()) {
             throw new AuthenticationException(login + "  is not found");
         }
+        LOG.debug("Account state {}", response.getAccountState());
+        return userMapper.apply(response.getLdapEntry()).getId();
     }
 
     @Override

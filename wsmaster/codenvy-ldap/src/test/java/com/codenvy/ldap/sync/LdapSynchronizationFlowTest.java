@@ -15,7 +15,6 @@
 package com.codenvy.ldap.sync;
 
 import com.codenvy.ldap.MyLdapServer;
-import com.codenvy.ldap.TestConnectionFactoryProvider;
 import com.codenvy.ldap.sync.LdapSynchronizer.SyncResult;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -185,12 +184,14 @@ public class LdapSynchronizationFlowTest {
             bind(EventService.class).in(Singleton.class);
             bind(JpaInitializer.class).asEagerSingleton();
             bind(EntityListenerInjectionManagerInitializer.class).asEagerSingleton();
+            bind(UserMapper.class).asEagerSingleton();
+
             install(new JpaPersistModule("test"));
             install(new UserJpaModule());
 
             // configure synchronizer
             bind(LdapEntrySelector.class).toProvider(LdapEntrySelectorProvider.class);
-            bind(ConnectionFactory.class).toProvider(new TestConnectionFactoryProvider(server));
+            bind(ConnectionFactory.class).toInstance(server.getConnectionFactory());
             bindConstant().annotatedWith(Names.named("ldap.sync.initial_delay_ms")).to(0L);
             bindConstant().annotatedWith(Names.named("ldap.sync.period_ms")).to(-1L);
             bindConstant().annotatedWith(Names.named("ldap.sync.user.attr.email")).to("mail");

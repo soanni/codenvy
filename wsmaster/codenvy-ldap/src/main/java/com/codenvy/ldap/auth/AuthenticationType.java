@@ -12,25 +12,31 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.api.dao.authentication;
-
-import org.eclipse.che.api.auth.AuthenticationException;
+package com.codenvy.ldap.auth;
 
 /**
- * Authentication using username and password.
- *
- * @author Sergii Kabashniuk
+ * The enum Authentication types.
  */
-public interface AuthenticationHandler {
+public enum AuthenticationType {
     /**
-     *  Check user password.
-     *
-     * @throws AuthenticationException - in case if login name and password are not matched.
-     * @return User id  of authenticated user.
-     *
+     * Active Directory.
      */
-    String authenticate(final String login, final String password) throws AuthenticationException;
-
-    /** @return - type of authentication handler */
-    String getType();
+    AD,
+    /**
+     * Authenticated Search.
+     */
+    AUTHENTICATED,
+    /**
+     * Direct Bind.
+     */
+    DIRECT,
+    /**
+     * Anonymous Search.
+     */
+    ANONYMOUS,
+    /**
+     * SASL bind search.
+     */
+    SASL
 }
+

@@ -15,7 +15,6 @@
 package com.codenvy.ldap.sync;
 
 import com.codenvy.ldap.MyLdapServer;
-import com.codenvy.ldap.TestConnectionFactoryProvider;
 
 import org.eclipse.che.commons.lang.Pair;
 import org.ldaptive.Connection;
@@ -45,7 +44,10 @@ public class LookupSelectorTest {
     @BeforeClass
     public void setUpServer() throws Exception {
         (server = MyLdapServer.newDefaultServer()).start();
-        connFactory = new TestConnectionFactoryProvider(server).get();
+
+
+
+        connFactory = server.getConnectionFactory();
 
 
         // first 100 users have additional attributes
