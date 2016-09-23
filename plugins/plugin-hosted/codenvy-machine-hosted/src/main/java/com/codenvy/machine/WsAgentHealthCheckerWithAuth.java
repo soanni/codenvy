@@ -16,7 +16,7 @@ package com.codenvy.machine;
 
 import com.codenvy.machine.authentication.shared.dto.MachineTokenDto;
 
-import org.eclipse.che.api.agent.server.WsAgentHealthChecker;
+import org.eclipse.che.api.agent.server.WsAgentHealthCheckerImpl;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.machine.Machine;
@@ -37,7 +37,7 @@ import java.io.IOException;
  * @author Valeriy Svydenko
  */
 @Singleton
-public class WsAgentHealthCheckerWithAuth extends WsAgentHealthChecker {
+public class WsAgentHealthCheckerWithAuth extends WsAgentHealthCheckerImpl {
 
     private final HttpJsonRequestFactory httpJsonRequestFactory;
     private final String apiEndpoint;

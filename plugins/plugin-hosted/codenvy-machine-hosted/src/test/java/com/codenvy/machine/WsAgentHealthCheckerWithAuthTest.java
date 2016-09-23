@@ -23,7 +23,7 @@ import org.eclipse.che.api.core.model.machine.Server;
 import org.eclipse.che.api.core.rest.HttpJsonRequest;
 import org.eclipse.che.api.core.rest.HttpJsonRequestFactory;
 import org.eclipse.che.api.core.rest.HttpJsonResponse;
-import org.eclipse.che.api.workspace.shared.dto.AgentHealthStateDto;
+import org.eclipse.che.api.workspace.shared.dto.WsAgentHealthStateDto;
 import org.eclipse.che.api.workspace.shared.dto.AgentStateDto;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
@@ -101,17 +101,11 @@ public class WsAgentHealthCheckerWithAuthTest {
     }
 
     @Test
-    public void wsAgentIdShouldBeReturned() throws Exception {
-        assertEquals(WSAGENT_REFERENCE, checker.agentId());
-    }
-
-    @Test
     public void stateShouldBeReturnedWithStatusNotFoundIfWorkspaceAgentIsNotExist() throws Exception {
         when(machineRuntimeInfo.getServers()).thenReturn(emptyMap());
 
-        AgentHealthStateDto result = checker.check(devMachine);
+        WsAgentHealthStateDto result = checker.check(devMachine);
 
-        assertEquals(WSAGENT_REFERENCE, result.getAgentId());
         assertEquals(NOT_FOUND.getStatusCode(), result.getAgentState().getCode());
     }
 
@@ -129,7 +123,7 @@ public class WsAgentHealthCheckerWithAuthTest {
         when(machineTokenDto.getMachineToken()).thenReturn("token");
         when(httpJsonRequest.setAuthorizationHeader(eq("token"))).thenReturn(httpJsonRequest);
 
-        final AgentHealthStateDto result = checker.check(devMachine);
+        final WsAgentHealthStateDto result = checker.check(devMachine);
         final AgentStateDto agentState = result.getAgentState();
 
         verify(httpJsonRequestFactory).fromUrl(WS_AGENT_SERVER_URL + '/');
@@ -137,7 +131,6 @@ public class WsAgentHealthCheckerWithAuthTest {
         verify(httpJsonRequest).setTimeout(WS_AGENT_PING_CONNECTION_TIMEOUT_MS);
         verify(httpJsonRequest, times(2)).request();
 
-        assertEquals(WSAGENT_REFERENCE, result.getAgentId());
         assertEquals(200, agentState.getCode());
         assertEquals("response", agentState.getReason());
     }
@@ -146,7 +139,7 @@ public class WsAgentHealthCheckerWithAuthTest {
     public void returnResultWithUnavailableStateIfDoNotGetResponseFromWsAgent() throws Exception {
         doThrow(IOException.class).when(httpJsonRequest).request();
 
-        final AgentHealthStateDto result = checker.check(devMachine);
+        final WsAgentHealthStateDto result = checker.check(devMachine);
         final AgentStateDto agentState = result.getAgentState();
 
         verify(httpJsonRequestFactory).fromUrl(WS_AGENT_SERVER_URL + '/');
@@ -154,7 +147,6 @@ public class WsAgentHealthCheckerWithAuthTest {
         verify(httpJsonRequest).setTimeout(WS_AGENT_PING_CONNECTION_TIMEOUT_MS);
         verify(httpJsonRequest, times(2)).request();
 
-        assertEquals(WSAGENT_REFERENCE, result.getAgentId());
         assertEquals(SERVICE_UNAVAILABLE.getStatusCode(), agentState.getCode());
     }
 }

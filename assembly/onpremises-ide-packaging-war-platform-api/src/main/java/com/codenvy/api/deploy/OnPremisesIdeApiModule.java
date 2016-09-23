@@ -49,7 +49,7 @@ import com.palominolabs.metrics.guice.InstrumentationModule;
 
 import org.eclipse.che.account.spi.AccountDao;
 import org.eclipse.che.account.spi.jpa.JpaAccountDao;
-import org.eclipse.che.api.agent.server.AgentHealthChecker;
+import org.eclipse.che.api.agent.server.WsAgentHealthChecker;
 import org.eclipse.che.api.agent.server.launcher.AgentLauncher;
 import org.eclipse.che.api.auth.AuthenticationDao;
 import org.eclipse.che.api.auth.AuthenticationService;
@@ -225,9 +225,7 @@ public class OnPremisesIdeApiModule extends AbstractModule {
         bind(ServerClient.class).to(com.codenvy.auth.sso.client.MachineSsoServerClient.class);
         bind(com.codenvy.auth.sso.client.MachineSessionInvalidator.class);
 
-        bind(org.eclipse.che.api.agent.server.AgentHealthCheckerService.class);
-        Multibinder<AgentHealthChecker> agentHealthCheckerMultibinder = Multibinder.newSetBinder(binder(), AgentHealthChecker.class);
-        agentHealthCheckerMultibinder.addBinding().to(WsAgentHealthCheckerWithAuth.class);
+        bind(WsAgentHealthChecker.class).to(WsAgentHealthCheckerWithAuth.class);
 
         //SSO
         Multibinder<com.codenvy.api.dao.authentication.AuthenticationHandler> handlerBinder =
