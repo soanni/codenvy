@@ -106,13 +106,6 @@
                 <version>${com.codahale.metrics.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.codenvy</groupId>
-                <artifactId>site</artifactId>
-                <version>${project.version}</version>
-                <type>zip</type>
-                <classifier>${site.classifier}</classifier>
-            </dependency>
-            <dependency>
                 <groupId>com.codenvy.cli</groupId>
                 <artifactId>cli-assembly</artifactId>
                 <version>${project.version}</version>
@@ -319,6 +312,13 @@
                 <artifactId>onpremises-ide-packaging-zip-terminal</artifactId>
                 <version>${project.version}</version>
                 <type>zip</type>
+            </dependency>
+            <dependency>
+                <groupId>com.codenvy.onpremises</groupId>
+                <artifactId>site</artifactId>
+                <version>${project.version}</version>
+                <type>zip</type>
+                <classifier>${site.classifier}</classifier>
             </dependency>
             <dependency>
                 <groupId>com.codenvy.onpremises.wsagent</groupId>
