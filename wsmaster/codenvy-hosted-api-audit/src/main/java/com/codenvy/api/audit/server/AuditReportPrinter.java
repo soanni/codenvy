@@ -136,7 +136,7 @@ class AuditReportPrinter {
         if (permissions != null) {
             printRow(permissions.getActions().toString() + "\n", auditReport);
         } else {
-            printError("Failed to retrieve workspace permissions", auditReport);
+            printRow("[]\n", auditReport);
         }
     }
 

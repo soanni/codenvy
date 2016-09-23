@@ -92,7 +92,7 @@ public class AuditManagerTest {
             "   └ Workspace2Name, is owner: false, permissions: [read, use, run, configure, setPermissions]\n"+
             "user2@email.com is owner of 2 workspaces and has permissions in 1 workspace\n"+
             "   └ Workspace2Name, is owner: true, permissions: [read, use, run, configure, setPermissions, delete]\n"+
-            "   └ Workspace1Name, is owner: true, permissions: [ERROR] Failed to retrieve workspace permissions!\n";
+            "   └ Workspace1Name, is owner: true, permissions: []\n";
 
     private Path auditReport;
 

@@ -19,8 +19,6 @@ import com.codenvy.api.license.LicenseException;
 import com.codenvy.api.license.server.CodenvyLicenseManager;
 import com.codenvy.api.permission.server.PermissionsManager;
 import com.codenvy.api.permission.server.model.impl.AbstractPermissions;
-import com.codenvy.api.workspace.server.WorkspaceDomain;
-import com.google.common.annotations.VisibleForTesting;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.che.api.core.ConflictException;
@@ -148,8 +146,8 @@ public class AuditManager {
                 for (WorkspaceImpl workspace : workspaces) {
                     try {
                         wsPermissions.put(workspace.getId(), permissionsManager.get(user.getId(), DOMAIN_ID, workspace.getId()));
-                    } catch (NotFoundException | ConflictException e) {
-                        wsPermissions.put(workspace.getId(), null);
+                    } catch (NotFoundException | ConflictException ignored) {
+                        //User doesn't have permissions for workspace
                     }
                 }
                 reportPrinter.printUserInfoWithHisWorkspacesInfo(auditReport, user, workspaces, wsPermissions);
