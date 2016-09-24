@@ -14,7 +14,7 @@
  */
 package com.codenvy.ldap.sync;
 
-import com.codenvy.ldap.MyLdapServer;
+import com.codenvy.ldap.EmbeddedLdapServer;
 
 import org.apache.directory.shared.ldap.entry.ServerEntry;
 import org.eclipse.che.commons.lang.Pair;
@@ -41,12 +41,12 @@ import static org.testng.Assert.assertNotNull;
  */
 public class MembershipSelectorTest {
 
-    private MyLdapServer      server;
-    private ConnectionFactory connFactory;
+    private EmbeddedLdapServer server;
+    private ConnectionFactory  connFactory;
 
     @BeforeClass
     public void setUpServer() throws Exception {
-        (server = MyLdapServer.newDefaultServer()).start();
+        (server = EmbeddedLdapServer.newDefaultServer()).start();
         connFactory = server.getConnectionFactory();
 
 

@@ -16,6 +16,7 @@ package com.codenvy.ldap.auth;
 
 
 import com.codenvy.api.dao.authentication.AuthenticationHandler;
+import com.codenvy.ldap.LdapUserIdNormalizer;
 import com.codenvy.ldap.sync.UserMapper;
 
 import org.eclipse.che.api.auth.AuthenticationException;
@@ -43,15 +44,16 @@ public class LdapAuthenticationHandler implements AuthenticationHandler {
 
     public static final String TYPE = "ldap";
 
-    private final Authenticator ldapAuthenticator;
-    private final UserMapper    userMapper;
+    private final Authenticator        ldapAuthenticator;
+    private final LdapUserIdNormalizer idNormalizer;
+    private final String[]             returnAttributes;
 
     @Inject
-    public LdapAuthenticationHandler(Authenticator ldapAuthenticator, UserMapper userMapper) {
+    public LdapAuthenticationHandler(Authenticator ldapAuthenticator, LdapUserIdNormalizer idNormalizer) {
         this.ldapAuthenticator = ldapAuthenticator;
-        this.userMapper = userMapper;
+        this.idNormalizer = idNormalizer;
+        this.returnAttributes = new String[] {idNormalizer.getIdAttributeName()};
     }
-
 
     @Override
     public String authenticate(String login, String password) throws AuthenticationException {
@@ -61,7 +63,7 @@ public class LdapAuthenticationHandler implements AuthenticationHandler {
             LOG.debug("Attempting LDAP authentication for: {}", login);
             final AuthenticationRequest request = new AuthenticationRequest(login,
                                                                             new Credential(password));
-            request.setReturnAttributes(userMapper.getLdapEntryAttributeNames());
+            request.setReturnAttributes(returnAttributes);
             response = this.ldapAuthenticator.authenticate(request);
         } catch (final LdapException e) {
             throw new AuthenticationException(401, "Unexpected LDAP error");
@@ -76,7 +78,7 @@ public class LdapAuthenticationHandler implements AuthenticationHandler {
             throw new AuthenticationException(login + "  is not found");
         }
         LOG.debug("Account state {}", response.getAccountState());
-        return userMapper.apply(response.getLdapEntry()).getId();
+        return idNormalizer.retrieveAndNormalize(response.getLdapEntry());
     }
 
     @Override

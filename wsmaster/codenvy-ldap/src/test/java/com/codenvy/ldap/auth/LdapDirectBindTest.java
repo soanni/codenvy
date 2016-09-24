@@ -14,8 +14,8 @@
  */
 package com.codenvy.ldap.auth;
 
-import com.codenvy.ldap.MyLdapServer;
-import com.codenvy.ldap.sync.UserMapper;
+import com.codenvy.ldap.LdapUserIdNormalizer;
+import com.codenvy.ldap.EmbeddedLdapServer;
 
 import org.apache.directory.shared.ldap.entry.ServerEntry;
 import org.apache.directory.shared.ldap.exception.LdapInvalidAttributeValueException;
@@ -41,22 +41,21 @@ public class LdapDirectBindTest {
     private static final String SUBTREE_SEARCH     = "false";
     private static final String ALLOW_MULTIPLE_DNS = "false";
 
-    private MyLdapServer               server;
+    private EmbeddedLdapServer         server;
     private LdapAuthenticationHandler  handler;
     private List<ServerEntry>          createdEntries;
     private List<Pair<String, String>> users;
 
     @BeforeClass
     public void startServer() throws Exception {
-        server = MyLdapServer.builder()
-                             .setPartitionId("codenvy")
-                             .setPartitionDn(BASE_DN)
-                             .useTmpWorkingDir()
-                             .setMaxSizeLimit(1000)
-                             .build();
+        server = EmbeddedLdapServer.builder()
+                                   .setPartitionId("codenvy")
+                                   .setPartitionDn(BASE_DN)
+                                   .useTmpWorkingDir()
+                                   .setMaxSizeLimit(1000)
+                                   .build();
         server.start();
 
-        UserMapper userMapper = new UserMapper("uid", "cn", "mail");
         PooledConnectionFactory connectionFactory = server.getConnectionFactory();
         EntryResolver entryResolverProvider =
                 new EntryResolverProvider(connectionFactory,
@@ -72,7 +71,7 @@ public class LdapDirectBindTest {
                                           null,
                                           USER_FILTER,
                                           ALLOW_MULTIPLE_DNS, SUBTREE_SEARCH).get();
-        handler = new LdapAuthenticationHandler(authenticator, userMapper);
+        handler = new LdapAuthenticationHandler(authenticator, new LdapUserIdNormalizer("uid"));
 
         // create a set of users
         users = new ArrayList<>();

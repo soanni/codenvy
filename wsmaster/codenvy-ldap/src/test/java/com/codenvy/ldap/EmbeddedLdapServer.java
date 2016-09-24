@@ -35,6 +35,7 @@ import org.apache.directory.shared.ldap.schema.manager.impl.DefaultSchemaManager
 import org.apache.directory.shared.ldap.schema.registries.SchemaLoader;
 import org.eclipse.che.api.core.util.CustomPortService;
 import org.eclipse.che.commons.lang.Pair;
+import org.ldaptive.Connection;
 import org.ldaptive.pool.PooledConnectionFactory;
 
 import java.io.File;
@@ -52,7 +53,7 @@ import static org.eclipse.che.commons.lang.IoUtil.deleteRecursive;
  *
  * @author Yevhenii Voevodin
  */
-public class MyLdapServer {
+public class EmbeddedLdapServer {
 
     private static final String            ADMIN_CN        = "admin";
     private static final String            ADMIN_PWD       = "password";
@@ -64,7 +65,7 @@ public class MyLdapServer {
     }
 
     /**
-     * Creates and returns a new instance of {@link MyLdapServer} with default configuration.
+     * Creates and returns a new instance of {@link EmbeddedLdapServer} with default configuration.
      *
      * <ul>
      * <li>partition id - 'codenvy'</li>
@@ -73,13 +74,13 @@ public class MyLdapServer {
      * <li>using temporary generated working directory</li>
      * </ul>
      */
-    public static MyLdapServer newDefaultServer() throws Exception {
-        return MyLdapServer.builder()
-                           .setPartitionId("codenvy")
-                           .allowAnonymousAccess()
-                           .setPartitionDn(DEFAULT_BASE_DN)
-                           .useTmpWorkingDir()
-                           .build();
+    public static EmbeddedLdapServer newDefaultServer() throws Exception {
+        return EmbeddedLdapServer.builder()
+                                 .setPartitionId("codenvy")
+                                 .allowAnonymousAccess()
+                                 .setPartitionDn(DEFAULT_BASE_DN)
+                                 .useTmpWorkingDir()
+                                 .build();
     }
 
 
@@ -92,13 +93,13 @@ public class MyLdapServer {
     private PooledConnectionFactory connectionFactory;
 
 
-    public MyLdapServer(File workingDir,
-                        String partitionDn,
-                        String partitionId,
-                        int port,
-                        boolean enableChangelog,
-                        boolean allowAnonymousAccess,
-                        long maxSizeLimit) throws Exception {
+    public EmbeddedLdapServer(File workingDir,
+                              String partitionDn,
+                              String partitionId,
+                              int port,
+                              boolean enableChangelog,
+                              boolean allowAnonymousAccess,
+                              long maxSizeLimit) throws Exception {
         requireNonNull(partitionDn, "Required non-null partition dn");
         requireNonNull(partitionId, "Required non-null partition id");
         this.workingDir = workingDir;
@@ -141,8 +142,8 @@ public class MyLdapServer {
     }
 
     /**
-     *
-     * @return - ldaptive PooledConnectionFactory to this server.
+     * Returns an instance of {@link PooledConnectionFactory} which
+     * produces {@link Connection} to this server.
      */
     public PooledConnectionFactory getConnectionFactory() {
         return connectionFactory;
@@ -410,14 +411,14 @@ public class MyLdapServer {
             return this;
         }
 
-        public MyLdapServer build() throws Exception {
-            return new MyLdapServer(workingDir,
-                                    partitionSuffix,
-                                    partitionId,
-                                    port,
-                                    enableChangelog,
-                                    allowAnonymousAccess,
-                                    maxSizeLimit);
+        public EmbeddedLdapServer build() throws Exception {
+            return new EmbeddedLdapServer(workingDir,
+                                          partitionSuffix,
+                                          partitionId,
+                                          port,
+                                          enableChangelog,
+                                          allowAnonymousAccess,
+                                          maxSizeLimit);
         }
     }
 }

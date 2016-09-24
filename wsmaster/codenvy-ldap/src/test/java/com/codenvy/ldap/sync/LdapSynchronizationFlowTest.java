@@ -14,7 +14,7 @@
  */
 package com.codenvy.ldap.sync;
 
-import com.codenvy.ldap.MyLdapServer;
+import com.codenvy.ldap.EmbeddedLdapServer;
 import com.codenvy.ldap.sync.LdapSynchronizer.SyncResult;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -56,13 +56,13 @@ import static org.testng.Assert.assertEquals;
  */
 public class LdapSynchronizationFlowTest {
 
-    private LdapSynchronizer synchronizer;
-    private UserDao          userDao;
-    private MyLdapServer     server;
+    private LdapSynchronizer   synchronizer;
+    private UserDao            userDao;
+    private EmbeddedLdapServer server;
 
     @BeforeClass
     public void setUp(ITestContext context) throws Exception {
-        (server = MyLdapServer.newDefaultServer()).start();
+        (server = EmbeddedLdapServer.newDefaultServer()).start();
         final Injector injector = Guice.createInjector(new Module(server));
         synchronizer = injector.getInstance(LdapSynchronizer.class);
         userDao = injector.getInstance(UserDao.class);
@@ -172,9 +172,9 @@ public class LdapSynchronizationFlowTest {
 
     public static class Module extends AbstractModule {
 
-        private final MyLdapServer server;
+        private final EmbeddedLdapServer server;
 
-        public Module(MyLdapServer server) {
+        public Module(EmbeddedLdapServer server) {
             this.server = server;
         }
 
@@ -184,7 +184,6 @@ public class LdapSynchronizationFlowTest {
             bind(EventService.class).in(Singleton.class);
             bind(JpaInitializer.class).asEagerSingleton();
             bind(EntityListenerInjectionManagerInitializer.class).asEagerSingleton();
-            bind(UserMapper.class).asEagerSingleton();
 
             install(new JpaPersistModule("test"));
             install(new UserJpaModule());

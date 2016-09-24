@@ -28,6 +28,8 @@ import java.util.function.Function;
 import static java.util.stream.Collectors.toMap;
 
 /**
+ * Maps {@link LdapEntry} to {@link ProfileImpl}.
+ *
  * @author Yevhenii Voevodin
  */
 public class ProfileMapper implements Function<LdapEntry, ProfileImpl> {
@@ -49,7 +51,7 @@ public class ProfileMapper implements Function<LdapEntry, ProfileImpl> {
     @Override
     public ProfileImpl apply(LdapEntry entry) {
         final ProfileImpl profile = new ProfileImpl();
-        profile.setUserId(UserMapper.NOT_VALID_ID_CHARS_PATTERN.matcher(entry.getAttribute(idAttr).getStringValue()).replaceAll(""));
+        profile.setUserId(entry.getAttribute(idAttr).getStringValue());
         for (Map.Entry<String, String> attrMapping : appToLdapAttrNames.entrySet()) {
             final LdapAttribute ldapAttr = entry.getAttribute(attrMapping.getValue());
             if (ldapAttr != null) {

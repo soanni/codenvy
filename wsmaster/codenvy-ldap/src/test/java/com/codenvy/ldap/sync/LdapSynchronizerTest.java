@@ -14,6 +14,7 @@
  */
 package com.codenvy.ldap.sync;
 
+import com.codenvy.ldap.LdapUserIdNormalizer;
 import com.codenvy.ldap.sync.LdapSynchronizer.SyncResult;
 
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
@@ -69,6 +70,9 @@ public class LdapSynchronizerTest {
     private LdapEntrySelector entrySelector;
 
     @Mock
+    private LdapUserIdNormalizer idNormalizer;
+
+    @Mock
     private UserDao userDao;
 
     @Mock
@@ -85,13 +89,13 @@ public class LdapSynchronizerTest {
                                             entrySelector,
                                             userDao,
                                             profileDao,
+                                            idNormalizer,
                                             null,
-                                            new UserMapper("uid",
-                                                                   "cn",
-                                                                   "mail"),
                                             0,
                                             0,
                                             "uid",
+                                            "cn",
+                                            "mail",
                                             new Pair[] {Pair.of("firstName", "givenName")});
 
         // mocking existing ids
@@ -153,28 +157,6 @@ public class LdapSynchronizerTest {
         assertEquals(syncResult.getRefreshed(), 2);
         verify(userDao, times(2)).update(anyObject());
         verify(profileDao, times(2)).update(anyObject());
-    }
-
-    @Test(dataProvider = "identifiersSet")
-    public void shouldNormalizeUserIdentifier(String raw, String normalized) throws Exception {
-        when(entrySelector.select(anyObject())).thenReturn(singletonList(createUserEntry(raw)));
-
-        synchronizer.syncAll();
-
-        final ArgumentCaptor<UserImpl> captor = ArgumentCaptor.forClass(UserImpl.class);
-        verify(userDao).create(captor.capture());
-        assertEquals(captor.getValue().getId(), normalized);
-    }
-
-    @DataProvider
-    public static Object[][] identifiersSet() {
-        return new String[][] {
-                {"{0000-1111-2222-3333-4444}", "0000-1111-2222-3333-4444"},
-                {"(abc1234456789)01.01.2000", "abc123445678901012000"},
-                {"abcd#efgh", "abcdefgh"},
-                {"dot.separated.identifier", "dotseparatedidentifier"},
-                {"A_Valid_Identifier-1234567890", "A_Valid_Identifier-1234567890"}
-        };
     }
 
     private static LdapEntry createUserEntry(String id) {

@@ -14,7 +14,7 @@
  */
 package com.codenvy.ldap.sync;
 
-import com.codenvy.ldap.MyLdapServer;
+import com.codenvy.ldap.EmbeddedLdapServer;
 
 import org.eclipse.che.commons.lang.Pair;
 import org.ldaptive.Connection;
@@ -38,12 +38,12 @@ import static org.testng.Assert.assertNotNull;
  */
 public class LookupSelectorTest {
 
-    private MyLdapServer      server;
-    private ConnectionFactory connFactory;
+    private EmbeddedLdapServer server;
+    private ConnectionFactory  connFactory;
 
     @BeforeClass
     public void setUpServer() throws Exception {
-        (server = MyLdapServer.newDefaultServer()).start();
+        (server = EmbeddedLdapServer.newDefaultServer()).start();
 
 
 

@@ -14,6 +14,7 @@
  */
 package com.codenvy.ldap.sync;
 
+import com.codenvy.ldap.LdapUserIdNormalizer;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Provider;
 import com.google.inject.persist.Transactional;
@@ -73,13 +74,11 @@ import static java.lang.String.format;
 @Singleton
 public class LdapSynchronizer {
 
-    private static final Logger  LOG                                   = LoggerFactory.getLogger(LdapSynchronizer.class);
-
-    private static final int     EACH_ENTRIES_COUNT_CHECK_INTERRUPTION = 200;
+    private static final Logger LOG                                   = LoggerFactory.getLogger(LdapSynchronizer.class);
+    private static final int    EACH_ENTRIES_COUNT_CHECK_INTERRUPTION = 200;
 
     private final long                             syncPeriodMs;
     private final long                             initDelayMs;
-    private final String                           userIdAttr;
     private final Function<LdapEntry, ProfileImpl> profileMapper;
     private final Function<LdapEntry, UserImpl>    userMapper;
     private final LdapEntrySelector                selector;
@@ -89,6 +88,7 @@ public class LdapSynchronizer {
     private final Provider<EntityManager>          emProvider;
     private final ScheduledExecutorService         scheduler;
     private final AtomicBoolean                    isSyncing;
+    private final LdapUserIdNormalizer             idNormalizer;
 
     /**
      * Creates an instance of synchronizer.
@@ -115,6 +115,14 @@ public class LdapSynchronizer {
      *         ldap attribute indicating user identifier, it must be unique, otherwise
      *         synchronization will fail on user which has the same identifier.
      *         e.g. 'uid'
+     * @param userNameAttr
+     *         ldap attribute indicating user name, it must be unique, otherwise
+     *         synchronization will fail on user which has the same name.
+     *         e.g. 'cn'
+     * @param userEmailAttr
+     *         ldap attribute indicating user email, it must be unique, otherwise
+     *         synchronization will fail on user which has the same email
+     *         e.g. 'mail'
      * @param profileAttributes
      *         an optional list of pairs indicating application to ldap attributes mapping.
      *         e.g. <i>lastName=sn,firstName=givenName,phone=telephoneNumber</i>
@@ -125,11 +133,13 @@ public class LdapSynchronizer {
                             LdapEntrySelector selector,
                             UserDao userDao,
                             ProfileDao profileDao,
+                            LdapUserIdNormalizer idNormalizer,
                             EntityListenerInjectionManagerInitializer jpaInitializer,
-                            UserMapper userMapper,
                             @Named("ldap.sync.period_ms") long syncPeriodMs,
                             @Named("ldap.sync.initial_delay_ms") long initDelayMs,
                             @Named("ldap.sync.user.attr.id") String userIdAttr,
+                            @Named("ldap.sync.user.attr.name") String userNameAttr,
+                            @Named("ldap.sync.user.attr.email") String userEmailAttr,
                             @Named("ldap.sync.profile.attrs") @Nullable Pair<String, String>[] profileAttributes) {
         if (initDelayMs < 0) {
             throw new IllegalArgumentException("'ldap.sync.initial_delay_ms' must be >= 0, the actual value is " + initDelayMs);
@@ -141,8 +151,8 @@ public class LdapSynchronizer {
         this.syncPeriodMs = syncPeriodMs;
         this.initDelayMs = initDelayMs;
         this.selector = selector;
-        this.userIdAttr = userIdAttr;
-        this.userMapper = userMapper;
+        this.idNormalizer = idNormalizer;
+        this.userMapper = new UserMapper(userIdAttr, userNameAttr, userEmailAttr);
         this.profileMapper = new ProfileMapper(userIdAttr, profileAttributes);
         this.isSyncing = new AtomicBoolean(false);
         this.scheduler = Executors.newScheduledThreadPool(1,
@@ -185,7 +195,7 @@ public class LdapSynchronizer {
             long iteration = 0;
             for (LdapEntry entry : selector.select(connection)) {
                 iteration++;
-
+                idNormalizer.normalize(entry);
                 final UserImpl user = userMapper.apply(entry);
                 final ProfileImpl profile = profileMapper.apply(entry);
                 try {

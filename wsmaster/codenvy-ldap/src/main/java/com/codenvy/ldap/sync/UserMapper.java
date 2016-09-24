@@ -17,53 +17,28 @@ package com.codenvy.ldap.sync;
 import org.eclipse.che.api.user.server.model.impl.UserImpl;
 import org.ldaptive.LdapEntry;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 /**
+ * Maps {@link LdapEntry} to {@link UserImpl}.
+ *
  * @author Yevhenii Voevodin
  */
-@Singleton
 public class UserMapper implements Function<LdapEntry, UserImpl> {
 
     private final String idAttr;
     private final String nameAttr;
     private final String mailAttr;
-    public static final Pattern NOT_VALID_ID_CHARS_PATTERN = Pattern.compile("[^a-zA-Z0-9-_]");
 
-    /**
-     * @param userIdAttr
-     *         ldap attribute indicating user identifier, it must be unique, otherwise
-     *         synchronization will fail on user which has the same identifier.
-     *         e.g. 'uid'
-     * @param userNameAttr
-     *         ldap attribute indicating user name, it must be unique, otherwise
-     *         synchronization will fail on user which has the same name.
-     *         e.g. 'cn'
-     * @param userEmailAttr
-     *         ldap attribute indicating user email, it must be unique, otherwise
-     *         synchronization will fail on user which has the same email
-     *         e.g. 'mail'
-     */
-    @Inject
-    public UserMapper(@Named("ldap.sync.user.attr.id") String userIdAttr,
-                      @Named("ldap.sync.user.attr.name") String userNameAttr,
-                      @Named("ldap.sync.user.attr.email") String userEmailAttr) {
+    public UserMapper(String userIdAttr, String userNameAttr, String userEmailAttr) {
         this.idAttr = userIdAttr;
         this.nameAttr = userNameAttr;
         this.mailAttr = userEmailAttr;
     }
 
-    public String[] getLdapEntryAttributeNames() {
-        return new String[]{idAttr, nameAttr, mailAttr};
-    }
-
     @Override
     public UserImpl apply(LdapEntry entry) {
-        return new UserImpl(NOT_VALID_ID_CHARS_PATTERN.matcher(entry.getAttribute(idAttr).getStringValue()).replaceAll(""),
+        return new UserImpl(entry.getAttribute(idAttr).getStringValue(),
                             entry.getAttribute(mailAttr).getStringValue(),
                             entry.getAttribute(nameAttr).getStringValue());
     }
