@@ -112,6 +112,10 @@ public class Config {
     public static final String HTTPS_PROXY_FOR_CODENVY = "https_proxy_for_codenvy";
     public static final String NO_PROXY_FOR_CODENVY    = "no_proxy_for_codenvy";
 
+    public static final String PGSQL_USERNAME      = "pgsql_username";
+    public static final String PGSQL_PASS          = "pgsql_pass";
+    public static final String PGSQL_DATABASE_NAME = "pgsql_database_name";
+
     public static final List<String> MULTI_SERVER_PROPERTIES = ImmutableList.of(MULTI_SERVER_BASE_CONFIG_PP,
                                                                                 MULTI_SERVER_4_0_PROPERTIES,
                                                                                 MULTI_SERVER_BASE_4_0_PROPERTIES,
