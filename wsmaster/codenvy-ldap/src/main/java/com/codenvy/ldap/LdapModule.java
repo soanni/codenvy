@@ -54,9 +54,5 @@ public class LdapModule extends AbstractModule {
         bind(LdapEntrySelector.class).toProvider(LdapEntrySelectorProvider.class);
         bind(LdapSynchronizer.class).asEagerSingleton();
         bind(LdapSynchronizerService.class);
-        bind(UserMapper.class).asEagerSingleton();
-
     }
-
-
 }
