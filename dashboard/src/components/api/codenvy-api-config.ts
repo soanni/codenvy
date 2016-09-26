@@ -18,6 +18,7 @@ import {CodenvyAPI} from './codenvy-api.factory';
 import {CodenvyUser} from './codenvy-user.factory';
 import {CodenvyFactory} from './codenvy-factory.factory';
 import {CodenvyPermissions} from './codenvy-permissions.factory';
+import {CodenvySystem} from './codenvy-system.factory';
 import {CodenvyFactoryTemplate} from './codenvy-factory-template.factory';
 import {CodenvyAPIBuilder} from './builder/codenvy-api-builder.factory';
 import {CodenvyHttpBackend} from './test/codenvy-http-backend';
@@ -31,6 +32,7 @@ export class CodenvyApiConfig {
     register.app.constant('clientTokenPath', '/');//is necessary for Braintree
     register.factory('codenvyFactory', CodenvyFactory);
     register.factory('codenvyPermissions', CodenvyPermissions);
+    register.factory('codenvySystem', CodenvySystem);
     register.factory('codenvyFactoryTemplate', CodenvyFactoryTemplate);
     register.factory('codenvyAPI', CodenvyAPI);
     register.factory('codenvyAPIBuilder', CodenvyAPIBuilder);

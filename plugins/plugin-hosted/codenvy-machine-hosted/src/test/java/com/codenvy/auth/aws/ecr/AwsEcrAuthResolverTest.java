@@ -14,19 +14,24 @@
  */
 package com.codenvy.auth.aws.ecr;
 
+import com.codenvy.auth.aws.AwsAccountCredentials;
+
 import org.eclipse.che.plugin.docker.client.dto.AuthConfig;
 import org.mockito.Mock;
 import org.mockito.testng.MockitoTestNGListener;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -48,31 +53,38 @@ public class AwsEcrAuthResolverTest {
 
     private static final String USERNAME = "AWS";
     private static final String PASSWORD = "dynamicTokenIsHere";
+
     private static final String AUTHORIZATION_TOKEN = "QVdTOmR5bmFtaWNUb2tlbklzSGVyZQ==";
 
     @Mock
-    private AwsInitialAuthConfig awsInitialAuthConfig;
+    private AwsEcrInitialAuthConfig awsEcrInitialAuthConfig;
+
+    private AwsAccountCredentials awsAccountCredentials;
 
     private AwsEcrAuthResolver awsEcrAuthResolver;
 
-    @BeforeMethod
-    private void setup() {
-        when(awsInitialAuthConfig.getAwsAccountId()).thenReturn(AWS_ID);
-        when(awsInitialAuthConfig.getRegion()).thenReturn(AWS_REGION);
-        when(awsInitialAuthConfig.getAccessKeyId()).thenReturn(AWS_ACCESS_KEY_ID);
-        when(awsInitialAuthConfig.getSecretAccessKey()).thenReturn(AWS_SECRET_ACCESS_KEY);
-        when(awsInitialAuthConfig.getEcrHostname()).thenReturn(AWS_ECR);
+    @BeforeClass
+    private void before() {
+        awsAccountCredentials = new AwsAccountCredentials(AWS_ID, AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY);
+    }
 
-        awsEcrAuthResolver = spy(new AwsEcrAuthResolver(awsInitialAuthConfig));
-        doReturn(AUTHORIZATION_TOKEN).when(awsEcrAuthResolver).getAwsAuthorizationToken();
+    @BeforeMethod
+    private void beforeTest() {
+        Map<String, AwsAccountCredentials> configuredCredentials = new HashMap<>();
+        configuredCredentials.put(AWS_ECR, awsAccountCredentials);
+        when(awsEcrInitialAuthConfig.getAuthConfigs()).thenReturn(configuredCredentials);
+
+        awsEcrAuthResolver = spy(new AwsEcrAuthResolver(awsEcrInitialAuthConfig));
+
+        doReturn(AUTHORIZATION_TOKEN).when(awsEcrAuthResolver).getAwsAuthorizationToken(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY);
     }
 
     @Test
-    public void shouldGetDynamicXRegistryAuth() {
+    public void shouldBeAbleToGetDynamicXRegistryAuth() {
         AuthConfig authConfig =
                 awsEcrAuthResolver.getXRegistryAuth(AWS_ECR);
 
-        verify(awsEcrAuthResolver).getAwsAuthorizationToken();
+        verify(awsEcrAuthResolver).getAwsAuthorizationToken(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY);
 
         assertEquals(authConfig.getUsername(), USERNAME);
         assertEquals(authConfig.getPassword(), PASSWORD);
@@ -90,40 +102,51 @@ public class AwsEcrAuthResolverTest {
 
     @Test
     public void shouldReturnNullWhenGetDynamicXRegistryAuthIfCredentialsIsNotConfigured() {
-        awsEcrAuthResolver = spy(new AwsEcrAuthResolver(new AwsInitialAuthConfig(null, null, null, null)));
-
-        assertNull(awsEcrAuthResolver.getXRegistryAuth(AWS_ECR));
-    }
-
-    @Test
-    public void shouldReturnNullWhenGetDynamicXRegistryAuthIfRetrievedAuthTokenCannotBeDecodedAsBase64() {
-        doReturn("QVdTOmR5SomEvRoNgBaSe64VaLuE+=").when(awsEcrAuthResolver).getAwsAuthorizationToken();
+        when(awsEcrInitialAuthConfig.getAuthConfigs()).thenReturn(new HashMap<>());
 
         assertNull(awsEcrAuthResolver.getXRegistryAuth(AWS_ECR));
     }
 
     @Test
     public void shouldReturnNullWhenGetDynamicXRegistryAuthIfFailedToRetrieveAuthToken() {
-        doReturn(null).when(awsEcrAuthResolver).getAwsAuthorizationToken();
+        doReturn(null).when(awsEcrAuthResolver).getAwsAuthorizationToken(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY);
+
+        assertNull(awsEcrAuthResolver.getXRegistryAuth(AWS_ECR));
+    }
+
+    @Test
+    public void shouldReturnNullWhenGetDynamicXRegistryAuthIfRetrievedAuthTokenCannotBeDecodedAsBase64() {
+        doReturn("QVdTOmR5SomEvRoNgBaSe64VaLuE+=").when(awsEcrAuthResolver).getAwsAuthorizationToken(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY);
 
         assertNull(awsEcrAuthResolver.getXRegistryAuth(AWS_ECR));
     }
 
     @Test
     public void shouldReturnNullWhenGetDynamicXRegistryAuthIfRetrievedAuthTokenHasWrongFormat() {
-        doReturn("J7sLO0KsMwKKy7h1").when(awsEcrAuthResolver).getAwsAuthorizationToken();
+        doReturn("J7sLO0KsMwKKy7h1").when(awsEcrAuthResolver).getAwsAuthorizationToken(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY);
 
         assertNull(awsEcrAuthResolver.getXRegistryAuth(AWS_ECR));
     }
 
     @Test
-    public void shouldGetDynamicXRegistryConfig() {
-        awsEcrAuthResolver = spy(new AwsEcrAuthResolver(new AwsInitialAuthConfig(AWS_ID,
-                                                                                 AWS_REGION,
-                                                                                 AWS_ACCESS_KEY_ID,
-                                                                                 AWS_SECRET_ACCESS_KEY)));
-        doReturn(AUTHORIZATION_TOKEN).when(awsEcrAuthResolver).getAwsAuthorizationToken();
+    public void shouldGetDynamicXRegistryAuthOnlyForGivenRegistry() {
+        Map<String, AwsAccountCredentials> configuredCredentials = new HashMap<>();
+        configuredCredentials.put("id1234.dkr.ecr.region-1.amazonaws.com", new AwsAccountCredentials("id1234", "region-1", "accessKey", "secretKey"));
+        configuredCredentials.put(AWS_ECR, awsAccountCredentials);
+        configuredCredentials.put("102030.dkr.ecr.region-2.amazonaws.com", new AwsAccountCredentials("102030", "region-2", "accessKey2", "secretKey2"));
+        when(awsEcrInitialAuthConfig.getAuthConfigs()).thenReturn(configuredCredentials);
 
+        AuthConfig authConfig =
+                awsEcrAuthResolver.getXRegistryAuth(AWS_ECR);
+
+        verify(awsEcrAuthResolver, times(1)).getAwsAuthorizationToken(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY);
+
+        assertEquals(authConfig.getUsername(), USERNAME);
+        assertEquals(authConfig.getPassword(), PASSWORD);
+    }
+
+    @Test
+    public void shouldBeAbleToGetDynamicXRegistryConfig() {
         Map<String, AuthConfig> authConfigsMap =
                 awsEcrAuthResolver.getXRegistryConfig();
 
@@ -134,8 +157,47 @@ public class AwsEcrAuthResolverTest {
     }
 
     @Test
+    public void shouldGetDynamicXRegistryConfigForAllConfiguredRegistries() {
+        Map<String, AwsAccountCredentials> configuredCredentials = new HashMap<>();
+        configuredCredentials.put(AWS_ECR, awsAccountCredentials);
+        configuredCredentials.put("id1234.dkr.ecr.region-1.amazonaws.com", new AwsAccountCredentials("id1234", "region-1", "accessKey", "secretKey"));
+        when(awsEcrInitialAuthConfig.getAuthConfigs()).thenReturn(configuredCredentials);
+        doReturn("QVdTOmR5bmFtaWNQYXNzd29yZA==").when(awsEcrAuthResolver).getAwsAuthorizationToken("accessKey", "secretKey");
+
+        Map<String, AuthConfig> authConfigsMap =
+                awsEcrAuthResolver.getXRegistryConfig();
+
+        verify(awsEcrAuthResolver, atLeastOnce()).getXRegistryAuth(anyString());
+        assertTrue(authConfigsMap.size() == 2);
+        AuthConfig authConfig = authConfigsMap.get(AWS_ECR);
+        assertEquals(authConfig.getUsername(), USERNAME);
+        assertEquals(authConfig.getPassword(), PASSWORD);
+        authConfig = authConfigsMap.get("id1234.dkr.ecr.region-1.amazonaws.com");
+        assertEquals(authConfig.getUsername(), USERNAME);
+        assertEquals(authConfig.getPassword(), "dynamicPassword");
+    }
+
+    @Test
+    public void shouldGetDynamicXRegistryConfigForRegistriesForWhichPossibleGetToken() {
+        Map<String, AwsAccountCredentials> configuredCredentials = new HashMap<>();
+        configuredCredentials.put(AWS_ECR, awsAccountCredentials);
+        configuredCredentials.put("id1234.dkr.ecr.region-1.amazonaws.com", new AwsAccountCredentials("id1234", "region-1", "accessKey", "secretKey"));
+        when(awsEcrInitialAuthConfig.getAuthConfigs()).thenReturn(configuredCredentials);
+        doReturn(null).when(awsEcrAuthResolver).getAwsAuthorizationToken("accessKey", "secretKey");
+
+        Map<String, AuthConfig> authConfigsMap =
+                awsEcrAuthResolver.getXRegistryConfig();
+
+        verify(awsEcrAuthResolver, atLeastOnce()).getXRegistryAuth(anyString());
+        assertTrue(authConfigsMap.size() == 1);
+        AuthConfig authConfig = authConfigsMap.get(AWS_ECR);
+        assertEquals(authConfig.getUsername(), USERNAME);
+        assertEquals(authConfig.getPassword(), PASSWORD);
+    }
+
+    @Test
     public void shouldReturnEmptyMapWhenGetDynamicXRegistryConfigIfCredentialsIsNotConfigured() {
-        awsEcrAuthResolver = spy(new AwsEcrAuthResolver(new AwsInitialAuthConfig(null, null, null, null)));
+        when(awsEcrInitialAuthConfig.getAuthConfigs()).thenReturn(new HashMap<>());
 
         Map<String, AuthConfig> authConfigsMap =
                 awsEcrAuthResolver.getXRegistryConfig();

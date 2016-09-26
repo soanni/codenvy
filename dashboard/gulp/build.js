@@ -168,4 +168,4 @@ gulp.task('clean', function () {
 });
 
 
-gulp.task('build', ['html', 'images', 'htmlassets', 'brandingassets', 'fonts', 'other']);
+gulp.task('build', ['html', 'images', 'htmlassets', 'brandingassets', 'fonts', 'other', 'zeroclipboardassets']);

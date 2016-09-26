@@ -21,6 +21,7 @@ import com.amazonaws.services.ecr.model.AmazonECRException;
 import com.amazonaws.services.ecr.model.AuthorizationData;
 import com.amazonaws.services.ecr.model.GetAuthorizationTokenRequest;
 import com.amazonaws.services.ecr.model.GetAuthorizationTokenResult;
+import com.codenvy.auth.aws.AwsAccountCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -47,11 +48,11 @@ import static org.eclipse.che.dto.server.DtoFactory.newDto;
 public class AwsEcrAuthResolver implements DockerRegistryDynamicAuthResolver {
     private static final Logger LOG = LoggerFactory.getLogger(DockerRegistryDynamicAuthResolver.class);
 
-    private final AwsInitialAuthConfig awsInitialAuthConfig;
+    private final AwsEcrInitialAuthConfig awsEcrInitialAuthConfig;
 
     @Inject
-    public AwsEcrAuthResolver(AwsInitialAuthConfig awsInitialAuthConfig) {
-        this.awsInitialAuthConfig = awsInitialAuthConfig;
+    public AwsEcrAuthResolver(AwsEcrInitialAuthConfig awsInitialAuthConfig) {
+        this.awsEcrInitialAuthConfig = awsInitialAuthConfig;
     }
 
     /**
@@ -65,29 +66,32 @@ public class AwsEcrAuthResolver implements DockerRegistryDynamicAuthResolver {
     @Override
     @Nullable
     public AuthConfig getXRegistryAuth(@Nullable String registry) {
-        try {
-            String ecrHostname = awsInitialAuthConfig.getEcrHostname();
-            if (ecrHostname != null && ecrHostname.equals(registry)) {
-                String authorizationToken = getAwsAuthorizationToken();
-                if (authorizationToken != null) {
-                    String decodedAuthorizationToken = new String(Base64.getDecoder().decode(authorizationToken));
-                    int colonIndex = decodedAuthorizationToken.indexOf(':');
-                    if (colonIndex != -1) {
-                        return newDto(AuthConfig.class).withUsername(decodedAuthorizationToken.substring(0, colonIndex))
-                                                       .withPassword(decodedAuthorizationToken.substring(colonIndex + 1));
-                    } else {
-                        LOG.warn("Cannot retrieve ECR credentials from token");
+        if (registry != null) {
+            AwsAccountCredentials awsAccountCredentials = awsEcrInitialAuthConfig.getAuthConfigs().get(registry);
+            if (awsAccountCredentials != null) { // given registry is configured
+                try {
+                    String authorizationToken = getAwsAuthorizationToken(awsAccountCredentials.getAccessKeyId(),
+                                                                         awsAccountCredentials.getSecretAccessKey());
+                    if (authorizationToken != null) {
+                        String decodedAuthorizationToken = new String(Base64.getDecoder().decode(authorizationToken));
+                        int colonIndex = decodedAuthorizationToken.indexOf(':');
+                        if (colonIndex != -1) {
+                            return newDto(AuthConfig.class).withUsername(decodedAuthorizationToken.substring(0, colonIndex))
+                                                           .withPassword(decodedAuthorizationToken.substring(colonIndex + 1));
+                        } else {
+                            LOG.error("Cannot retrieve ECR credentials from token for {} registry", registry);
+                        }
                     }
+                } catch (IllegalArgumentException e) {
+                    LOG.error("Retrieved AWS ECR authorization token for {} registry has invalid format", registry);
                 }
             }
-        } catch (IllegalArgumentException e) {
-            LOG.warn("Retrieved AWS ECR authorization token has invalid format");
         }
         return null;
     }
 
     /**
-     * Retrieves actual auth config for Amazon ECR.
+     * Retrieves actual auth configs for configured Amazon ECRs.
      * If no AWS ECR credentials found, an empty map will be returned.
      *
      * @return actual AWS ECR auth config or empty map if ECR not configured
@@ -96,19 +100,20 @@ public class AwsEcrAuthResolver implements DockerRegistryDynamicAuthResolver {
     public Map<String, AuthConfig> getXRegistryConfig() {
         Map<String, AuthConfig> dynamicAuthConfigs = new HashMap<>();
 
-        AuthConfig authConfig = getXRegistryAuth(awsInitialAuthConfig.getEcrHostname());
-        if (authConfig != null) {
-            dynamicAuthConfigs.put(awsInitialAuthConfig.getEcrHostname(), authConfig);
+        for (String registry : awsEcrInitialAuthConfig.getAuthConfigs().keySet()) {
+            AuthConfig authConfig = getXRegistryAuth(registry);
+            if (authConfig != null) {
+                dynamicAuthConfigs.put(registry, authConfig);
+            }
         }
 
         return dynamicAuthConfigs;
     }
 
     @VisibleForTesting
-    String getAwsAuthorizationToken() {
+    String getAwsAuthorizationToken(String accessKeyId, String secretAccessKey) {
         try {
-            AWSCredentials credentials = new BasicAWSCredentials(awsInitialAuthConfig.getAccessKeyId(),
-                                                                 awsInitialAuthConfig.getSecretAccessKey());
+            AWSCredentials credentials = new BasicAWSCredentials(accessKeyId, secretAccessKey);
             AmazonECRClient amazonECRClient = new AmazonECRClient(credentials);
             GetAuthorizationTokenResult tokenResult = amazonECRClient.getAuthorizationToken(new GetAuthorizationTokenRequest());
             List<AuthorizationData> authData = tokenResult.getAuthorizationData();
