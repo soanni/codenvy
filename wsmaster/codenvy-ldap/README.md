@@ -1,3 +1,14 @@
+LDAP Integration
+---
+Ldap integration has two major components: synchronization and authentication.
+To be able to successfully login, first of all, syncronization have to do be completed at
+least once. Only after that you'll be able to authenticate. In general sequence look like this:
+synchronization gets all users according to configured filters, grabs necessary fields and transform it to Codenvy User and persist it in database.
+Users that are not exists in search result will be removed, users that is a part of the search will be updated, new users will be added.
+After that when user enter his name and password system will authenticate it with remote ldap.
+If authentication completed successfuly then ldap entry will be transformed according to synchronization configuration to
+Codenvy User after that this user will be authenticated in Codenvy.
+
 LDAP Authentication
 ---
 #### Authentication configuration
