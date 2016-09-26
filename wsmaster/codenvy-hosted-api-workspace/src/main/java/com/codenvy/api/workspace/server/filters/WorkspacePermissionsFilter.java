@@ -102,6 +102,7 @@ public class WorkspacePermissionsFilter extends CheMethodInvokerFilter {
                 action = READ;
                 break;
 
+            case "checkAgentHealth":
             case "getByKey":
                 key = ((String)arguments[0]);
                 action = READ;
